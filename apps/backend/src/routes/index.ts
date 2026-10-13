@@ -8,6 +8,7 @@ import { guardiansRouter } from '../modules/guardians/guardians.routes';
 import { classesRouter } from '../modules/classes/classes.routes';
 import { subjectsRouter } from '../modules/subjects/subjects.routes';
 import { teacherAssignmentsRouter } from '../modules/teacher-assignments/teacher-assignments.routes';
+import { classSubjectsRouter } from '../modules/class-subjects/class-subjects.routes';
 
 export const apiRouter = Router();
 
@@ -20,3 +21,4 @@ apiRouter.use('/guardians', guardiansRouter);
 apiRouter.use('/classes', classesRouter);
 apiRouter.use('/subjects', subjectsRouter);
 apiRouter.use('/teacher-assignments', teacherAssignmentsRouter);
+apiRouter.use('/class-subjects', classSubjectsRouter);

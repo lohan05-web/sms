@@ -23,13 +23,13 @@ teacherAssignmentsRouter.get(
 );
 teacherAssignmentsRouter.post(
   '/',
-  requirePermission(Permission.TEACHER_ASSIGN),
+  requirePermission(Permission.TEACHER_MANAGE),
   validate(createSchema),
   asyncHandler(teacherAssignmentsController.create),
 );
 teacherAssignmentsRouter.delete(
   '/:id',
-  requirePermission(Permission.TEACHER_ASSIGN),
+  requirePermission(Permission.TEACHER_MANAGE),
   validate(idParamSchema, 'params'),
   asyncHandler(teacherAssignmentsController.remove),
 );

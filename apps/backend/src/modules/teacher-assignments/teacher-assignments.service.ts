@@ -16,7 +16,7 @@ export const teacherAssignmentsService = {
     if (schoolId) where.teacher = { schoolId };
     return prisma.teacherAssignment.findMany({
       where,
-      include: { teacher: true, subject: true, classLevel: true, section: true },
+      include: { teacher: true, subject: true, section: true },
     });
   },
   async create(input: any, actor: Actor) {
