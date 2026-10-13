@@ -7,6 +7,7 @@ import { teachersRouter } from '../modules/teachers/teachers.routes';
 import { guardiansRouter } from '../modules/guardians/guardians.routes';
 import { classesRouter } from '../modules/classes/classes.routes';
 import { subjectsRouter } from '../modules/subjects/subjects.routes';
+import { teacherAssignmentsRouter } from '../modules/teacher-assignments/teacher-assignments.routes';
 
 export const apiRouter = Router();
 
@@ -18,3 +19,4 @@ apiRouter.use('/teachers', teachersRouter);
 apiRouter.use('/guardians', guardiansRouter);
 apiRouter.use('/classes', classesRouter);
 apiRouter.use('/subjects', subjectsRouter);
+apiRouter.use('/teacher-assignments', teacherAssignmentsRouter);
