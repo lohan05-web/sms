@@ -10,6 +10,8 @@ import { subjectsRouter } from '../modules/subjects/subjects.routes';
 import { teacherAssignmentsRouter } from '../modules/teacher-assignments/teacher-assignments.routes';
 import { classSubjectsRouter } from '../modules/class-subjects/class-subjects.routes';
 import { attendancesRouter } from '../modules/attendances/attendances.routes';
+import { examsRouter } from '../modules/exams/exams.routes';
+import { examResultsRouter } from '../modules/results/results.routes';
 
 export const apiRouter = Router();
 
@@ -24,3 +26,5 @@ apiRouter.use('/subjects', subjectsRouter);
 apiRouter.use('/teacher-assignments', teacherAssignmentsRouter);
 apiRouter.use('/class-subjects', classSubjectsRouter);
 apiRouter.use('/attendances', attendancesRouter);
+apiRouter.use('/exams', examsRouter);
+apiRouter.use('/exam-results', examResultsRouter);

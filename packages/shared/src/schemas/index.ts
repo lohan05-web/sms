@@ -7,3 +7,5 @@ export * from './guardian.schema';
 export * from './class.schema';
 export * from './subject.schema';
 export * from './attendance.schema';
+export * from './exam.schema';
+export * from './result.schema';
