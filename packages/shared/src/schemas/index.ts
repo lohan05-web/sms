@@ -6,3 +6,4 @@ export * from './teacher.schema';
 export * from './guardian.schema';
 export * from './class.schema';
 export * from './subject.schema';
+export * from './attendance.schema';
