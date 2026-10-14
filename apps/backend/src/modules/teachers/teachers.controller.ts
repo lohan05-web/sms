@@ -16,6 +16,10 @@ export const teachersController = {
       meta: { total: r.total, page: r.page, limit: r.limit, totalPages: r.totalPages },
     });
   },
+  async me(req: Request, res: Response) {
+    const r = await teachersService.me(actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
   async getById(req: Request, res: Response) {
     const r = await teachersService.getById(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: r });
@@ -26,6 +30,15 @@ export const teachersController = {
   },
   async update(req: Request, res: Response) {
     const r = await teachersService.update(req.params.id as string, req.body, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
+  async setActive(req: Request, res: Response) {
+    const isActive = Boolean((req.body as { isActive?: boolean }).isActive);
+    const r = await teachersService.setActive(req.params.id as string, isActive, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
+  async resetPassword(req: Request, res: Response) {
+    const r = await teachersService.resetPassword(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: r });
   },
   async remove(req: Request, res: Response) {

@@ -43,7 +43,10 @@ export const classesService = {
     return cls;
   },
   async create(input: CreateClassLevelInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    // Never let a scoped admin pick another school (resolveSchoolScope returns
+    // their own school for them), and fall back to the signed-in admin's school
+    // so the front end never has to send a school id explicitly.
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     const cls = await prisma.classLevel.create({
       data: { schoolId, name: input.name, numericLevel: input.numericLevel },

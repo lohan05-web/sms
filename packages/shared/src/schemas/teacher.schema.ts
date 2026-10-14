@@ -1,7 +1,7 @@
 ﻿import { z } from 'zod';
 import { emailSchema, phoneSchema } from './common.schema';
 export const createTeacherSchema = z.object({
-  email: emailSchema.optional(),
+  email: emailSchema,
   password: z
     .string()
     .min(8)
@@ -26,6 +26,7 @@ export const updateTeacherSchema = z
     qualification: z.string().max(200).nullable().optional(),
     specialization: z.string().max(200).nullable().optional(),
     status: z.enum(['ACTIVE', 'ON_LEAVE', 'RESIGNED', 'TERMINATED']).optional(),
+    isActive: z.boolean().optional(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided' });
 export type UpdateTeacherInput = z.infer<typeof updateTeacherSchema>;

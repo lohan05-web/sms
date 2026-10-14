@@ -17,6 +17,9 @@ export const Permission = {
   TEACHER_READ: 'teacher:read',
   TEACHER_MANAGE: 'teacher:manage',
 
+  PARENT_READ: 'parent:read',
+  PARENT_MANAGE: 'parent:manage',
+
   CLASS_READ: 'class:read',
   CLASS_MANAGE: 'class:manage',
 
@@ -52,6 +55,12 @@ export const Permission = {
 
   REPORT_READ: 'report:read',
   AUDIT_READ: 'audit:read',
+
+  ACADEMIC_READ: 'academic:read',
+  ACADEMIC_MANAGE: 'academic:manage',
+
+  NOTIFICATION_READ: 'notification:read',
+  NOTIFICATION_MANAGE: 'notification:manage',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -72,6 +81,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.STUDENT_UPDATE,
     P.TEACHER_READ,
     P.TEACHER_MANAGE,
+    P.PARENT_READ,
+    P.PARENT_MANAGE,
     P.CLASS_READ,
     P.CLASS_MANAGE,
     P.SUBJECT_READ,
@@ -91,8 +102,13 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.NOTICE_MANAGE,
     P.REPORT_READ,
     P.AUDIT_READ,
+    P.ACADEMIC_READ,
+    P.ACADEMIC_MANAGE,
+    P.NOTIFICATION_READ,
+    P.NOTIFICATION_MANAGE,
   ],
   [Role.ADMIN]: [
+    P.SCHOOL_READ,
     P.USER_READ,
     P.USER_CREATE,
     P.USER_UPDATE,
@@ -101,6 +117,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.STUDENT_UPDATE,
     P.TEACHER_READ,
     P.TEACHER_MANAGE,
+    P.PARENT_READ,
+    P.PARENT_MANAGE,
     P.CLASS_READ,
     P.CLASS_MANAGE,
     P.SUBJECT_READ,
@@ -115,6 +133,10 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.NOTICE_READ,
     P.NOTICE_MANAGE,
     P.REPORT_READ,
+    P.ACADEMIC_READ,
+    P.ACADEMIC_MANAGE,
+    P.NOTIFICATION_READ,
+    P.NOTIFICATION_MANAGE,
   ],
   [Role.TEACHER]: [
     P.STUDENT_READ,
@@ -127,6 +149,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.RESULT_MANAGE,
     P.NOTICE_READ,
     P.REPORT_READ,
+    P.ACADEMIC_READ,
+    P.NOTIFICATION_READ,
   ],
   [Role.ACCOUNTANT]: [
     P.STUDENT_READ,
@@ -138,6 +162,8 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.PAYMENT_MANAGE,
     P.NOTICE_READ,
     P.REPORT_READ,
+    P.ACADEMIC_READ,
+    P.NOTIFICATION_READ,
   ],
   [Role.LIBRARIAN]: [
     P.STUDENT_READ,
@@ -146,17 +172,31 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.LOAN_READ,
     P.LOAN_MANAGE,
     P.NOTICE_READ,
+    P.NOTIFICATION_READ,
   ],
-  [Role.TRANSPORT_MANAGER]: [P.STUDENT_READ, P.TRANSPORT_READ, P.TRANSPORT_MANAGE, P.NOTICE_READ],
-  [Role.PARENT]: [
+  [Role.TRANSPORT_MANAGER]: [
     P.STUDENT_READ,
+    P.TRANSPORT_READ,
+    P.TRANSPORT_MANAGE,
+    P.NOTICE_READ,
+    P.NOTIFICATION_READ,
+  ],
+  [Role.PARENT]: [
+    // Parents are intentionally limited to announcements and their own
+    // notifications. Access to a child's attendance, marks, results and
+    // invoices is served exclusively through the parent portal endpoints
+    // (/parents/me/...), which scope every query to the parent's children.
+    P.NOTICE_READ,
+    P.NOTIFICATION_READ,
+  ],
+  [Role.STUDENT]: [
     P.ATTENDANCE_READ,
     P.RESULT_READ,
     P.INVOICE_READ,
     P.NOTICE_READ,
-    P.REPORT_READ,
+    P.ACADEMIC_READ,
+    P.NOTIFICATION_READ,
   ],
-  [Role.STUDENT]: [P.ATTENDANCE_READ, P.RESULT_READ, P.INVOICE_READ, P.NOTICE_READ],
 };
 
 export function getPermissionsForRole(role: Role): readonly Permission[] {

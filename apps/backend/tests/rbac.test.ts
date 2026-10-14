@@ -24,4 +24,31 @@ describe('RBAC', () => {
     expect(hasPermission(Role.TRANSPORT_MANAGER, Permission.TRANSPORT_MANAGE)).toBe(true);
     expect(hasPermission(Role.TRANSPORT_MANAGER, Permission.LIBRARY_MANAGE)).toBe(false);
   });
+
+  it('scopes academic administration to principals and admins', () => {
+    expect(hasPermission(Role.PRINCIPAL, Permission.ACADEMIC_MANAGE)).toBe(true);
+    expect(hasPermission(Role.ADMIN, Permission.ACADEMIC_MANAGE)).toBe(true);
+    expect(hasPermission(Role.TEACHER, Permission.ACADEMIC_READ)).toBe(true);
+    expect(hasPermission(Role.TEACHER, Permission.ACADEMIC_MANAGE)).toBe(false);
+    expect(hasPermission(Role.STUDENT, Permission.ACADEMIC_MANAGE)).toBe(false);
+  });
+
+  it('lets principals and admins manage teacher and parent accounts', () => {
+    for (const role of [Role.PRINCIPAL, Role.ADMIN]) {
+      expect(hasPermission(role, Permission.TEACHER_MANAGE)).toBe(true);
+      expect(hasPermission(role, Permission.PARENT_READ)).toBe(true);
+      expect(hasPermission(role, Permission.PARENT_MANAGE)).toBe(true);
+    }
+    expect(hasPermission(Role.TEACHER, Permission.TEACHER_MANAGE)).toBe(false);
+    expect(hasPermission(Role.TEACHER, Permission.PARENT_MANAGE)).toBe(false);
+  });
+
+  it('keeps parents limited to announcements and self-scoped portal data', () => {
+    expect(hasPermission(Role.PARENT, Permission.NOTICE_READ)).toBe(true);
+    expect(hasPermission(Role.PARENT, Permission.NOTIFICATION_READ)).toBe(true);
+    expect(hasPermission(Role.PARENT, Permission.STUDENT_READ)).toBe(false);
+    expect(hasPermission(Role.PARENT, Permission.RESULT_READ)).toBe(false);
+    expect(hasPermission(Role.PARENT, Permission.INVOICE_READ)).toBe(false);
+    expect(hasPermission(Role.PARENT, Permission.PARENT_MANAGE)).toBe(false);
+  });
 });

@@ -35,6 +35,22 @@ export const updateStudentSchema = z
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided' });
 export type UpdateStudentInput = z.infer<typeof updateStudentSchema>;
+
+const MAX_PHOTO_LENGTH = 2_000_000;
+
+/** A resized image sent as a data URL, or `null` to clear the photo. */
+export const updateStudentPhotoSchema = z.object({
+  photoUrl: z
+    .string()
+    .max(MAX_PHOTO_LENGTH, 'Photo is too large (max ~1.5 MB)')
+    .nullable()
+    .refine(
+      (value) => value === null || value === '' || /^data:image\/(png|jpe?g|webp);base64,/.test(value),
+      { message: 'Photo must be a PNG, JPEG or WebP image' },
+    ),
+});
+export type UpdateStudentPhotoInput = z.infer<typeof updateStudentPhotoSchema>;
+
 export const listStudentsQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),

@@ -36,6 +36,15 @@ export const studentsController = {
     const result = await studentsService.update(req.params.id as string, req.body, actorFrom(req));
     res.status(200).json({ success: true, data: result });
   },
+  async updatePhoto(req: Request, res: Response) {
+    const { photoUrl } = req.body as { photoUrl: string | null };
+    const result = await studentsService.updatePhoto(
+      req.params.id as string,
+      photoUrl,
+      actorFrom(req),
+    );
+    res.status(200).json({ success: true, data: result });
+  },
   async remove(req: Request, res: Response) {
     const result = await studentsService.remove(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: result });

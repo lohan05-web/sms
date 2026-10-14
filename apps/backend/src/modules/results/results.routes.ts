@@ -14,6 +14,12 @@ import { asyncHandler } from '../../utils/asyncHandler';
 import { examResultsController } from './results.controller';
 
 const idParamSchema = z.object({ id: idSchema });
+const reportCardQuerySchema = z.object({
+  studentId: z.string().cuid(),
+  examId: z.string().cuid().optional(),
+  classLevelId: z.string().cuid().optional(),
+  examIds: z.string().optional(),
+});
 export const examResultsRouter = Router();
 examResultsRouter.use(authenticate);
 examResultsRouter.get(
@@ -21,6 +27,12 @@ examResultsRouter.get(
   requirePermission(Permission.RESULT_READ),
   validate(listExamResultsQuerySchema, 'query'),
   asyncHandler(examResultsController.list),
+);
+examResultsRouter.get(
+  '/report-card',
+  requirePermission(Permission.RESULT_READ),
+  validate(reportCardQuerySchema, 'query'),
+  asyncHandler(examResultsController.reportCard),
 );
 examResultsRouter.get(
   '/:id',

@@ -114,6 +114,18 @@ enum VehicleStatus {
   INACTIVE
 }
 
+enum NotificationType {
+  GENERAL
+  NOTICE
+  ATTENDANCE
+  INVOICE
+  PAYMENT
+  FEE
+  EXAM
+  RESULT
+  TRANSPORT
+}
+
 // ---------------------------------------------------------------------------
 // Core: School & Users
 // ---------------------------------------------------------------------------
@@ -149,6 +161,7 @@ model School {
   notices         Notice[]
   auditLogs       AuditLog[]
   Exam            Exam[]
+  notifications   Notification[]
 
   @@index([isActive])
 }
@@ -180,6 +193,7 @@ model User {
   bookLoansBorrowed BookLoan[]      @relation("LoanBorrower")
   issuedLoans       BookLoan[]      @relation("LoanIssuer")
   receivedPayments  Payment[]       @relation("PaymentReceiver")
+  notifications     Notification[]
 
   @@index([schoolId])
   @@index([role])
@@ -266,7 +280,7 @@ model Section {
   schoolId       String
   classLevelId   String
   name           String
-  capacity       Int      @default(40)
+  capacity       Int      @default(10)
   classTeacherId String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -349,6 +363,7 @@ model StudentProfile {
   bloodGroup    String?
   address       String?       @db.Text
   rollNo        String?
+  photoUrl      String?       @db.MediumText
   status        StudentStatus @default(ACTIVE)
   sectionId     String?
   createdAt     DateTime      @default(now())
@@ -455,6 +470,8 @@ model Exam {
   classLevelId   String
   name           String
   type           ExamType @default(UNIT_TEST)
+  maxMarks       Int      @default(100)
+  passingMarks   Int      @default(0)
   startDate      DateTime @db.Date
   endDate        DateTime @db.Date
   isPublished    Boolean  @default(false)
@@ -626,6 +643,10 @@ model BookLoan {
   status     LoanStatus @default(BORROWED)
   fine       Decimal    @default(0) @db.Decimal(8, 2)
   issuedById String?
+  // Non-null only while the loan is active (BORROWED/OVERDUE); used to
+  // enforce at most one active loan per (book, borrower) via a unique index.
+  // MySQL permits multiple NULLs in a unique index, so closed loans are exempt.
+  activeKey  String?    @unique
   createdAt  DateTime   @default(now())
 
   book     Book            @relation(fields: [bookId], references: [id], onDelete: Cascade)
@@ -755,4 +776,24 @@ model AuditLog {
   @@index([schoolId])
   @@index([userId])
   @@index([entity, entityId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  schoolId  String?
+  type      NotificationType @default(GENERAL)
+  title     String
+  body      String?          @db.Text
+  data      Json?
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  school School? @relation(fields: [schoolId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isRead])
+  @@index([schoolId])
+  @@index([createdAt])
 }

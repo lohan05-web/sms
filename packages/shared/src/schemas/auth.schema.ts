@@ -43,3 +43,19 @@ export const changePasswordSchema = z.object({
 });
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+
+/**
+ * Reset a managed account's password. When `newPassword` is omitted the server
+ * generates a strong password and returns it once so the admin can hand it over.
+ */
+export const resetPasswordSchema = z.object({
+  newPassword: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(128)
+    .regex(/[A-Za-z]/, 'Password must contain a letter')
+    .regex(/[0-9]/, 'Password must contain a number')
+    .optional(),
+});
+
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

@@ -28,6 +28,15 @@ export const guardiansController = {
     const r = await guardiansService.update(req.params.id as string, req.body, actorFrom(req));
     res.status(200).json({ success: true, data: r });
   },
+  async setActive(req: Request, res: Response) {
+    const isActive = Boolean((req.body as { isActive?: boolean }).isActive);
+    const r = await guardiansService.setActive(req.params.id as string, isActive, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
+  async resetPassword(req: Request, res: Response) {
+    const r = await guardiansService.resetPassword(req.params.id as string, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
   async remove(req: Request, res: Response) {
     const r = await guardiansService.remove(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: r });

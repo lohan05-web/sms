@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Section` MODIFY `capacity` INTEGER NOT NULL DEFAULT 10;

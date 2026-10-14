@@ -1,4 +1,4 @@
-import type { LoginInput, RegisterInput } from '@smartschool/shared';
+import type { LoginInput, RegisterInput, Role } from '@smartschool/shared';
 import type { User } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
@@ -63,7 +63,7 @@ async function issueTokens(user: User, meta: RequestMeta) {
 }
 
 export const authService = {
-  async login(input: LoginInput, meta: RequestMeta) {
+  async login(input: LoginInput, meta: RequestMeta, allowedRoles?: readonly Role[]) {
     const user = await prisma.user.findUnique({ where: { email: input.email } });
     if (!user || !user.isActive) {
       throw ApiError.unauthorized('Invalid email or password');
@@ -72,6 +72,10 @@ export const authService = {
     const passwordValid = await verifyPassword(input.password, user.passwordHash);
     if (!passwordValid) {
       throw ApiError.unauthorized('Invalid email or password');
+    }
+
+    if (allowedRoles && allowedRoles.length > 0 && !allowedRoles.includes(user.role as Role)) {
+      throw ApiError.unauthorized('This account cannot sign in through this portal');
     }
 
     const tokens = await issueTokens(user, meta);

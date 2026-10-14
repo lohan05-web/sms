@@ -32,4 +32,16 @@ export const examResultsController = {
     const r = await examResultsService.remove(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: r });
   },
+  async reportCard(req: Request, res: Response) {
+    const actor = actorFrom(req);
+    const studentId = req.query.studentId as string;
+    const examId = req.query.examId as string | undefined;
+    const classLevelId = req.query.classLevelId as string | undefined;
+    const examIds = (req.query.examIds as string | undefined)?.split(',').filter(Boolean);
+    const r = await examResultsService.reportCard(
+      { studentId, examId, classLevelId, examIds },
+      actor,
+    );
+    res.status(200).json({ success: true, data: r });
+  },
 };

@@ -9,9 +9,12 @@ const app = createApp();
 const httpServer = createServer(app);
 attachSocketServer(httpServer);
 
+import { startScheduler, stopScheduler } from './lib/scheduler';
+
 httpServer.listen(env.PORT, () => {
   logger.info(`SmartSchool API listening on http://localhost:${env.PORT}${env.API_PREFIX}`);
   logger.info(`Environment: ${env.NODE_ENV}`);
+  startScheduler();
 });
 
 let shuttingDown = false;
@@ -23,6 +26,7 @@ function shutdown(signal: string): void {
   shuttingDown = true;
   logger.info({ signal }, 'Shutting down gracefully');
 
+  stopScheduler();
   httpServer.close(() => {
     void prisma
       .$disconnect()

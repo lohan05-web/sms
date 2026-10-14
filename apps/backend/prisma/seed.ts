@@ -52,9 +52,23 @@ async function main(): Promise<void> {
     },
   });
 
+  const student = await prisma.studentProfile.upsert({
+    where: { schoolId_admissionNo: { schoolId: school.id, admissionNo: 'DEMO-0001' } },
+    update: {},
+    create: {
+      schoolId: school.id,
+      admissionNo: 'DEMO-0001',
+      admissionDate: new Date(`${year}-06-01`),
+      dateOfBirth: new Date(`${year - 12}-01-15`),
+      gender: 'MALE',
+      status: 'ACTIVE',
+    },
+  });
+
   console.log('\nSeed complete');
   console.log(`  School.......: ${school.name} (${school.id})`);
   console.log(`  Super admin..: ${adminEmail}`);
+  console.log(`  Demo student.: ${student.admissionNo} (${student.id})`);
   if (generatedPassword) {
     console.log(`  Password.....: ${adminPassword}`);
     console.log('  ^ Generated randomly. Store it securely and change it after first login.');

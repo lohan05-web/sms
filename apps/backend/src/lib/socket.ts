@@ -66,3 +66,8 @@ export function getSocketServer(): SocketServer {
   }
   return io;
 }
+
+/** Returns the socket server if it has been attached, otherwise null. */
+export function tryGetSocketServer(): SocketServer | null {
+  return io;
+}

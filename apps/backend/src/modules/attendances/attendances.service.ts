@@ -3,10 +3,13 @@
   ListAttendancesQuery,
   UpdateAttendanceInput,
 } from '@smartschool/shared';
+import { SOCKET_EVENTS } from '@smartschool/shared';
 import type { Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
+import { emitToSchool } from '../../lib/realtime';
 import { paginate, toSkipTake } from '../../utils/pagination';
+import { notifyUsers } from '../notifications/notifications.service';
 import type { Actor } from '../users/users.service';
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
@@ -59,17 +62,55 @@ export const attendancesService = {
     });
     if (!section || section.classLevel.schoolId !== schoolId)
       throw ApiError.badRequest('Invalid section');
+    const student = await prisma.studentProfile.findUnique({ where: { id: input.studentId } });
+    if (!student || student.schoolId !== schoolId) throw ApiError.badRequest('Invalid student');
+    if (student.sectionId && student.sectionId !== input.sectionId) {
+      // Be tolerant if sectionId differs in legacy data? Keep as is for stability
+      // throw ApiError.badRequest('Student is not in the selected section');
+    }
+    const activeYear = await prisma.academicYear.findFirst({
+      where: { schoolId, isCurrent: true },
+    });
+    const academicYearId =
+      activeYear?.id ?? (await prisma.academicYear.findFirst({ where: { schoolId } }))?.id;
+    if (!academicYearId) throw ApiError.badRequest('Academic year required');
     const att = await prisma.attendance.create({
       data: {
         studentId: input.studentId,
         sectionId: input.sectionId,
-        academicYearId: (section as any).academicYearId,
+        academicYearId,
         date: input.date,
         status: input.status,
         remarks: input.remark,
         recordedById: input.takenById || actor.id,
       },
     });
+    emitToSchool(schoolId, SOCKET_EVENTS.ATTENDANCE_MARKED, {
+      id: att.id,
+      studentId: att.studentId,
+      sectionId: att.sectionId,
+      status: att.status,
+      date: att.date,
+    });
+    if (att.status === 'ABSENT' || att.status === 'LATE') {
+      const profile = await prisma.studentProfile.findUnique({
+        where: { id: att.studentId },
+        include: {
+          guardians: { include: { guardian: { select: { userId: true } } } },
+        },
+      });
+      const recipients = [
+        profile?.userId ?? null,
+        ...(profile?.guardians ?? []).map((g) => g.guardian.userId ?? null),
+      ].filter((id): id is string => Boolean(id));
+      await notifyUsers(recipients, {
+        schoolId,
+        type: 'ATTENDANCE',
+        title: `Attendance marked ${att.status.toLowerCase()}`,
+        body: `Your child was marked ${att.status.toLowerCase()} on ${att.date.toISOString().slice(0, 10)}.`,
+        data: { attendanceId: att.id, studentId: att.studentId, status: att.status },
+      });
+    }
     return att;
   },
   async update(id: string, input: UpdateAttendanceInput, actor: Actor) {
@@ -88,6 +129,32 @@ export const attendancesService = {
         ...(input.remark !== undefined ? { remarks: input.remark } : {}),
       },
     });
+    // Emit update and notify on status change
+    const schoolId = existing.section.classLevel.schoolId;
+    emitToSchool(schoolId, SOCKET_EVENTS.ATTENDANCE_MARKED, {
+      id: att.id,
+      studentId: att.studentId,
+      sectionId: att.sectionId,
+      status: att.status,
+      date: att.date,
+    });
+    if (att.status === 'ABSENT' || att.status === 'LATE') {
+      const profile = await prisma.studentProfile.findUnique({
+        where: { id: att.studentId },
+        include: { guardians: { include: { guardian: { select: { userId: true } } } } },
+      });
+      const recipients = [
+        profile?.userId ?? null,
+        ...(profile?.guardians ?? []).map((g) => g.guardian.userId ?? null),
+      ].filter((id): id is string => Boolean(id));
+      await notifyUsers(recipients, {
+        schoolId,
+        type: 'ATTENDANCE',
+        title: `Attendance marked ${att.status.toLowerCase()}`,
+        body: `Your child was marked ${att.status.toLowerCase()} on ${att.date.toISOString().slice(0, 10)}.`,
+        data: { attendanceId: att.id, studentId: att.studentId, status: att.status },
+      });
+    }
     return att;
   },
   async remove(id: string, actor: Actor) {

@@ -43,6 +43,11 @@ export const examsService = {
     const schoolId = resolveSchoolScope(actor, input.schoolId);
     if (!schoolId) throw ApiError.badRequest('School is required');
     const activeAy = await prisma.academicYear.findFirst({ where: { schoolId } });
+    const maxMarks = input.maxMarks ?? 100;
+    const passingMarks = input.passingMarks ?? 0;
+    if (passingMarks > maxMarks) {
+      throw ApiError.badRequest('Passing marks cannot exceed max marks');
+    }
     const exam = await prisma.exam.create({
       data: {
         schoolId,
@@ -51,6 +56,8 @@ export const examsService = {
         classLevelId: input.classLevelId,
         name: input.name,
         type: input.examType || 'UNIT_TEST',
+        maxMarks,
+        passingMarks,
         startDate: input.startDate || new Date(),
         endDate: input.endDate || new Date(),
         isPublished: false,
@@ -63,11 +70,18 @@ export const examsService = {
     if (!existing) throw ApiError.notFound('Exam not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const maxMarks = input.maxMarks ?? existing.maxMarks;
+    const passingMarks = input.passingMarks ?? existing.passingMarks;
+    if (passingMarks > maxMarks) {
+      throw ApiError.badRequest('Passing marks cannot exceed max marks');
+    }
     const exam = await prisma.exam.update({
       where: { id },
       data: {
         ...(input.name !== undefined ? { name: input.name } : {}),
         ...(input.examType !== undefined ? { type: input.examType } : {}),
+        ...(input.maxMarks !== undefined ? { maxMarks: input.maxMarks } : {}),
+        ...(input.passingMarks !== undefined ? { passingMarks: input.passingMarks } : {}),
         ...(input.startDate !== undefined ? { startDate: input.startDate } : {}),
         ...(input.endDate !== undefined ? { endDate: input.endDate } : {}),
       },

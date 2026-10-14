@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import type { Role } from '@smartschool/shared';
 import { env, isProduction } from '../../config/env';
 import { ApiError } from '../../errors/ApiError';
 import { parseDuration } from '../../utils/duration';
@@ -34,14 +35,33 @@ function extractRefreshToken(req: Request): string | undefined {
   return fromBody ?? fromCookie;
 }
 
+async function loginWithRoles(req: Request, res: Response, allowedRoles?: readonly Role[]) {
+  const result = await authService.login(req.body, requestMeta(req), allowedRoles);
+  setRefreshCookie(res, result.tokens.refreshToken);
+  res.status(200).json({
+    success: true,
+    data: { user: result.user, accessToken: result.tokens.accessToken },
+  });
+}
+
 export const authController = {
   async login(req: Request, res: Response) {
-    const result = await authService.login(req.body, requestMeta(req));
-    setRefreshCookie(res, result.tokens.refreshToken);
-    res.status(200).json({
-      success: true,
-      data: { user: result.user, accessToken: result.tokens.accessToken },
-    });
+    await loginWithRoles(req, res);
+  },
+
+  /** Dedicated portal sign-in for administrators/platform staff. */
+  async loginAdmin(req: Request, res: Response) {
+    await loginWithRoles(req, res, ['SUPER_ADMIN', 'PRINCIPAL', 'ADMIN', 'ACCOUNTANT', 'LIBRARIAN', 'TRANSPORT_MANAGER']);
+  },
+
+  /** Dedicated portal sign-in for teachers. */
+  async loginTeacher(req: Request, res: Response) {
+    await loginWithRoles(req, res, ['TEACHER']);
+  },
+
+  /** Dedicated portal sign-in for parents. */
+  async loginParent(req: Request, res: Response) {
+    await loginWithRoles(req, res, ['PARENT']);
   },
 
   async register(req: Request, res: Response) {

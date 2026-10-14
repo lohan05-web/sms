@@ -16,6 +16,31 @@ function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): st
   return actor.schoolId;
 }
 
+async function assertSectionCapacity(
+  sectionId: string,
+  schoolId: string,
+  excludeStudentId?: string,
+): Promise<void> {
+  const section = await prisma.section.findUnique({
+    where: { id: sectionId },
+    select: { id: true, schoolId: true, capacity: true, name: true },
+  });
+  if (!section || section.schoolId !== schoolId) throw ApiError.badRequest('Invalid section');
+
+  const enrolled = await prisma.studentProfile.count({
+    where: {
+      sectionId,
+      status: 'ACTIVE',
+      ...(excludeStudentId ? { id: { not: excludeStudentId } } : {}),
+    },
+  });
+  if (enrolled >= section.capacity) {
+    throw ApiError.badRequest(
+      `Section "${section.name}" is full (${enrolled}/${section.capacity} students)`,
+    );
+  }
+}
+
 export const studentsService = {
   async list(query: ListStudentsQuery, actor: Actor) {
     const { skip, take } = toSkipTake(query.page, query.limit);
@@ -59,6 +84,7 @@ export const studentsService = {
   async create(input: CreateStudentInput, actor: Actor) {
     const schoolId = resolveSchoolScope(actor, input.schoolId);
     if (!schoolId) throw ApiError.badRequest('School is required');
+    if (input.sectionId) await assertSectionCapacity(input.sectionId, schoolId);
     let userId: string | undefined;
     if (input.email && input.password) {
       const existing = await prisma.user.findUnique({ where: { email: input.email } });
@@ -109,6 +135,9 @@ export const studentsService = {
     if (!existing) throw ApiError.notFound('Student not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    if (input.sectionId && input.sectionId !== existing.sectionId) {
+      await assertSectionCapacity(input.sectionId, existing.schoolId, id);
+    }
     const student = await prisma.studentProfile.update({
       where: { id },
       data: {
@@ -118,6 +147,18 @@ export const studentsService = {
         ...(input.address !== undefined ? { address: input.address } : {}),
       },
       include: { user: true, section: { include: { classLevel: true } } },
+    });
+    return student;
+  },
+  async updatePhoto(id: string, photoUrl: string | null, actor: Actor) {
+    const existing = await prisma.studentProfile.findUnique({ where: { id } });
+    if (!existing) throw ApiError.notFound('Student not found');
+    const scope = resolveSchoolScope(actor);
+    if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const student = await prisma.studentProfile.update({
+      where: { id },
+      data: { photoUrl: photoUrl && photoUrl.length > 0 ? photoUrl : null },
+      select: { id: true, photoUrl: true },
     });
     return student;
   },

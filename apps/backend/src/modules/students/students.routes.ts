@@ -3,6 +3,7 @@
   createStudentSchema,
   idSchema,
   listStudentsQuerySchema,
+  updateStudentPhotoSchema,
   updateStudentSchema,
 } from '@smartschool/shared';
 import { Router } from 'express';
@@ -42,6 +43,13 @@ studentsRouter.patch(
   validate(idParamSchema, 'params'),
   validate(updateStudentSchema),
   asyncHandler(studentsController.update),
+);
+studentsRouter.patch(
+  '/:id/photo',
+  requirePermission(Permission.STUDENT_UPDATE),
+  validate(idParamSchema, 'params'),
+  validate(updateStudentPhotoSchema),
+  asyncHandler(studentsController.updatePhoto),
 );
 studentsRouter.delete(
   '/:id',

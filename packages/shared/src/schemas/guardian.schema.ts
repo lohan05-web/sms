@@ -26,6 +26,8 @@ export const updateGuardianSchema = z
     occupation: z.string().max(120).nullable().optional(),
     address: z.string().max(500).nullable().optional(),
     relation: z.enum(['FATHER', 'MOTHER', 'GUARDIAN', 'OTHER']).optional(),
+    isActive: z.boolean().optional(),
+    studentIds: z.array(z.string().cuid()).optional(),
   })
   .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided' });
 export type UpdateGuardianInput = z.infer<typeof updateGuardianSchema>;

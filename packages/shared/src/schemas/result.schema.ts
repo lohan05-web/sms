@@ -4,6 +4,7 @@ export const createExamResultSchema = z.object({
   schoolId: z.string().cuid().optional(),
   examId: z.string().cuid(),
   studentId: z.string().cuid(),
+  subjectId: z.string().cuid(),
   marksObtained: z.coerce.number().int().min(0),
   grade: z.string().max(5).optional(),
   remarks: z.string().max(255).optional(),

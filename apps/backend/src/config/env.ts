@@ -6,10 +6,19 @@ import { z } from 'zod';
 const currentDir = dirname(fileURLToPath(import.meta.url));
 
 // Load `.env` from the backend package first, then fall back to the repo root.
+// Paths are resolved relative to both this file and the working directory so
+// that the source (tsx) and bundled (dist) entrypoints both find the file.
 // Variables already present in process.env (e.g. injected by the test runner
 // or the host platform) always win, so nothing can be silently overridden.
-loadEnv({ path: resolve(currentDir, '../../.env') });
-loadEnv({ path: resolve(currentDir, '../../../../.env') });
+for (const candidate of [
+  resolve(currentDir, '.env'),
+  resolve(currentDir, '../../.env'),
+  resolve(currentDir, '../../../../.env'),
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../../.env'),
+]) {
+  loadEnv({ path: candidate });
+}
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
