@@ -1,9 +1,11 @@
 import { Permission } from '@smartschool/shared';
 import { Link } from 'react-router-dom';
+import { TimetableDayList } from '../components/TimetableViews';
 import { ErrorState, PageHeader, Spinner, StatCard } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { formatDate, humanize } from '../lib/format';
 import { can } from '../lib/permissions';
+import type { TimetableItem } from '../lib/timetable';
 import { useAsync } from '../lib/useAsync';
 import { api } from '../lib/api';
 
@@ -12,6 +14,13 @@ interface Assignment {
   subject?: { name?: string; code?: string } | null;
   section?: { name?: string; classLevel?: { name?: string } | null } | null;
   academicYear?: { name?: string } | null;
+}
+
+interface AttendanceCard {
+  total: number;
+  byStatus: Record<string, number>;
+  percentage: number;
+  indicator: string;
 }
 
 interface TeacherMe {
@@ -24,6 +33,12 @@ interface TeacherMe {
   user?: { firstName?: string; lastName?: string; email?: string; phone?: string | null } | null;
   school?: { name?: string } | null;
   assignments?: Assignment[];
+  timetableEntries?: TimetableItem[];
+  attendance?: { today: AttendanceCard; overall: AttendanceCard };
+}
+
+function titleCase(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export function TeacherPortalPage() {
@@ -126,6 +141,35 @@ export function TeacherPortalPage() {
             ))}
           </div>
         )}
+      </section>
+      {teacher.attendance ? (
+        <section className="panel">
+          <h2 className="panel__title">Attendance</h2>
+          <div className="dashboard">
+            <StatCard
+              label="Today"
+              value={`${teacher.attendance.today.percentage}%`}
+              hint={`${teacher.attendance.today.total} marks · ${titleCase(
+                teacher.attendance.today.indicator,
+              )}`}
+            />
+            <StatCard
+              label="Overall"
+              value={`${teacher.attendance.overall.percentage}%`}
+              hint={`${teacher.attendance.overall.total} marks · ${titleCase(
+                teacher.attendance.overall.indicator,
+              )}`}
+            />
+          </div>
+        </section>
+      ) : null}
+      <section className="panel">
+        <h2 className="panel__title">My timetable</h2>
+        <TimetableDayList
+          entries={teacher.timetableEntries ?? []}
+          showSection
+          emptyMessage="No classes have been scheduled for you yet."
+        />
       </section>
     </div>
   );

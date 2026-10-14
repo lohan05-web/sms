@@ -16,18 +16,44 @@ export const teacherAssignmentsService = {
     if (schoolId) where.teacher = { schoolId };
     return prisma.teacherAssignment.findMany({
       where,
-      include: { teacher: true, subject: true, section: true },
+      include: {
+        teacher: true,
+        subject: true,
+        section: { include: { classLevel: true } },
+        academicYear: true,
+      },
     });
   },
-  async create(input: any, actor: Actor) {
+  async create(
+    input: {
+      teacherId: string;
+      sectionId: string;
+      subjectId: string;
+      academicYearId: string;
+    },
+    actor: Actor,
+  ) {
     const scope = resolveSchoolScope(actor);
-    const ta = await prisma.teacherAssignment.create({ data: input });
-    const full = await prisma.teacherAssignment.findUnique({
-      where: { id: ta.id },
-      include: { teacher: true },
+    const teacher = await prisma.teacherProfile.findUnique({
+      where: { id: input.teacherId },
+      select: { id: true, schoolId: true },
     });
-    if (scope && full?.teacher.schoolId !== scope) throw ApiError.forbidden('Access denied');
-    return ta;
+    if (!teacher) throw ApiError.notFound('Teacher not found');
+    if (scope && teacher.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    return prisma.teacherAssignment.create({
+      data: {
+        teacherId: input.teacherId,
+        sectionId: input.sectionId,
+        subjectId: input.subjectId,
+        academicYearId: input.academicYearId,
+      },
+      include: {
+        teacher: true,
+        subject: true,
+        section: { include: { classLevel: true } },
+        academicYear: true,
+      },
+    });
   },
   async remove(id: string, actor: Actor) {
     const existing = await prisma.teacherAssignment.findUnique({

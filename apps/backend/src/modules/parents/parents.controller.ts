@@ -19,4 +19,16 @@ export const parentsController = {
     const r = await parentsService.childResults(actorFrom(req), req.params.studentId as string);
     res.status(200).json({ success: true, data: r });
   },
+  async homework(req: Request, res: Response) {
+    const r = await parentsService.childHomework(actorFrom(req), req.params.studentId as string);
+    res.status(200).json({ success: true, data: r });
+  },
+  async timetable(req: Request, res: Response) {
+    const r = await parentsService.childTimetable(actorFrom(req), req.params.studentId as string);
+    res.status(200).json({ success: true, data: r });
+  },
+  async syllabus(req: Request, res: Response) {
+    const r = await parentsService.childSyllabus(actorFrom(req), req.params.studentId as string);
+    res.status(200).json({ success: true, data: r });
+  },
 };

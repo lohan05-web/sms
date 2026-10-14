@@ -33,6 +33,8 @@ interface RealtimeContextValue {
   lastEvent: NotificationEvent | null;
   /** Increments on every inbound notification so data views can refetch. */
   version: number;
+  /** Increments on every inbound live message so open threads can refetch. */
+  messageVersion: number;
   refreshUnread: () => Promise<void>;
   dismiss: (id: string) => void;
 }
@@ -48,6 +50,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [lastEvent, setLastEvent] = useState<NotificationEvent | null>(null);
   const [version, setVersion] = useState(0);
+  const [messageVersion, setMessageVersion] = useState(0);
 
   const socketRef = useRef<Socket | null>(null);
   const toastSeq = useRef(0);
@@ -75,7 +78,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const userRole = user?.role ?? null;
 
   useEffect(() => {
-    if (!userId || !userRole || !can(userRole, Permission.NOTIFICATION_READ)) {
+    const canReceiveRealtime =
+      userRole !== null &&
+      (can(userRole, Permission.NOTIFICATION_READ) || can(userRole, Permission.MESSAGE_READ));
+    if (!userId || !userRole || !canReceiveRealtime) {
       setStatus('idle');
       return;
     }
@@ -101,6 +107,10 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     const onReconnectAttempt = () => {
       if (active) setStatus('reconnecting');
     };
+    const onMessageCreated = () => {
+      if (!active) return;
+      setMessageVersion((current) => current + 1);
+    };
     const onNotification = (payload: unknown) => {
       if (!active) return;
       const event = notificationFromEvent(payload);
@@ -124,6 +134,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     socket.on('connect_error', onConnectError);
     socket.io.on('reconnect_attempt', onReconnectAttempt);
     socket.on(SOCKET_EVENTS.NOTIFICATION, onNotification);
+    socket.on(SOCKET_EVENTS.MESSAGE_CREATED, onMessageCreated);
 
     const timersMap = timers.current;
     return () => {
@@ -133,6 +144,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       socket.off('connect_error', onConnectError);
       socket.io.off('reconnect_attempt', onReconnectAttempt);
       socket.off(SOCKET_EVENTS.NOTIFICATION, onNotification);
+      socket.off(SOCKET_EVENTS.MESSAGE_CREATED, onMessageCreated);
       socket.disconnect();
       socketRef.current = null;
       for (const timer of timersMap.values()) clearTimeout(timer);
@@ -141,8 +153,8 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [userId, userRole, refreshUnread]);
 
   const value = useMemo<RealtimeContextValue>(
-    () => ({ status, unread, toasts, lastEvent, version, refreshUnread, dismiss }),
-    [status, unread, toasts, lastEvent, version, refreshUnread, dismiss],
+    () => ({ status, unread, toasts, lastEvent, version, messageVersion, refreshUnread, dismiss }),
+    [status, unread, toasts, lastEvent, version, messageVersion, refreshUnread, dismiss],
   );
 
   return <RealtimeContext.Provider value={value}>{children}</RealtimeContext.Provider>;

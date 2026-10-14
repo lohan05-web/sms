@@ -16,6 +16,10 @@ export const classesController = {
       meta: { total: r.total, page: r.page, limit: r.limit, totalPages: r.totalPages },
     });
   },
+  async roster(req: Request, res: Response) {
+    const r = await classesService.roster(actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
   async getById(req: Request, res: Response) {
     const r = await classesService.getById(req.params.id as string, actorFrom(req));
     res.status(200).json({ success: true, data: r });

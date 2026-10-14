@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateTransportRouteInput,
   ListTransportRoutesQuery,
   UpdateTransportRouteInput,
@@ -49,7 +49,7 @@ export const transportRoutesService = {
     return route;
   },
   async create(input: CreateTransportRouteInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     if (input.vehicleId) {
       const vehicle = await prisma.vehicle.findUnique({ where: { id: input.vehicleId } });

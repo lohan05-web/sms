@@ -21,7 +21,12 @@ export type LookupKind =
   | 'routeStops'
   | 'vehicles'
   | 'users'
-  | 'exams';
+  | 'exams'
+  | 'homework'
+  | 'timetable'
+  | 'syllabus'
+  | 'homeworkSubmissions'
+  | 'homeworkAttachments';
 
 type Row = Record<string, unknown>;
 
@@ -130,6 +135,36 @@ const SOURCES: Record<LookupKind, LookupSource> = {
       const subject = str(nested(row, 'subject', 'name'));
       return subject ? `${name} · ${subject}` : name;
     },
+  },
+  homework: {
+    path: '/homework',
+    label: (row) => str(row.title),
+  },
+  timetable: {
+    path: '/timetable',
+    label: (row) => {
+      const subject = str(nested(row, 'subject', 'name'));
+      const section = str(nested(row, 'section', 'name'));
+      const cls = str(nested(row, 'section', 'classLevel.name'));
+      const prefix = [cls, section].filter(Boolean).join(' · ');
+      return prefix ? `${prefix}: ${subject}` : subject;
+    },
+  },
+  syllabus: {
+    path: '/syllabus',
+    label: (row) => str(row.title),
+  },
+  homeworkSubmissions: {
+    path: '/homework-submissions',
+    label: (row) => {
+      const student = person(row, 'student');
+      const hw = str(nested(row, 'homework', 'title'));
+      return hw && student ? `${hw} — ${student}` : hw || student;
+    },
+  },
+  homeworkAttachments: {
+    path: '/homework-attachments',
+    label: (row) => str(row.name),
   },
 };
 

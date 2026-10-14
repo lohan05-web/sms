@@ -1,4 +1,4 @@
-import type { CreateBookInput, ListBooksQuery, UpdateBookInput } from '@smartschool/shared';
+﻿import type { CreateBookInput, ListBooksQuery, UpdateBookInput } from '@smartschool/shared';
 import type { Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
@@ -45,7 +45,7 @@ export const booksService = {
     return book;
   },
   async create(input: CreateBookInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     return prisma.book.create({
       data: {

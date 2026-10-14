@@ -1,7 +1,7 @@
-import type { Role } from '@smartschool/shared';
-import { NAV_ITEMS, navForRole } from '../nav';
+import { Permission, type Role } from '@smartschool/shared';
+import { NAV_ITEMS } from '../nav';
 import { resourceByKey } from '../resources';
-import { can, canAny } from './permissions';
+import { can } from './permissions';
 
 const RESOURCE_PREFIX = '/resource/';
 
@@ -19,15 +19,9 @@ function withoutHashAndQuery(pathname: string): string {
 export function defaultPathForRole(role: Role): string {
   if (role === 'TEACHER') return '/teacher';
   if (role === 'PARENT') return '/parent';
-
-  const items = navForRole(role);
-  if (items.some((item) => item.path === '/')) return '/';
-  return (
-    items.find((item) => item.path === '/notifications')?.path ??
-    items.find((item) => item.path === '/profile')?.path ??
-    items[0]?.path ??
-    '/login'
-  );
+  if (can(role, Permission.REPORT_READ)) return '/';
+  if (can(role, Permission.NOTIFICATION_READ)) return '/notifications';
+  return '/profile';
 }
 
 /**
@@ -40,8 +34,6 @@ export function canAccessPath(role: Role, pathname: string): boolean {
   const navItem = NAV_ITEMS.find((item) => item.path === path);
   if (navItem) {
     if (navItem.roles) return navItem.roles.includes(role);
-    if (navItem.anyPermission && navItem.anyPermission.length > 0)
-      return canAny(role, navItem.anyPermission);
     return !navItem.permission || can(role, navItem.permission);
   }
 

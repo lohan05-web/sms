@@ -4,30 +4,46 @@ const {
   guardianFindFirst,
   linkFindMany,
   linkFindFirst,
+  studentProfileFindUnique,
   attendanceGroupBy,
   attendanceFindMany,
+  attendanceFindFirst,
   resultFindMany,
   invoiceFindMany,
   assignmentFindMany,
+  homeworkCount,
+  timetableEntryCount,
+  timetableEntryFindMany,
+  syllabusUnitCount,
 } = vi.hoisted(() => ({
   guardianFindFirst: vi.fn(),
   linkFindMany: vi.fn(),
   linkFindFirst: vi.fn(),
+  studentProfileFindUnique: vi.fn(),
   attendanceGroupBy: vi.fn(),
   attendanceFindMany: vi.fn(),
+  attendanceFindFirst: vi.fn(),
   resultFindMany: vi.fn(),
   invoiceFindMany: vi.fn(),
   assignmentFindMany: vi.fn(),
+  homeworkCount: vi.fn(),
+  timetableEntryCount: vi.fn(),
+  timetableEntryFindMany: vi.fn(),
+  syllabusUnitCount: vi.fn(),
 }));
 
 vi.mock('../src/lib/prisma', () => ({
   prisma: {
     guardian: { findFirst: guardianFindFirst },
     studentGuardian: { findMany: linkFindMany, findFirst: linkFindFirst },
-    attendance: { groupBy: attendanceGroupBy, findMany: attendanceFindMany },
+    studentProfile: { findUnique: studentProfileFindUnique },
+    attendance: { groupBy: attendanceGroupBy, findMany: attendanceFindMany, findFirst: attendanceFindFirst },
     examResult: { findMany: resultFindMany },
     invoice: { findMany: invoiceFindMany },
     teacherAssignment: { findMany: assignmentFindMany },
+    homework: { count: homeworkCount },
+    timetableEntry: { count: timetableEntryCount, findMany: timetableEntryFindMany },
+    syllabusUnit: { count: syllabusUnitCount },
   },
 }));
 
@@ -61,15 +77,26 @@ describe('parentsService overview', () => {
     guardianFindFirst.mockReset();
     linkFindMany.mockReset();
     linkFindFirst.mockReset();
+    studentProfileFindUnique.mockReset();
     attendanceGroupBy.mockReset();
     attendanceFindMany.mockReset();
     resultFindMany.mockReset();
     invoiceFindMany.mockReset();
     assignmentFindMany.mockReset();
+    homeworkCount.mockReset();
+    timetableEntryCount.mockReset();
+    timetableEntryFindMany.mockReset();
+    syllabusUnitCount.mockReset();
     attendanceGroupBy.mockResolvedValue([]);
+    attendanceFindFirst.mockReset();
+    attendanceFindFirst.mockResolvedValue(null);
     resultFindMany.mockResolvedValue([]);
     invoiceFindMany.mockResolvedValue([]);
     assignmentFindMany.mockResolvedValue([]);
+    homeworkCount.mockResolvedValue(0);
+    timetableEntryCount.mockResolvedValue(0);
+    timetableEntryFindMany.mockResolvedValue([]);
+    syllabusUnitCount.mockResolvedValue(0);
   });
 
   it('returns child details, photo and the section teachers', async () => {
@@ -112,6 +139,28 @@ describe('parentsService overview', () => {
       subject: 'Mathematics',
       contact: '12345',
     });
+  });
+
+  it('summarises attendance with an overall percentage and today status', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1', firstName: 'Pat', lastName: 'Parent' });
+    linkFindMany.mockResolvedValue(childLink());
+    attendanceGroupBy.mockResolvedValue([
+      { status: 'PRESENT', _count: { _all: 38 } },
+      { status: 'EXCUSED', _count: { _all: 2 } },
+    ]);
+    attendanceFindFirst.mockResolvedValue({
+      date: new Date('2026-10-14T00:00:00.000Z'),
+      status: 'PRESENT',
+    });
+
+    const result = await parentsService.overview(parent);
+    const child = result.children[0]!;
+
+    expect(child.attendance.total).toBe(40);
+    expect(child.attendance.present).toBe(38);
+    expect(child.attendance.percentage).toBe(95);
+    expect(child.attendance.indicator).toBe('good');
+    expect(child.attendance.today).toEqual({ date: '2026-10-14', status: 'PRESENT' });
   });
 
   it('rejects accounts without a linked parent profile', async () => {

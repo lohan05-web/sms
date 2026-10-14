@@ -44,7 +44,7 @@ export const subjectsService = {
     return subject;
   },
   async create(input: CreateSubjectInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     const subject = await prisma.subject.create({
       data: { schoolId, name: input.name, code: input.code },

@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateInvoiceInput,
   ListInvoicesQuery,
   UpdateInvoiceInput,
@@ -48,7 +48,7 @@ export const invoicesService = {
     return inv;
   },
   async create(input: CreateInvoiceInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     let ay = input.academicYearId;
     if (!ay) {

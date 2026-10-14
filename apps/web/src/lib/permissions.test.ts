@@ -31,35 +31,119 @@ describe('permissions helpers', () => {
 });
 
 describe('navForRole', () => {
-  it('hides user management from students but keeps profile', () => {
-    const items = navForRole(Role.STUDENT);
-    const keys = items.map((item) => item.key);
-    expect(keys).toContain('profile');
-    expect(keys).toContain('notifications');
-    expect(keys).not.toContain('users');
-  });
-
-  it('shows user management to admins', () => {
+  it('shows the dashboard and reports to admins', () => {
     const keys = navForRole(Role.ADMIN).map((item) => item.key);
-    expect(keys).toContain('users');
-    expect(keys).toContain('students');
+    expect(keys).toContain('dashboard');
+    expect(keys).toContain('reports');
   });
 
-  it('always keeps permission-less items such as profile', () => {
-    for (const role of Object.values(Role)) {
-      expect(navForRole(role).some((item) => item.key === 'profile')).toBe(true);
-    }
+  it('does not show the admin dashboard to students', () => {
+    const keys = navForRole(Role.STUDENT).map((item) => item.key);
+    expect(keys).not.toContain('dashboard');
+    expect(keys).not.toContain('reports');
   });
 
-  it('hides the Communication section from teachers only', () => {
-    const teacherKeys = navForRole(Role.TEACHER).map((item) => item.key);
-    expect(teacherKeys).not.toContain('notices');
-    expect(teacherKeys).not.toContain('notifications');
+  it('shows student details and student marks to admins', () => {
+    const items = navForRole(Role.ADMIN);
+    expect(items.find((item) => item.key === 'student-details')?.path).toBe('/resource/students');
+    expect(items.find((item) => item.key === 'student-marks')?.path).toBe('/resource/exam-results');
+  });
 
-    for (const role of [Role.SUPER_ADMIN, Role.ADMIN, Role.STUDENT, Role.PARENT]) {
-      const keys = navForRole(role).map((item) => item.key);
-      expect(keys).toContain('notices');
-      expect(keys).toContain('notifications');
-    }
+  it('gates student marks behind the result permission', () => {
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).toContain('student-details');
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).not.toContain('student-marks');
+  });
+
+  it('shows teacher details and timetable to admins', () => {
+    const items = navForRole(Role.ADMIN);
+    expect(items.find((item) => item.key === 'teacher-details')?.path).toBe('/resource/teachers');
+    expect(items.find((item) => item.key === 'timetable')?.path).toBe('/timetable');
+  });
+
+  it('gates teacher details and timetable behind their permissions', () => {
+    const accountant = navForRole(Role.ACCOUNTANT).map((item) => item.key);
+    expect(accountant).not.toContain('teacher-details');
+    expect(accountant).not.toContain('timetable');
+    const teacher = navForRole(Role.TEACHER).map((item) => item.key);
+    expect(teacher).not.toContain('teacher-details');
+    expect(teacher).toContain('timetable');
+  });
+
+  it('shows parent details, notifications and messages to admins', () => {
+    const items = navForRole(Role.ADMIN);
+    expect(items.find((item) => item.key === 'parent-details')?.path).toBe('/resource/guardians');
+    expect(items.find((item) => item.key === 'notifications')?.path).toBe('/notifications');
+    expect(items.find((item) => item.key === 'messages')?.path).toBe('/messages');
+  });
+
+  it('gates parent details behind the parent permission', () => {
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).not.toContain('parent-details');
+    expect(navForRole(Role.STUDENT).map((item) => item.key)).not.toContain('parent-details');
+  });
+
+  it('shows class, attendance and settings to admins', () => {
+    const items = navForRole(Role.ADMIN);
+    expect(items.find((item) => item.key === 'class')?.path).toBe('/resource/classes');
+    expect(items.find((item) => item.key === 'sections')?.path).toBe('/resource/sections');
+    expect(items.find((item) => item.key === 'attendance')?.path).toBe('/resource/attendances');
+    expect(items.find((item) => item.key === 'settings')?.path).toBe('/settings');
+  });
+
+  it('keeps settings and class away from students', () => {
+    const student = navForRole(Role.STUDENT).map((item) => item.key);
+    expect(student).not.toContain('settings');
+    expect(student).not.toContain('class');
+    expect(student).not.toContain('sections');
+    expect(student).toContain('attendance');
+  });
+
+  it('shows mark and subject to admins', () => {
+    const items = navForRole(Role.ADMIN);
+    expect(items.find((item) => item.key === 'mark')?.path).toBe('/exams/marks');
+    expect(items.find((item) => item.key === 'subject')?.path).toBe('/resource/subjects');
+  });
+
+  it('gates subjects behind the subject permission', () => {
+    expect(navForRole(Role.STUDENT).map((item) => item.key)).not.toContain('subject');
+    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('subject');
+  });
+
+  it('shows homework to staff and gates it behind the homework permission', () => {
+    expect(navForRole(Role.ADMIN).find((item) => item.key === 'homework')?.path).toBe(
+      '/resource/homework',
+    );
+    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('homework');
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).not.toContain('homework');
+  });
+
+  it('shows books and finance to the super admin', () => {
+    const items = navForRole(Role.SUPER_ADMIN);
+    expect(items.find((item) => item.key === 'books')?.path).toBe('/resource/books');
+    expect(items.find((item) => item.key === 'finance')?.path).toBe('/resource/payments');
+  });
+
+  it('routes books and finance to the right roles', () => {
+    expect(navForRole(Role.LIBRARIAN).map((item) => item.key)).toContain('books');
+    expect(navForRole(Role.LIBRARIAN).map((item) => item.key)).not.toContain('finance');
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).toContain('finance');
+    expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).not.toContain('books');
+  });
+
+  it('shows the class roster to roles that can read classes', () => {
+    expect(navForRole(Role.ADMIN).find((item) => item.key === 'class-roster')?.path).toBe(
+      '/class-roster',
+    );
+    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('class-roster');
+    expect(navForRole(Role.STUDENT).map((item) => item.key)).not.toContain('class-roster');
+  });
+
+  it('shows the teacher portal only to teachers', () => {
+    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('teacher-portal');
+    expect(navForRole(Role.ADMIN).map((item) => item.key)).not.toContain('teacher-portal');
+  });
+
+  it('shows the parent portal only to parents', () => {
+    expect(navForRole(Role.PARENT).map((item) => item.key)).toContain('parent-portal');
+    expect(navForRole(Role.ADMIN).map((item) => item.key)).not.toContain('parent-portal');
   });
 });

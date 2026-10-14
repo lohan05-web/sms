@@ -30,3 +30,17 @@ export const listAttendancesQuerySchema = z.object({
   studentId: z.string().cuid().optional(),
 });
 export type ListAttendancesQuery = z.infer<typeof listAttendancesQuerySchema>;
+
+export const attendanceSummaryQuerySchema = z.object({
+  studentId: z.string().cuid().optional(),
+  sectionId: z.string().cuid().optional(),
+  classLevelId: z.string().cuid().optional(),
+  termId: z.string().cuid().optional(),
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Expected a month formatted as YYYY-MM')
+    .optional(),
+  from: z.coerce.date().optional(),
+  to: z.coerce.date().optional(),
+});
+export type AttendanceSummaryQuery = z.infer<typeof attendanceSummaryQuerySchema>;

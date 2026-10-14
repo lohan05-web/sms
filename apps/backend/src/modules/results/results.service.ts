@@ -46,7 +46,7 @@ export const examResultsService = {
     return res;
   },
   async create(input: CreateExamResultInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     const exam = await prisma.exam.findUnique({ where: { id: input.examId } });
     if (!exam || exam.schoolId !== schoolId) throw ApiError.badRequest('Invalid exam');

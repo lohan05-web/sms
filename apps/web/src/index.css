@@ -98,20 +98,6 @@ h3 {
   font-weight: 700;
 }
 
-.nav__group {
-  margin-bottom: 18px;
-}
-
-.nav__group-title {
-  display: block;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  padding-left: 10px;
-}
-
 .nav__link {
   display: block;
   padding: 8px 10px;
@@ -278,6 +264,95 @@ h3 {
 .stat-card__hint {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel__header .panel__title {
+  margin-bottom: 0;
+}
+
+/* Grouped bar chart ------------------------------------------------------- */
+.bar-chart {
+  display: grid;
+  gap: 10px;
+}
+
+.bar-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.bar-legend__swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.bar-legend__swatch--students,
+.bar__fill--students {
+  background: #3b82f6;
+}
+
+.bar-legend__swatch--teachers,
+.bar__fill--teachers {
+  background: #10b981;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.bar-row__label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.bar-row__bars {
+  display: grid;
+  gap: 4px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar__track {
+  flex: 1;
+  height: 14px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar__fill {
+  height: 100%;
+  border-radius: 999px;
+  min-width: 0;
+  transition: width 0.2s ease;
+}
+
+.bar__value {
+  font-size: 12px;
+  width: 32px;
+  text-align: right;
 }
 
 /* Tables ------------------------------------------------------------------ */
@@ -1101,4 +1176,368 @@ h3 {
   flex-direction: column;
   gap: 8px;
 }
+
+/* Attendance tracker ------------------------------------------------------ */
+.tracker-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 4px 0 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.tracker-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tracker-legend__swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.tracker-legend__swatch--good,
+.attendance-pct--success {
+  background: color-mix(in srgb, var(--success) 25%, transparent);
+  color: var(--success);
+}
+
+.tracker-legend__swatch--warning,
+.attendance-pct--warning {
+  background: color-mix(in srgb, var(--warning) 25%, transparent);
+  color: var(--warning);
+}
+
+.tracker-legend__swatch--critical,
+.attendance-pct--danger {
+  background: color-mix(in srgb, var(--danger) 25%, transparent);
+  color: var(--danger);
+}
+
+.attendance-pct {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.tracker-row {
+  cursor: pointer;
+}
+
+.tracker-row:hover {
+  background: var(--bg-subtle);
+}
+
+.tracker-detail td {
+  background: var(--bg-subtle);
+}
+
+.day-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px 0;
+}
+
+.day-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0b1220;
+}
+
+.day-chip--present {
+  background: var(--success);
+}
+
+.day-chip--absent {
+  background: var(--danger);
+  color: #fff;
+}
+
+.day-chip--excused {
+  background: var(--warning);
+}
+
+.day-chip--late {
+  background: #38bdf8;
+}
+
+.day-chip--half_day {
+  background: #a78bfa;
+}
+
+/* Messaging --------------------------------------------------------------- */
+.messages {
+  display: grid;
+  grid-template-columns: minmax(260px, 340px) 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.messages__list,
+.messages__thread {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 420px;
+}
+
+.messages__list {
+  padding: 12px;
+}
+
+.conversation-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.conversation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.conversation:hover {
+  background: var(--bg-subtle);
+}
+
+.conversation--active {
+  background: var(--bg-subtle);
+  border-color: var(--primary);
+}
+
+.conversation--unread .conversation__subject {
+  font-weight: 700;
+}
+
+.conversation__avatar {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #8b5cf6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.conversation__main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.conversation__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.conversation__subject {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation__time {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.conversation__who,
+.conversation__preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conversation__badge {
+  flex: 0 0 auto;
+  align-self: center;
+  min-width: 20px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.thread__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.thread__subject {
+  font-size: 16px;
+  margin: 0 0 2px;
+}
+
+.thread__who {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.thread {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  flex: 1;
+  align-content: start;
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-subtle);
+  justify-self: start;
+}
+
+.bubble--mine {
+  justify-self: end;
+  background: rgba(59, 130, 246, 0.16);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+.bubble__meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.bubble__sender {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.bubble__time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.bubble__body {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.reply {
+  display: grid;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.reply__actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 900px) {
+  .messages {
+    grid-template-columns: 1fr;
+  }
+
+  .conversation-list,
+  .thread {
+    max-height: none;
+  }
+}
+
+.toolbar__field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.alert__list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+.timetable {
+  display: grid;
+  gap: 18px;
+}
+
+.timetable__day-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.timetable-grid th,
+.timetable-grid td {
+  vertical-align: top;
+  min-width: 140px;
+}
+
+.timetable-grid__time {
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.timetable-grid__cell {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.timetable-grid__cell strong {
+  font-size: 13px;
+}
+
 

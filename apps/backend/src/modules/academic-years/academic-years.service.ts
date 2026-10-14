@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateAcademicYearInput,
   ListAcademicYearsQuery,
   UpdateAcademicYearInput,
@@ -45,7 +45,7 @@ export const academicYearsService = {
   },
 
   async create(input: CreateAcademicYearInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
 
     const duplicate = await prisma.academicYear.findFirst({

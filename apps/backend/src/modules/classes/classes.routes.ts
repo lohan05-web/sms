@@ -23,6 +23,11 @@ classesRouter.get(
   asyncHandler(classesController.list),
 );
 classesRouter.get(
+  '/roster',
+  requirePermission(Permission.CLASS_READ),
+  asyncHandler(classesController.roster),
+);
+classesRouter.get(
   '/:id',
   requirePermission(Permission.CLASS_READ),
   validate(idParamSchema, 'params'),

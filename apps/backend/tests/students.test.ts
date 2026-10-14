@@ -141,3 +141,35 @@ describe('studentsService capacity limits', () => {
     expect(studentUpdate).not.toHaveBeenCalled();
   });
 });
+
+describe('studentsService.create school resolution', () => {
+  const superAdmin: Actor = { id: 'su1', role: 'SUPER_ADMIN', schoolId: 'school-1' };
+  const unscopedSuperAdmin: Actor = { id: 'su2', role: 'SUPER_ADMIN', schoolId: null };
+
+  beforeEach(() => {
+    sectionFindUnique.mockReset();
+    studentFindUnique.mockReset();
+    studentCount.mockReset();
+    studentCreate.mockReset();
+    studentUpdate.mockReset();
+  });
+
+  it("uses the signed-in admin's school when none is sent", async () => {
+    studentCreate.mockResolvedValue({ id: 'stu-1' });
+
+    await studentsService.create({ ...baseInput, sectionId: undefined }, superAdmin);
+
+    expect(studentCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ schoolId: 'school-1' }),
+      }),
+    );
+  });
+
+  it('fails clearly when no school can be resolved', async () => {
+    await expect(
+      studentsService.create({ ...baseInput, sectionId: undefined }, unscopedSuperAdmin),
+    ).rejects.toThrow('School is required');
+    expect(studentCreate).not.toHaveBeenCalled();
+  });
+});

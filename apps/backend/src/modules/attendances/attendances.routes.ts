@@ -1,5 +1,6 @@
 ﻿import {
   Permission,
+  attendanceSummaryQuerySchema,
   createAttendanceSchema,
   idSchema,
   listAttendancesQuerySchema,
@@ -21,6 +22,12 @@ attendancesRouter.get(
   requirePermission(Permission.ATTENDANCE_READ),
   validate(listAttendancesQuerySchema, 'query'),
   asyncHandler(attendancesController.list),
+);
+attendancesRouter.get(
+  '/summary',
+  requirePermission(Permission.ATTENDANCE_READ),
+  validate(attendanceSummaryQuerySchema, 'query'),
+  asyncHandler(attendancesController.summary),
 );
 attendancesRouter.get(
   '/:id',

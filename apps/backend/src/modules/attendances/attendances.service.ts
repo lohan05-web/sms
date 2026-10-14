@@ -1,9 +1,23 @@
 ﻿import type {
+  AttendanceCounts,
+  AttendanceDayEntry,
+  AttendanceSummary,
+  AttendanceSummaryQuery,
+  AttendanceSummaryStudent,
   CreateAttendanceInput,
   ListAttendancesQuery,
   UpdateAttendanceInput,
 } from '@smartschool/shared';
-import { SOCKET_EVENTS } from '@smartschool/shared';
+import {
+  SOCKET_EVENTS,
+  addAttendanceStatus,
+  attendanceIndicator,
+  attendancePercentage,
+  dateOnly,
+  emptyAttendanceCounts,
+  monthInputValue,
+  monthRange,
+} from '@smartschool/shared';
 import type { Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
@@ -12,13 +26,164 @@ import { paginate, toSkipTake } from '../../utils/pagination';
 import { notifyUsers } from '../notifications/notifications.service';
 import type { Actor } from '../users/users.service';
 
+const SUMMARY_MAX_RECORDS = 5000;
+const SUMMARY_STUDENT_LIMIT = 500;
+
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
   if (actor.role === 'SUPER_ADMIN') return requestedSchoolId ?? undefined;
   if (!actor.schoolId) throw ApiError.forbidden('Your account is not linked to a school');
   return actor.schoolId;
 }
 
+function mergeCounts(target: AttendanceCounts, source: AttendanceCounts): void {
+  target.total += source.total;
+  target.present += source.present;
+  target.absent += source.absent;
+  target.late += source.late;
+  target.excused += source.excused;
+  target.halfDay += source.halfDay;
+}
+
+function fullName(user: { firstName?: string | null; lastName?: string | null } | null): string {
+  return `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
+}
+
 export const attendancesService = {
+  /**
+   * Attendance tracker: daily status breakdown plus a monthly/term percentage
+   * per student, with the visual indicator band (good/warning/critical).
+   */
+  async summary(query: AttendanceSummaryQuery, actor: Actor): Promise<AttendanceSummary> {
+    if (!query.studentId && !query.sectionId && !query.classLevelId) {
+      throw ApiError.badRequest('Select a class, section or student to view attendance');
+    }
+
+    const schoolId = resolveSchoolScope(actor);
+
+    // Resolve the reporting period first so an invalid term/month fails fast.
+    let period: AttendanceSummary['period'];
+    let from: Date;
+    let to: Date;
+    if (query.termId) {
+      const term = await prisma.term.findUnique({
+        where: { id: query.termId },
+        include: { academicYear: true },
+      });
+      if (!term || (schoolId && term.academicYear.schoolId !== schoolId)) {
+        throw ApiError.badRequest('Invalid term');
+      }
+      from = term.startDate;
+      to = term.endDate;
+      period = {
+        kind: 'term',
+        from: dateOnly(term.startDate),
+        to: dateOnly(term.endDate),
+        label: term.name,
+      };
+    } else if (query.month) {
+      const range = monthRange(query.month);
+      if (!range) throw ApiError.badRequest('Invalid month');
+      from = new Date(`${range.from}T00:00:00.000Z`);
+      to = new Date(`${range.to}T00:00:00.000Z`);
+      period = { kind: 'month', from: range.from, to: range.to, label: range.label };
+    } else if (query.from || query.to) {
+      from = query.from ?? query.to!;
+      to = query.to ?? query.from!;
+      period = {
+        kind: 'range',
+        from: dateOnly(from),
+        to: dateOnly(to),
+        label: `${dateOnly(from)} → ${dateOnly(to)}`,
+      };
+    } else {
+      const range = monthRange(monthInputValue(new Date()))!;
+      from = new Date(`${range.from}T00:00:00.000Z`);
+      to = new Date(`${range.to}T00:00:00.000Z`);
+      period = { kind: 'month', from: range.from, to: range.to, label: range.label };
+    }
+
+    const sectionScope: Prisma.SectionWhereInput = {};
+    if (schoolId) sectionScope.classLevel = { schoolId };
+    if (query.classLevelId) sectionScope.classLevelId = query.classLevelId;
+
+    const where: Prisma.AttendanceWhereInput = { date: { gte: from, lte: to } };
+    if (Object.keys(sectionScope).length > 0) where.section = sectionScope;
+    if (query.sectionId) where.sectionId = query.sectionId;
+    if (query.studentId) where.studentId = query.studentId;
+
+    const records = await prisma.attendance.findMany({
+      where,
+      select: { studentId: true, status: true, date: true },
+      orderBy: { date: 'asc' },
+      take: SUMMARY_MAX_RECORDS,
+    });
+
+    const byStudent = new Map<string, { counts: AttendanceCounts; days: AttendanceDayEntry[] }>();
+    for (const record of records) {
+      let bucket = byStudent.get(record.studentId);
+      if (!bucket) {
+        bucket = { counts: emptyAttendanceCounts(), days: [] };
+        byStudent.set(record.studentId, bucket);
+      }
+      addAttendanceStatus(bucket.counts, record.status);
+      bucket.days.push({ date: dateOnly(record.date), status: record.status });
+    }
+
+    const studentWhere: Prisma.StudentProfileWhereInput = {};
+    if (schoolId) studentWhere.schoolId = schoolId;
+    if (query.studentId) studentWhere.id = query.studentId;
+    if (query.sectionId) studentWhere.sectionId = query.sectionId;
+    else if (query.classLevelId) studentWhere.section = { classLevelId: query.classLevelId };
+    const recordIds = [...byStudent.keys()];
+    studentWhere.OR = [
+      { status: 'ACTIVE' },
+      ...(recordIds.length > 0 ? [{ id: { in: recordIds } }] : []),
+    ];
+
+    const students = await prisma.studentProfile.findMany({
+      where: studentWhere,
+      take: SUMMARY_STUDENT_LIMIT,
+      include: { user: true, section: { include: { classLevel: true } } },
+      orderBy: [{ rollNo: 'asc' }, { admissionNo: 'asc' }],
+    });
+
+    const summaryStudents: AttendanceSummaryStudent[] = students.map((student) => {
+      const bucket = byStudent.get(student.id);
+      const counts = bucket?.counts ?? emptyAttendanceCounts();
+      const percentage = attendancePercentage(counts);
+      return {
+        studentId: student.id,
+        name: fullName(student.user) || student.admissionNo,
+        admissionNo: student.admissionNo,
+        rollNo: student.rollNo ?? null,
+        className: student.section?.classLevel?.name ?? null,
+        sectionName: student.section?.name ?? null,
+        ...counts,
+        percentage,
+        indicator: attendanceIndicator(percentage),
+        days: bucket?.days ?? [],
+      };
+    });
+
+    const overallCounts = emptyAttendanceCounts();
+    for (const student of summaryStudents) mergeCounts(overallCounts, student);
+    const overallPercentage = attendancePercentage(overallCounts);
+
+    return {
+      period,
+      scope: {
+        studentId: query.studentId,
+        sectionId: query.sectionId,
+        classLevelId: query.classLevelId,
+      },
+      overall: {
+        ...overallCounts,
+        percentage: overallPercentage,
+        indicator: attendanceIndicator(overallPercentage),
+      },
+      students: summaryStudents,
+    };
+  },
   async list(query: ListAttendancesQuery, actor: Actor) {
     const { skip, take } = toSkipTake(query.page, query.limit);
     const where: Prisma.AttendanceWhereInput = {};
@@ -54,7 +219,7 @@ export const attendancesService = {
     return att;
   },
   async create(input: CreateAttendanceInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     const section = await prisma.section.findUnique({
       where: { id: input.sectionId },

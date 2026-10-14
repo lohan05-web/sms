@@ -1,8 +1,69 @@
-import type { EnrollmentReportQuery, ReportRangeQuery } from '@smartschool/shared';
+import type {
+  EnrollmentReportQuery,
+  JoiningBucket,
+  JoiningReport,
+  JoiningReportQuery,
+  ReportRangeQuery,
+} from '@smartschool/shared';
+import {
+  attendanceCountsFromRecord,
+  attendanceMetrics,
+  monthInputValue,
+  monthRange,
+} from '@smartschool/shared';
 import type { AttendanceStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
 import type { Actor } from '../users/users.service';
+
+function pad2(value: number): string {
+  return String(value).padStart(2, '0');
+}
+
+/** `YYYY-MM` key (UTC) for a date, matching `admissionDate`/`joiningDate` semantics. */
+function monthKey(date: Date): string {
+  return `${date.getUTCFullYear()}-${pad2(date.getUTCMonth() + 1)}`;
+}
+
+/** Every calendar month key between two dates, inclusive. */
+function monthsBetween(start: Date, end: Date): string[] {
+  const months: string[] = [];
+  let year = start.getUTCFullYear();
+  let month = start.getUTCMonth();
+  const endYear = end.getUTCFullYear();
+  const endMonth = end.getUTCMonth();
+  while (year < endYear || (year === endYear && month <= endMonth)) {
+    months.push(`${year}-${pad2(month + 1)}`);
+    month += 1;
+    if (month > 11) {
+      month = 0;
+      year += 1;
+    }
+    if (months.length >= 36) break;
+  }
+  return months;
+}
+
+function within(date: Date, start: Date, end: Date): boolean {
+  const time = date.getTime();
+  return time >= start.getTime() && time <= end.getTime();
+}
+
+function percentChange(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+/** Percentage + indicator band plus the raw status breakdown for a dashboard card. */
+function attendanceCard(record: Record<AttendanceStatus, number>) {
+  const metrics = attendanceMetrics(attendanceCountsFromRecord(record));
+  return {
+    total: metrics.total,
+    byStatus: record,
+    percentage: metrics.percentage,
+    indicator: metrics.indicator,
+  };
+}
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
   if (actor.role === 'SUPER_ADMIN') return requestedSchoolId ?? undefined;
@@ -52,6 +113,8 @@ export const reportsService = {
     tomorrow.setDate(tomorrow.getDate() + 1);
     const attendanceWhere: Prisma.AttendanceWhereInput = { date: { gte: today, lt: tomorrow } };
     if (schoolId) attendanceWhere.section = { classLevel: { schoolId } };
+    const attendanceOverallWhere: Prisma.AttendanceWhereInput = {};
+    if (schoolId) attendanceOverallWhere.section = { classLevel: { schoolId } };
 
     const [
       students,
@@ -66,6 +129,7 @@ export const reportsService = {
       invoiceGroups,
       paymentsAgg,
       attendanceGroups,
+      attendanceOverallGroups,
     ] = await Promise.all([
       prisma.studentProfile.count({ where: { ...schoolWhere, status: 'ACTIVE' } }),
       prisma.teacherProfile.count({ where: schoolWhere }),
@@ -83,6 +147,11 @@ export const reportsService = {
       prisma.invoice.groupBy({ by: ['status'], where: schoolWhere, _count: { _all: true } }),
       prisma.payment.aggregate({ where: paymentWhere, _sum: { amount: true } }),
       prisma.attendance.groupBy({ by: ['status'], where: attendanceWhere, _count: { _all: true } }),
+      prisma.attendance.groupBy({
+        by: ['status'],
+        where: attendanceOverallWhere,
+        _count: { _all: true },
+      }),
     ]);
 
     const invoiceStatusCounts: Record<string, number> = {};
@@ -90,7 +159,10 @@ export const reportsService = {
 
     const attendanceToday = emptyAttendanceStatus();
     for (const group of attendanceGroups) attendanceToday[group.status] = group._count._all;
-    const attendanceTotal = Object.values(attendanceToday).reduce((sum, n) => sum + n, 0);
+
+    const attendanceOverall = emptyAttendanceStatus();
+    for (const group of attendanceOverallGroups)
+      attendanceOverall[group.status] = group._count._all;
 
     return {
       counts: {
@@ -111,10 +183,8 @@ export const reportsService = {
         collectedThisMonth: Number(paymentsAgg._sum.amount ?? 0),
         byStatus: invoiceStatusCounts,
       },
-      attendanceToday: {
-        total: attendanceTotal,
-        byStatus: attendanceToday,
-      },
+      attendanceToday: attendanceCard(attendanceToday),
+      attendanceOverall: attendanceCard(attendanceOverall),
     };
   },
 
@@ -211,6 +281,131 @@ export const reportsService = {
     return {
       totalStudents: byClassLevel.reduce((sum, item) => sum + item.students, 0),
       byClassLevel,
+    };
+  },
+
+  /**
+   * Student/teacher joining statistics. Counts are derived live from the actual
+   * `admissionDate`/`joiningDate` values so any new record shows up on the next request.
+   */
+  async joinings(query: JoiningReportQuery, actor: Actor): Promise<JoiningReport> {
+    const schoolId = resolveSchoolScope(actor);
+    const where = schoolId ? { schoolId } : {};
+
+    const [academicYears, students, teachers] = await Promise.all([
+      prisma.academicYear.findMany({
+        where,
+        orderBy: { startDate: 'desc' },
+      }),
+      prisma.studentProfile.findMany({ where, select: { admissionDate: true } }),
+      prisma.teacherProfile.findMany({ where, select: { joiningDate: true } }),
+    ]);
+
+    const studentDates = students.map((student) => student.admissionDate);
+    const teacherDates = teachers.map((teacher) => teacher.joiningDate);
+
+    const studentMonths = new Map<string, number>();
+    for (const date of studentDates) {
+      const key = monthKey(date);
+      studentMonths.set(key, (studentMonths.get(key) ?? 0) + 1);
+    }
+    const teacherMonths = new Map<string, number>();
+    for (const date of teacherDates) {
+      const key = monthKey(date);
+      teacherMonths.set(key, (teacherMonths.get(key) ?? 0) + 1);
+    }
+
+    const selectedYear =
+      (query.academicYearId
+        ? academicYears.find((year) => year.id === query.academicYearId)
+        : academicYears.find((year) => year.isCurrent) ?? academicYears[0]) ?? null;
+
+    const monthCount = (map: Map<string, number>, key: string): number => map.get(key) ?? 0;
+
+    const countInRange = (dates: Date[], start: Date, end: Date): number =>
+      dates.reduce((sum, date) => (within(date, start, end) ? sum + 1 : sum), 0);
+
+    // Monthly series: the selected academic year when available, otherwise the
+    // trailing 12 months ending in the current month.
+    const seriesKeys = selectedYear
+      ? monthsBetween(selectedYear.startDate, selectedYear.endDate)
+      : Array.from({ length: 12 }, (_, index) =>
+          monthInputValue(new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth() - (11 - index), 1))),
+        );
+
+    const monthly = seriesKeys.map((key) => ({
+      month: key,
+      label: monthRange(key)?.label ?? key,
+      students: monthCount(studentMonths, key),
+      teachers: monthCount(teacherMonths, key),
+    }));
+
+    // Selected month (defaults to the current calendar month).
+    const selectedMonthKey = query.month ?? monthInputValue(new Date());
+    const previousDate = new Date(
+      Date.UTC(Number(selectedMonthKey.slice(0, 4)), Number(selectedMonthKey.slice(5, 7)) - 2, 1),
+    );
+    const previousMonthKey = monthInputValue(previousDate);
+
+    const academicYearTotals: JoiningBucket = selectedYear
+      ? {
+          students: countInRange(studentDates, selectedYear.startDate, selectedYear.endDate),
+          teachers: countInRange(teacherDates, selectedYear.startDate, selectedYear.endDate),
+        }
+      : { students: 0, teachers: 0 };
+
+    const current: JoiningBucket = {
+      students: monthCount(studentMonths, selectedMonthKey),
+      teachers: monthCount(teacherMonths, selectedMonthKey),
+    };
+    const previous: JoiningBucket = {
+      students: monthCount(studentMonths, previousMonthKey),
+      teachers: monthCount(teacherMonths, previousMonthKey),
+    };
+
+    return {
+      filters: {
+        academicYearId: selectedYear?.id,
+        month: selectedMonthKey,
+      },
+      academicYear: selectedYear
+        ? {
+            id: selectedYear.id,
+            name: selectedYear.name,
+            startDate: selectedYear.startDate.toISOString().slice(0, 10),
+            endDate: selectedYear.endDate.toISOString().slice(0, 10),
+            isCurrent: selectedYear.isCurrent,
+          }
+        : null,
+      selectedMonth: {
+        month: selectedMonthKey,
+        label: monthRange(selectedMonthKey)?.label ?? selectedMonthKey,
+      },
+      totals: {
+        academicYear: academicYearTotals,
+        month: current,
+        allTime: { students: studentDates.length, teachers: teacherDates.length },
+      },
+      monthly,
+      academicYears: academicYears.map((year) => ({
+        id: year.id,
+        name: year.name,
+        isCurrent: year.isCurrent,
+        students: countInRange(studentDates, year.startDate, year.endDate),
+        teachers: countInRange(teacherDates, year.startDate, year.endDate),
+      })),
+      growth: {
+        month: selectedMonthKey,
+        label: monthRange(selectedMonthKey)?.label ?? selectedMonthKey,
+        previousMonth: previousMonthKey,
+        previousLabel: monthRange(previousMonthKey)?.label ?? previousMonthKey,
+        current,
+        previous,
+        studentDelta: current.students - previous.students,
+        teacherDelta: current.teachers - previous.teachers,
+        studentPercent: percentChange(current.students, previous.students),
+        teacherPercent: percentChange(current.teachers, previous.teachers),
+      },
     };
   },
 };

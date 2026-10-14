@@ -1,4 +1,4 @@
-import type { CreateNotificationInput, ListNotificationsQuery } from '@smartschool/shared';
+﻿import type { CreateNotificationInput, ListNotificationsQuery } from '@smartschool/shared';
 import { SOCKET_EVENTS } from '@smartschool/shared';
 import { Prisma, type NotificationType } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
@@ -134,7 +134,7 @@ export const notificationsService = {
   async create(input: CreateNotificationInput, actor: Actor) {
     if (!input.userId && !input.role)
       throw ApiError.badRequest('A target userId or role is required');
-    let schoolId = resolveSchoolScope(actor, input.schoolId) ?? null;
+    let schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? null;
     let recipients: string[] = [];
     if (input.userId) {
       const target = await prisma.user.findUnique({ where: { id: input.userId } });

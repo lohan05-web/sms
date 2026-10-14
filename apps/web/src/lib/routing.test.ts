@@ -57,17 +57,40 @@ describe('canAccessPath', () => {
     expect(canAccessPath(Role.STUDENT, '/notifications#top')).toBe(true);
   });
 
-  it('honours any-of permission routes such as attendance marking', () => {
-    expect(canAccessPath(Role.TEACHER, '/attendance/mark')).toBe(true);
-    expect(canAccessPath(Role.ADMIN, '/attendance/mark')).toBe(true);
-    expect(canAccessPath(Role.PARENT, '/attendance/mark')).toBe(false);
+  it('gates notifications, messages and parent details', () => {
+    expect(canAccessPath(Role.ADMIN, '/notifications')).toBe(true);
+    expect(canAccessPath(Role.STUDENT, '/notifications')).toBe(true);
+    expect(canAccessPath(Role.ADMIN, '/messages')).toBe(true);
+    expect(canAccessPath(Role.STUDENT, '/messages')).toBe(true);
+    expect(canAccessPath(Role.ADMIN, '/resource/guardians')).toBe(true);
+    expect(canAccessPath(Role.STUDENT, '/resource/guardians')).toBe(false);
   });
 
-  it('honours any-of permission routes such as exam marks entry', () => {
-    expect(canAccessPath(Role.TEACHER, '/exams/marks')).toBe(true);
+  it('gates settings behind the school permission', () => {
+    expect(canAccessPath(Role.ADMIN, '/settings')).toBe(true);
+    expect(canAccessPath(Role.TEACHER, '/settings')).toBe(false);
+    expect(canAccessPath(Role.STUDENT, '/settings')).toBe(false);
+  });
+
+  it('gates the marks entry route behind the result permission', () => {
     expect(canAccessPath(Role.ADMIN, '/exams/marks')).toBe(true);
-    expect(canAccessPath(Role.PARENT, '/exams/marks')).toBe(false);
-    expect(canAccessPath(Role.LIBRARIAN, '/exams/marks')).toBe(false);
+    expect(canAccessPath(Role.TEACHER, '/exams/marks')).toBe(true);
+    expect(canAccessPath(Role.ACCOUNTANT, '/exams/marks')).toBe(false);
+  });
+
+  it('gates the timetable route behind its permission', () => {
+    expect(canAccessPath(Role.ADMIN, '/timetable')).toBe(true);
+    expect(canAccessPath(Role.TEACHER, '/timetable')).toBe(true);
+    expect(canAccessPath(Role.STUDENT, '/timetable')).toBe(true);
+    expect(canAccessPath(Role.ACCOUNTANT, '/timetable')).toBe(false);
+    expect(canAccessPath(Role.PARENT, '/timetable')).toBe(false);
+  });
+
+  it('gates the class roster behind the class permission', () => {
+    expect(canAccessPath(Role.ADMIN, '/class-roster')).toBe(true);
+    expect(canAccessPath(Role.TEACHER, '/class-roster')).toBe(true);
+    expect(canAccessPath(Role.STUDENT, '/class-roster')).toBe(false);
+    expect(canAccessPath(Role.ACCOUNTANT, '/class-roster')).toBe(false);
   });
 
   it('gates the teacher and parent portals to their own roles', () => {
@@ -77,13 +100,6 @@ describe('canAccessPath', () => {
     expect(canAccessPath(Role.PARENT, '/parent')).toBe(true);
     expect(canAccessPath(Role.ADMIN, '/parent')).toBe(false);
     expect(canAccessPath(Role.TEACHER, '/parent')).toBe(false);
-  });
-
-  it('gates library circulation behind loan access', () => {
-    expect(canAccessPath(Role.LIBRARIAN, '/library/loans')).toBe(true);
-    expect(canAccessPath(Role.SUPER_ADMIN, '/library/loans')).toBe(true);
-    expect(canAccessPath(Role.PRINCIPAL, '/library/loans')).toBe(false);
-    expect(canAccessPath(Role.TEACHER, '/library/loans')).toBe(false);
   });
 });
 

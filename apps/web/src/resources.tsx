@@ -19,6 +19,7 @@ import {
   createFeeCategorySchema,
   createFeeStructureSchema,
   createGuardianSchema,
+  createHomeworkSchema,
   createNoticeSchema,
   createSectionSchema,
   createStudentSchema,
@@ -43,6 +44,7 @@ import {
   updateFeeCategorySchema,
   updateFeeStructureSchema,
   updateGuardianSchema,
+  updateHomeworkSchema,
   updateInvoiceSchema,
   updateNoticeSchema,
   updatePaymentSchema,
@@ -410,6 +412,10 @@ export const RESOURCES: ResourceConfig[] = [
       { header: 'Employee No', render: (row) => text(firstOf(row, 'employeeNo')) },
       { header: 'Email', render: (row) => text(firstOf(row, 'user.email', 'email')) },
       {
+        header: 'Class',
+        render: (row) => text(firstOf(row, 'sectionsAsTeacher.0.classLevel.name')),
+      },
+      {
         header: 'Status',
         render: (row) => text(humanize(firstOf(row, 'status', 'employmentStatus'))),
       },
@@ -665,8 +671,15 @@ export const RESOURCES: ResourceConfig[] = [
           ),
       },
       { header: 'Subject', render: (row) => text(firstOf(row, 'subject.name', 'subjectId')) },
-      { header: 'Class', render: (row) => text(firstOf(row, 'classLevel.name', 'classLevelId')) },
+      {
+        header: 'Class',
+        render: (row) => text(firstOf(row, 'section.classLevel.name', 'section.classLevelId')),
+      },
       { header: 'Section', render: (row) => text(firstOf(row, 'section.name', 'sectionId')) },
+      {
+        header: 'Academic year',
+        render: (row) => text(firstOf(row, 'academicYear.name', 'academicYearId')),
+      },
     ],
     form: {
       create: {
@@ -686,18 +699,25 @@ export const RESOURCES: ResourceConfig[] = [
             lookup: 'subjects',
           },
           {
-            name: 'classLevelId',
-            label: 'Class',
+            name: 'academicYearId',
+            label: 'Academic year',
             type: 'select',
             required: true,
-            lookup: 'classes',
+            lookup: 'academicYears',
           },
-          { name: 'sectionId', label: 'Section', type: 'select', lookup: 'sections' },
+          {
+            name: 'sectionId',
+            label: 'Section',
+            type: 'select',
+            required: true,
+            lookup: 'sections',
+          },
         ],
         schema: requiredSchema([
           { name: 'teacherId', label: 'Teacher', type: 'select', required: true },
           { name: 'subjectId', label: 'Subject', type: 'select', required: true },
-          { name: 'classLevelId', label: 'Class', type: 'select', required: true },
+          { name: 'academicYearId', label: 'Academic year', type: 'select', required: true },
+          { name: 'sectionId', label: 'Section', type: 'select', required: true },
         ]),
       },
     },
@@ -904,6 +924,72 @@ export const RESOURCES: ResourceConfig[] = [
           textField('remarks', 'Remarks', { type: 'textarea' }),
         ],
         schema: updateExamResultSchema,
+      },
+    },
+  },
+  {
+    key: 'homework',
+    label: 'Homework',
+    apiPath: '/homework',
+    permission: Permission.HOMEWORK_READ,
+    searchable: true,
+    createPermission: Permission.HOMEWORK_MANAGE,
+    updatePermission: Permission.HOMEWORK_MANAGE,
+    deletePermission: Permission.HOMEWORK_MANAGE,
+    deletable: true,
+    columns: [
+      { header: 'Title', render: (row) => text(firstOf(row, 'title')) },
+      { header: 'Subject', render: (row) => text(firstOf(row, 'subject.name', 'subjectId')) },
+      {
+        header: 'Section',
+        render: (row) => {
+          const cls = asString(firstOf(row, 'section.classLevel.name'));
+          const section = asString(firstOf(row, 'section.name'));
+          return text([cls, section].filter(Boolean).join(' · ') || firstOf(row, 'sectionId'));
+        },
+      },
+      personColumn('Teacher', 'teacher.user'),
+      { header: 'Due', render: (row) => text(formatDate(firstOf(row, 'dueDate'))) },
+      { header: 'Submissions', render: (row) => text(firstOf(row, '_count.submissions')) },
+    ],
+    form: {
+      create: {
+        fields: [
+          textField('title', 'Title', { required: true }),
+          {
+            name: 'sectionId',
+            label: 'Section',
+            type: 'select',
+            required: true,
+            lookup: 'sections',
+          },
+          {
+            name: 'subjectId',
+            label: 'Subject',
+            type: 'select',
+            required: true,
+            lookup: 'subjects',
+          },
+          { name: 'teacherId', label: 'Teacher', type: 'select', lookup: 'teachers' },
+          textField('assignedDate', 'Assigned date', { type: 'date' }),
+          textField('dueDate', 'Due date', { type: 'date', required: true }),
+          textField('description', 'Description', { type: 'textarea' }),
+          textField('materials', 'Materials', { type: 'textarea' }),
+        ],
+        schema: createHomeworkSchema,
+      },
+      edit: {
+        fields: [
+          textField('title', 'Title'),
+          { name: 'sectionId', label: 'Section', type: 'select', lookup: 'sections' },
+          { name: 'subjectId', label: 'Subject', type: 'select', lookup: 'subjects' },
+          { name: 'teacherId', label: 'Teacher', type: 'select', lookup: 'teachers' },
+          textField('assignedDate', 'Assigned date', { type: 'date' }),
+          textField('dueDate', 'Due date', { type: 'date' }),
+          textField('description', 'Description', { type: 'textarea' }),
+          textField('materials', 'Materials', { type: 'textarea' }),
+        ],
+        schema: updateHomeworkSchema,
       },
     },
   },

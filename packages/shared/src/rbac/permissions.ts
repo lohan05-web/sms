@@ -30,6 +30,13 @@ export const Permission = {
   ATTENDANCE_MARK: 'attendance:mark',
   ATTENDANCE_MANAGE: 'attendance:manage',
 
+  HOMEWORK_READ: 'homework:read',
+  HOMEWORK_MANAGE: 'homework:manage',
+  TIMETABLE_READ: 'timetable:read',
+  TIMETABLE_MANAGE: 'timetable:manage',
+  SYLLABUS_READ: 'syllabus:read',
+  SYLLABUS_MANAGE: 'syllabus:manage',
+
   EXAM_READ: 'exam:read',
   EXAM_MANAGE: 'exam:manage',
   RESULT_READ: 'result:read',
@@ -61,6 +68,9 @@ export const Permission = {
 
   NOTIFICATION_READ: 'notification:read',
   NOTIFICATION_MANAGE: 'notification:manage',
+
+  MESSAGE_READ: 'message:read',
+  MESSAGE_MANAGE: 'message:manage',
 } as const;
 
 export type Permission = (typeof Permission)[keyof typeof Permission];
@@ -89,6 +99,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.SUBJECT_MANAGE,
     P.ATTENDANCE_READ,
     P.ATTENDANCE_MANAGE,
+    P.HOMEWORK_READ,
+    P.HOMEWORK_MANAGE,
+    P.TIMETABLE_READ,
+    P.TIMETABLE_MANAGE,
+    P.SYLLABUS_READ,
+    P.SYLLABUS_MANAGE,
     P.EXAM_READ,
     P.EXAM_MANAGE,
     P.RESULT_READ,
@@ -105,7 +121,9 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.ACADEMIC_READ,
     P.ACADEMIC_MANAGE,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
     P.NOTIFICATION_MANAGE,
+    P.MESSAGE_MANAGE,
   ],
   [Role.ADMIN]: [
     P.SCHOOL_READ,
@@ -125,6 +143,12 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.SUBJECT_MANAGE,
     P.ATTENDANCE_READ,
     P.ATTENDANCE_MANAGE,
+    P.HOMEWORK_READ,
+    P.HOMEWORK_MANAGE,
+    P.TIMETABLE_READ,
+    P.TIMETABLE_MANAGE,
+    P.SYLLABUS_READ,
+    P.SYLLABUS_MANAGE,
     P.EXAM_READ,
     P.EXAM_MANAGE,
     P.RESULT_READ,
@@ -136,7 +160,9 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.ACADEMIC_READ,
     P.ACADEMIC_MANAGE,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
     P.NOTIFICATION_MANAGE,
+    P.MESSAGE_MANAGE,
   ],
   [Role.TEACHER]: [
     P.STUDENT_READ,
@@ -144,6 +170,10 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.SUBJECT_READ,
     P.ATTENDANCE_READ,
     P.ATTENDANCE_MARK,
+    P.HOMEWORK_READ,
+    P.HOMEWORK_MANAGE,
+    P.TIMETABLE_READ,
+    P.SYLLABUS_READ,
     P.EXAM_READ,
     P.RESULT_READ,
     P.RESULT_MANAGE,
@@ -151,6 +181,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.REPORT_READ,
     P.ACADEMIC_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
   [Role.ACCOUNTANT]: [
     P.STUDENT_READ,
@@ -164,6 +195,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.REPORT_READ,
     P.ACADEMIC_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
   [Role.LIBRARIAN]: [
     P.STUDENT_READ,
@@ -173,6 +205,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.LOAN_MANAGE,
     P.NOTICE_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
   [Role.TRANSPORT_MANAGER]: [
     P.STUDENT_READ,
@@ -180,6 +213,7 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     P.TRANSPORT_MANAGE,
     P.NOTICE_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
   [Role.PARENT]: [
     // Parents are intentionally limited to announcements and their own
@@ -188,14 +222,19 @@ export const ROLE_PERMISSIONS: Record<Role, readonly Permission[] | ['*']> = {
     // (/parents/me/...), which scope every query to the parent's children.
     P.NOTICE_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
   [Role.STUDENT]: [
     P.ATTENDANCE_READ,
+    P.HOMEWORK_READ,
+    P.TIMETABLE_READ,
+    P.SYLLABUS_READ,
     P.RESULT_READ,
     P.INVOICE_READ,
     P.NOTICE_READ,
     P.ACADEMIC_READ,
     P.NOTIFICATION_READ,
+    P.MESSAGE_READ,
   ],
 };
 

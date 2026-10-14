@@ -11,8 +11,8 @@ const idParamSchema = z.object({ id: idSchema });
 const createSchema = z.object({
   teacherId: idSchema,
   subjectId: idSchema,
-  classLevelId: idSchema,
-  sectionId: idSchema.optional(),
+  sectionId: idSchema,
+  academicYearId: idSchema,
 });
 export const teacherAssignmentsRouter = Router();
 teacherAssignmentsRouter.use(authenticate);

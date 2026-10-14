@@ -20,3 +20,7 @@ export * from './audit.schema';
 export * from './school.schema';
 export * from './academic.schema';
 export * from './notification.schema';
+export * from './messaging.schema';
+export * from './homework.schema';
+export * from './timetable.schema';
+export * from './syllabus.schema';

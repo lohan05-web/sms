@@ -1,6 +1,7 @@
 import {
   Permission,
   enrollmentReportQuerySchema,
+  joiningReportQuerySchema,
   reportRangeQuerySchema,
 } from '@smartschool/shared';
 import { Router } from 'express';
@@ -34,4 +35,10 @@ reportsRouter.get(
   requirePermission(Permission.REPORT_READ),
   validate(enrollmentReportQuerySchema, 'query'),
   asyncHandler(reportsController.enrollment),
+);
+reportsRouter.get(
+  '/joinings',
+  requirePermission(Permission.REPORT_READ),
+  validate(joiningReportQuerySchema, 'query'),
+  asyncHandler(reportsController.joinings),
 );

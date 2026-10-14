@@ -1,13 +1,19 @@
+import type { ReportCard, OverallResult } from '@smartschool/shared';
 import { Link } from 'react-router-dom';
+import { TimetableDayList } from '../components/TimetableViews';
 import { EmptyState, ErrorState, PageHeader, Spinner, StatCard } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { formatCurrency, formatDate, humanize } from '../lib/format';
+import type { TimetableItem } from '../lib/timetable';
 import { useAsync } from '../lib/useAsync';
 
 interface AttendanceSummary {
   total: number;
   byStatus: Record<string, number>;
+  percentage: number;
+  indicator: string;
+  today: { date: string; status: string } | null;
 }
 
 interface ChildResult {
@@ -49,6 +55,9 @@ interface Child {
   results: ChildResult[];
   invoices: ChildInvoice[];
   outstanding: number;
+  timetable?: TimetableItem[];
+  reportCards?: ReportCard[];
+  overallResult?: OverallResult;
 }
 
 interface ParentOverview {
@@ -104,12 +113,9 @@ export function ParentPortalPage() {
         <EmptyState message="No children are linked to your account yet. Please contact the school office." />
       ) : (
         children.map((child) => {
-          const attendanceRate =
-            child.attendance.total > 0
-              ? Math.round(
-                  ((child.attendance.byStatus.PRESENT ?? 0) / child.attendance.total) * 100,
-                )
-              : 0;
+          const todayLabel = child.attendance.today
+            ? humanize(child.attendance.today.status)
+            : 'Not marked';
 
           return (
             <section className="panel" key={child.id}>
@@ -151,36 +157,91 @@ export function ParentPortalPage() {
                 <StatCard label="Roll no" value={child.rollNo ?? '—'} />
                 <StatCard label="Class" value={child.className ?? '—'} />
                 <StatCard label="Section" value={child.sectionName ?? '—'} />
-                <StatCard label="Attendance" value={`${attendanceRate}%`} hint={`${child.attendance.total} records`} />
+                <StatCard
+                  label="Attendance"
+                  value={`${child.attendance.percentage}%`}
+                  hint={`${child.attendance.total} records`}
+                />
+                <StatCard
+                  label="Today"
+                  value={todayLabel}
+                  hint={child.attendance.today?.date ?? 'No record yet'}
+                />
                 <StatCard label="Outstanding" value={formatCurrency(child.outstanding)} />
               </div>
 
-              <h3 className="panel__subtitle">Recent results</h3>
-              {child.results.length === 0 ? (
+              <h3 className="panel__subtitle">Timetable</h3>
+              <TimetableDayList
+                entries={child.timetable ?? []}
+                emptyMessage="No timetable has been published for this class yet."
+              />
+
+              <h3 className="panel__subtitle">Academic results</h3>
+              {child.overallResult && child.overallResult.totalMarks > 0 ? (
+                <div className="stat-grid">
+                  <StatCard
+                    label="Overall marks"
+                    value={`${child.overallResult.marksObtained} / ${child.overallResult.totalMarks}`}
+                  />
+                  <StatCard
+                    label="Overall percentage"
+                    value={`${child.overallResult.percentage}%`}
+                  />
+                  <StatCard label="Overall grade" value={child.overallResult.grade || '—'} />
+                </div>
+              ) : null}
+              {(child.reportCards ?? []).length === 0 ? (
                 <p className="muted">No results published yet.</p>
               ) : (
-                <div className="table-wrap">
-                  <table className="table">
-                    <thead>
-                      <tr>
-                        <th>Exam</th>
-                        <th>Subject</th>
-                        <th>Marks</th>
-                        <th>Grade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {child.results.map((result) => (
-                        <tr key={result.id}>
-                          <td>{result.exam?.name ?? '—'}</td>
-                          <td>{result.subject?.name ?? '—'}</td>
-                          <td>{result.marksObtained ?? '—'}</td>
-                          <td>{result.grade ?? '—'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                (child.reportCards ?? []).map((card) => (
+                  <div className="panel" key={card.examId}>
+                    <div className="panel__header">
+                      <h4 className="panel__title">{card.exam}</h4>
+                      <span className="muted">{[card.date, card.examType].filter(Boolean).join(' · ')}</span>
+                    </div>
+                    <div className="table-wrap">
+                      <table className="table">
+                        <thead>
+                          <tr>
+                            <th>Subject</th>
+                            <th>Marks obtained</th>
+                            <th>Total marks</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {card.subjects.map((subject) => (
+                            <tr key={`${card.examId}-${subject.subjectId}`}>
+                              <td>{subject.subject}</td>
+                              <td>{subject.marksObtained}</td>
+                              <td>{subject.totalMarks}</td>
+                              <td>{subject.percentage}%</td>
+                              <td>{subject.grade || '—'}</td>
+                            </tr>
+                          ))}
+                          <tr>
+                            <td>
+                              <strong>Overall</strong>
+                            </td>
+                            <td>
+                              <strong>{card.marksObtained}</strong>
+                            </td>
+                            <td>
+                              <strong>{card.totalMarks}</strong>
+                            </td>
+                            <td>
+                              <strong>{card.percentage}%</strong>
+                            </td>
+                            <td>
+                              <strong>{card.grade || '—'}</strong>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                ))
               )}
 
               <h3 className="panel__subtitle">Recent invoices</h3>

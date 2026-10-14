@@ -29,7 +29,13 @@ import { schoolsRouter } from '../modules/schools/schools.routes';
 import { academicYearsRouter } from '../modules/academic-years/academic-years.routes';
 import { termsRouter } from '../modules/terms/terms.routes';
 import { sectionsRouter } from '../modules/sections/sections.routes';
+import { homeworkRouter } from '../modules/homework/homework.routes';
+import { homeworkAttachmentsRouter } from '../modules/homework-attachments/homework-attachments.routes';
+import { homeworkSubmissionsRouter } from '../modules/homework-submissions/homework-submissions.routes';
+import { timetableRouter } from '../modules/timetable/timetable.routes';
+import { syllabusRouter } from '../modules/syllabus/syllabus.routes';
 import { notificationsRouter } from '../modules/notifications/notifications.routes';
+import { conversationsRouter } from '../modules/messaging/messaging.routes';
 
 export const apiRouter = Router();
 
@@ -63,4 +69,10 @@ apiRouter.use('/schools', schoolsRouter);
 apiRouter.use('/academic-years', academicYearsRouter);
 apiRouter.use('/terms', termsRouter);
 apiRouter.use('/sections', sectionsRouter);
+apiRouter.use('/homework', homeworkRouter);
+apiRouter.use('/homework-attachments', homeworkAttachmentsRouter);
+apiRouter.use('/homework-submissions', homeworkSubmissionsRouter);
+apiRouter.use('/timetable', timetableRouter);
+apiRouter.use('/syllabus', syllabusRouter);
 apiRouter.use('/notifications', notificationsRouter);
+apiRouter.use('/conversations', conversationsRouter);

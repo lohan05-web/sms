@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateVehicleInput,
   ListVehiclesQuery,
   UpdateVehicleInput,
@@ -47,7 +47,7 @@ export const vehiclesService = {
     return vehicle;
   },
   async create(input: CreateVehicleInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     return prisma.vehicle.create({
       data: {

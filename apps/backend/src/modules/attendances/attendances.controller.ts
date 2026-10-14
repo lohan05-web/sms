@@ -8,6 +8,10 @@ function actorFrom(req: Request): Actor {
 }
 
 export const attendancesController = {
+  async summary(req: Request, res: Response) {
+    const r = await attendancesService.summary(req.query as any, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
   async list(req: Request, res: Response) {
     const r = await attendancesService.list(req.query as any, actorFrom(req));
     res.status(200).json({

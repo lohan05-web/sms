@@ -82,7 +82,7 @@ export const studentsService = {
     return student;
   },
   async create(input: CreateStudentInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     if (input.sectionId) await assertSectionCapacity(input.sectionId, schoolId);
     let userId: string | undefined;

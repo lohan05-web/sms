@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   CreateFeeCategoryInput,
   CreateFeeStructureInput,
   ListFeeCategoriesQuery,
@@ -45,7 +45,7 @@ export const feesService = {
     return fc;
   },
   async createCategory(input: CreateFeeCategoryInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     return prisma.feeCategory.create({
       data: { schoolId, name: input.name, description: input.description },
@@ -90,7 +90,7 @@ export const feesService = {
     return paginate(items, total, query.page, query.limit);
   },
   async createStructure(input: CreateFeeStructureInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     let ay = input.academicYearId;
     if (!ay) {

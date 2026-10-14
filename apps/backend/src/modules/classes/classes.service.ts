@@ -32,6 +32,53 @@ export const classesService = {
     const total = await prisma.classLevel.count({ where });
     return paginate(items, total, query.page, query.limit);
   },
+  async roster(actor: Actor) {
+    const where: Prisma.ClassLevelWhereInput = {};
+    const schoolId = resolveSchoolScope(actor);
+    if (schoolId) where.schoolId = schoolId;
+    const classes = await prisma.classLevel.findMany({
+      where,
+      orderBy: { numericLevel: 'asc' },
+      include: {
+        sections: {
+          orderBy: { name: 'asc' },
+          include: {
+            classTeacher: {
+              include: { user: { select: { firstName: true, lastName: true } } },
+            },
+            students: {
+              orderBy: { admissionNo: 'asc' },
+              include: { user: { select: { firstName: true, lastName: true } } },
+            },
+          },
+        },
+      },
+    });
+    return classes.map((cls) => {
+      const students = cls.sections.flatMap((section) =>
+        section.students.map((student) => ({
+          id: student.id,
+          admissionNo: student.admissionNo,
+          name: `${student.user?.firstName ?? ''} ${student.user?.lastName ?? ''}`.trim(),
+          gender: student.gender,
+          status: student.status,
+        })),
+      );
+      const classTeacher = cls.sections.find((section) => section.classTeacher)?.classTeacher;
+      const teacher = classTeacher
+        ? `${classTeacher.user?.firstName ?? ''} ${classTeacher.user?.lastName ?? ''}`.trim()
+        : '';
+      return {
+        id: cls.id,
+        name: cls.name,
+        numericLevel: cls.numericLevel,
+        sections: cls.sections.map((section) => section.name),
+        teacher: teacher || null,
+        studentCount: students.length,
+        students,
+      };
+    });
+  },
   async getById(id: string, actor: Actor) {
     const cls = await prisma.classLevel.findUnique({
       where: { id },

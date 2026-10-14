@@ -31,3 +31,21 @@ parentsRouter.get(
   validate(childParamSchema, 'params'),
   asyncHandler(parentsController.results),
 );
+parentsRouter.get(
+  '/me/children/:studentId/homework',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  asyncHandler(parentsController.homework),
+);
+parentsRouter.get(
+  '/me/children/:studentId/timetable',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  asyncHandler(parentsController.timetable),
+);
+parentsRouter.get(
+  '/me/children/:studentId/syllabus',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  asyncHandler(parentsController.syllabus),
+);

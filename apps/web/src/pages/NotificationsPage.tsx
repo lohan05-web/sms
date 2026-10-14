@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ErrorState, PageHeader, Spinner } from '../components/ui';
 import { Pagination } from '../components/Pagination';
 import { useRealtime } from '../components/RealtimeProvider';
@@ -15,6 +16,12 @@ interface NotificationItem {
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
+  data?: Record<string, unknown> | null;
+}
+
+function conversationIdOf(item: NotificationItem): string | null {
+  const value = item.data?.conversationId;
+  return typeof value === 'string' && value ? value : null;
 }
 
 interface NotificationsResult {
@@ -125,6 +132,14 @@ export function NotificationsPage() {
                     {item.body ? <p className="notification__body">{item.body}</p> : null}
                   </div>
                   <div className="notification__actions">
+                    {conversationIdOf(item) ? (
+                      <Link
+                        className="btn btn--ghost btn--sm"
+                        to={`/messages?c=${encodeURIComponent(conversationIdOf(item)!)}`}
+                      >
+                        Open
+                      </Link>
+                    ) : null}
                     {!item.isRead ? (
                       <button
                         type="button"

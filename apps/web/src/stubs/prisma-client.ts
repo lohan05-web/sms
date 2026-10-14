@@ -60,6 +60,7 @@ export const NotificationType = {
   EXAM: 'EXAM',
   RESULT: 'RESULT',
   TRANSPORT: 'TRANSPORT',
+  MESSAGE: 'MESSAGE',
 } as const;
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType];
 
@@ -86,6 +87,32 @@ export const VehicleStatus = {
   INACTIVE: 'INACTIVE',
 } as const;
 export type VehicleStatus = (typeof VehicleStatus)[keyof typeof VehicleStatus];
+
+export const SubmissionStatus = {
+  PENDING: 'PENDING',
+  SUBMITTED: 'SUBMITTED',
+  LATE: 'LATE',
+  GRADED: 'GRADED',
+} as const;
+export type SubmissionStatus = (typeof SubmissionStatus)[keyof typeof SubmissionStatus];
+
+export const SyllabusStatus = {
+  NOT_STARTED: 'NOT_STARTED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+} as const;
+export type SyllabusStatus = (typeof SyllabusStatus)[keyof typeof SyllabusStatus];
+
+export const Weekday = {
+  MONDAY: 'MONDAY',
+  TUESDAY: 'TUESDAY',
+  WEDNESDAY: 'WEDNESDAY',
+  THURSDAY: 'THURSDAY',
+  FRIDAY: 'FRIDAY',
+  SATURDAY: 'SATURDAY',
+  SUNDAY: 'SUNDAY',
+} as const;
+export type Weekday = (typeof Weekday)[keyof typeof Weekday];
 
 export const Prisma = {};
 export type Prisma = unknown;

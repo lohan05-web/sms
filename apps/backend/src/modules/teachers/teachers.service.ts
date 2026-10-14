@@ -3,7 +3,11 @@
   ListTeachersQuery,
   UpdateTeacherInput,
 } from '@smartschool/shared';
-import type { Prisma, Role as PrismaRole } from '@prisma/client';
+import {
+  attendanceCountsFromRecord,
+  attendanceMetrics,
+} from '@smartschool/shared';
+import type { AttendanceStatus, Prisma, Role as PrismaRole } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
 import { paginate, toSkipTake } from '../../utils/pagination';
@@ -14,6 +18,54 @@ function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): st
   if (actor.role === 'SUPER_ADMIN') return requestedSchoolId ?? undefined;
   if (!actor.schoolId) throw ApiError.forbidden('Your account is not linked to a school');
   return actor.schoolId;
+}
+
+function emptyAttendanceStatus(): Record<AttendanceStatus, number> {
+  return { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0, HALF_DAY: 0 };
+}
+
+function attendanceCard(record: Record<AttendanceStatus, number>) {
+  const metrics = attendanceMetrics(attendanceCountsFromRecord(record));
+  return {
+    total: metrics.total,
+    byStatus: record,
+    percentage: metrics.percentage,
+    indicator: metrics.indicator,
+  };
+}
+
+/** Today's and all-time attendance for the given sections. */
+async function attendanceForSections(sectionIds: string[]) {
+  const empty = {
+    today: attendanceCard(emptyAttendanceStatus()),
+    overall: attendanceCard(emptyAttendanceStatus()),
+  };
+  if (sectionIds.length === 0) return empty;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const [overallGroups, todayGroups] = await Promise.all([
+    prisma.attendance.groupBy({
+      by: ['status'],
+      where: { sectionId: { in: sectionIds } },
+      _count: { _all: true },
+    }),
+    prisma.attendance.groupBy({
+      by: ['status'],
+      where: { sectionId: { in: sectionIds }, date: { gte: today, lt: tomorrow } },
+      _count: { _all: true },
+    }),
+  ]);
+
+  const overall = emptyAttendanceStatus();
+  for (const group of overallGroups) overall[group.status] = group._count._all;
+  const todayCounts = emptyAttendanceStatus();
+  for (const group of todayGroups) todayCounts[group.status] = group._count._all;
+
+  return { today: attendanceCard(todayCounts), overall: attendanceCard(overall) };
 }
 
 export const teachersService = {
@@ -36,7 +88,13 @@ export const teachersService = {
       skip,
       take,
       orderBy: { createdAt: 'desc' },
-      include: { user: true, school: true },
+      include: {
+        user: true,
+        school: true,
+        sectionsAsTeacher: {
+          include: { classLevel: { select: { id: true, name: true } } },
+        },
+      },
     });
     const total = await prisma.teacherProfile.count({ where });
     return paginate(items, total, query.page, query.limit);
@@ -56,10 +114,27 @@ export const teachersService = {
             academicYear: true,
           },
         },
+        sectionsAsTeacher: { select: { id: true } },
+        timetableEntries: {
+          orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
+          include: {
+            subject: { select: { id: true, name: true, code: true } },
+            section: {
+              select: { id: true, name: true, classLevel: { select: { id: true, name: true } } },
+            },
+          },
+        },
       },
     });
     if (!teacher) throw ApiError.notFound('No teacher profile is linked to this account');
-    return teacher;
+
+    const sectionIds = new Set<string>([
+      ...teacher.assignments.map((assignment) => assignment.sectionId),
+      ...teacher.sectionsAsTeacher.map((section) => section.id),
+    ]);
+    const attendance = await attendanceForSections([...sectionIds]);
+
+    return { ...teacher, attendance };
   },
 
   async getById(id: string, actor: Actor) {

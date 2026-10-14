@@ -1,4 +1,4 @@
-import type { CreateNoticeInput, ListNoticesQuery, UpdateNoticeInput } from '@smartschool/shared';
+﻿import type { CreateNoticeInput, ListNoticesQuery, UpdateNoticeInput } from '@smartschool/shared';
 import { SOCKET_EVENTS } from '@smartschool/shared';
 import { Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
@@ -48,7 +48,7 @@ export const noticesService = {
     return notice;
   },
   async create(input: CreateNoticeInput, actor: Actor) {
-    const schoolId = resolveSchoolScope(actor, input.schoolId);
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
     const notice = await prisma.notice.create({
       data: {
