@@ -1,7 +1,7 @@
 import { Permission } from '@smartschool/shared';
 import { Link } from 'react-router-dom';
 import { TimetableDayList } from '../components/TimetableViews';
-import { ErrorState, PageHeader, Spinner, StatCard } from '../components/ui';
+import { ErrorState, PageHeader, SkeletonPanels, StatCard } from '../components/ui';
 import { useAuth } from '../lib/auth';
 import { formatDate, humanize } from '../lib/format';
 import { can } from '../lib/permissions';
@@ -45,7 +45,12 @@ export function TeacherPortalPage() {
   const { user } = useAuth();
   const state = useAsync<TeacherMe>(() => api.get<TeacherMe>('/teachers/me'), []);
 
-  if (state.loading) return <Spinner label="Loading your dashboard…" />;
+  if (state.loading)
+    return (
+      <div className="page">
+        <SkeletonPanels count={3} />
+      </div>
+    );
   if (state.error)
     return <ErrorState message={state.error} onRetry={state.reload} />;
   if (!state.data) return null;

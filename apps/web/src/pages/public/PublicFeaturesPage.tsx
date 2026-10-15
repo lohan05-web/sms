@@ -1,6 +1,14 @@
 import { Icon } from '../../components/Icon';
+import { LearningArt } from '../../components/illustrations';
 import { SITE_FEATURES } from '../../lib/publicContent';
-import { CtaBand, FeatureCard, PageHero, Section, SectionHeading } from './sections';
+import {
+  CtaBand,
+  FeatureCard,
+  PageHero,
+  Section,
+  SectionHeading,
+  Split,
+} from './sections';
 
 const HIGHLIGHTS = [
   {
@@ -43,21 +51,54 @@ export function PublicFeaturesPage() {
 
       <Section>
         <div className="site-grid site-grid--3">
-          {SITE_FEATURES.map((feature) => (
-            <FeatureCard key={feature.title} feature={feature} />
+          {SITE_FEATURES.map((feature, index) => (
+            <FeatureCard key={feature.title} feature={feature} delay={index * 60} />
           ))}
         </div>
       </Section>
 
       <Section className="site-section--tint">
+        <Split
+          reverse
+          media={
+            <div className="site-panel">
+              <LearningArt className="site-panel__art" />
+            </div>
+          }
+        >
+          <SectionHeading
+            align="start"
+            eyebrow="Built for real classrooms"
+            title="Tools that fit the way schools already work"
+            description="Nothing here is a puzzle. Every screen follows the language your staff already uses."
+          />
+          <ul className="site-checklist">
+            <li>
+              <Icon name="check" size={16} /> Familiar, role-aware navigation
+            </li>
+            <li>
+              <Icon name="check" size={16} /> Bulk actions for repetitive admin work
+            </li>
+            <li>
+              <Icon name="check" size={16} /> Works on the devices your staff already own
+            </li>
+          </ul>
+        </Split>
+      </Section>
+
+      <Section>
         <SectionHeading
           eyebrow="In focus"
           title="The details that save the most time"
         />
         <div className="site-highlights">
-          {HIGHLIGHTS.map((item) => (
-            <article className="site-card site-highlight" key={item.title}>
-              <span className="site-card__icon">
+          {HIGHLIGHTS.map((item, index) => (
+            <article
+              className="site-card site-highlight site-card--lift"
+              key={item.title}
+              {...{ 'data-reveal': '', style: { transitionDelay: `${index * 80}ms` } }}
+            >
+              <span className="site-card__icon site-card__icon--pulse">
                 <Icon name={item.icon} size={22} />
               </span>
               <h3>{item.title}</h3>

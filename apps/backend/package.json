@@ -26,6 +26,7 @@
     "prisma:seed-parents": "tsx prisma/seed-parents.ts",
     "prisma:assign-classes": "tsx prisma/assign-student-classes.ts",
     "prisma:assign-teachers": "tsx prisma/assign-teacher-classes.ts",
+    "prisma:backfill-designations": "tsx prisma/backfill-teacher-designations.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {

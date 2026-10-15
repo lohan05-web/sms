@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
+import { AnalyticsArt, DecorShapes, HeroScene } from '../../components/illustrations';
 import {
   SITE_FEATURES,
   SITE_MODULES,
@@ -10,17 +11,41 @@ import {
   CtaBand,
   FeatureCard,
   ModuleCard,
+  PeopleCard,
   Section,
   SectionHeading,
+  Split,
   StatStrip,
 } from './sections';
+
+const PEOPLE = [
+  {
+    variant: 'teacher' as const,
+    title: 'Teachers',
+    description:
+      'Take the register, plan lessons, record marks and message parents from one simple workspace.',
+  },
+  {
+    variant: 'student' as const,
+    title: 'Students',
+    description:
+      'See timetables, homework, learning material and results — always up to date, always in one place.',
+  },
+  {
+    variant: 'parent' as const,
+    title: 'Parents',
+    description:
+      'Follow attendance, fees, notices and reports, and reach the school whenever it matters.',
+  },
+];
 
 export function PublicHomePage() {
   return (
     <>
       <section className="site-hero">
+        <DecorShapes className="site-hero__decor" />
         <div className="site-container site-hero__inner">
-          <div className="site-hero__content">
+          <div className="site-hero__content site-anim-stack">
             <span className="site-eyebrow site-eyebrow--onDark">
               <Icon name="sparkles" size={14} /> School management, simplified
             </span>
@@ -54,43 +79,34 @@ export function PublicHomePage() {
             </ul>
           </div>
 
-          <div className="site-hero__visual" aria-hidden="true">
-            <div className="mock">
-              <div className="mock__bar">
-                <span />
-                <span />
-                <span />
-              </div>
-              <div className="mock__body">
-                <div className="mock__stats">
-                  <div className="mock__stat">
-                    <small>Attendance today</small>
-                    <strong>94%</strong>
-                  </div>
-                  <div className="mock__stat">
-                    <small>Fees collected</small>
-                    <strong>$48.2k</strong>
-                  </div>
-                  <div className="mock__stat">
-                    <small>Open enquiries</small>
-                    <strong>36</strong>
-                  </div>
-                </div>
-                <div className="mock__chart">
-                  <span style={{ height: '42%' }} />
-                  <span style={{ height: '66%' }} />
-                  <span style={{ height: '54%' }} />
-                  <span style={{ height: '82%' }} />
-                  <span style={{ height: '70%' }} />
-                  <span style={{ height: '92%' }} />
-                  <span style={{ height: '61%' }} />
-                </div>
-                <div className="mock__rows">
-                  <span />
-                  <span />
-                  <span />
-                </div>
-              </div>
+          <div className="site-hero__visual">
+            <HeroScene className="site-hero__art site-illus--float" />
+            <div className="site-float site-float--a" aria-hidden="true">
+              <span className="site-float__icon">
+                <Icon name="trending" size={16} />
+              </span>
+              <span className="site-float__text">
+                <strong>94%</strong>
+                <small>Attendance today</small>
+              </span>
+            </div>
+            <div className="site-float site-float--b" aria-hidden="true">
+              <span className="site-float__icon">
+                <Icon name="finance" size={16} />
+              </span>
+              <span className="site-float__text">
+                <strong>$48.2k</strong>
+                <small>Fees collected</small>
+              </span>
+            </div>
+            <div className="site-float site-float--c" aria-hidden="true">
+              <span className="site-float__icon">
+                <Icon name="inbox" size={16} />
+              </span>
+              <span className="site-float__text">
+                <strong>36</strong>
+                <small>Open enquiries</small>
+              </span>
             </div>
           </div>
         </div>
@@ -107,15 +123,59 @@ export function PublicHomePage() {
           description="Replace disconnected spreadsheets and paper registers with a platform every role can trust."
         />
         <div className="site-grid site-grid--3">
-          {SITE_FEATURES.slice(0, 6).map((feature) => (
-            <FeatureCard key={feature.title} feature={feature} />
+          {SITE_FEATURES.slice(0, 6).map((feature, index) => (
+            <FeatureCard key={feature.title} feature={feature} delay={index * 70} />
           ))}
         </div>
-        <div className="site-center">
+        <div className="site-center" {...{ 'data-reveal': '' }}>
           <Link to="/site/features" className="site-textlink">
             See all features <Icon name="arrow-right" size={15} />
           </Link>
         </div>
+      </Section>
+
+      <Section className="site-section--tint">
+        <SectionHeading
+          eyebrow="Built for every role"
+          title="One platform, everyone included"
+          description="From the front office to the family at home — each person sees exactly what they need."
+        />
+        <div className="site-grid site-grid--3">
+          {PEOPLE.map((person, index) => (
+            <PeopleCard
+              key={person.title}
+              variant={person.variant}
+              title={person.title}
+              description={person.description}
+              delay={index * 80}
+            />
+          ))}
+        </div>
+      </Section>
+
+      <Section>
+        <Split
+          media={<AnalyticsArt className="site-panel__art" />}
+          className="site-split--panel"
+        >
+          <SectionHeading
+            align="start"
+            eyebrow="Clear insight"
+            title="Decisions backed by live numbers"
+            description="Attendance, results, collections and enquiries update in real time, so leadership always sees the full picture."
+          />
+          <ul className="site-checklist">
+            <li>
+              <Icon name="check" size={16} /> Live dashboards for every role
+            </li>
+            <li>
+              <Icon name="check" size={16} /> Class and section level breakdowns
+            </li>
+            <li>
+              <Icon name="check" size={16} /> Export-ready reports in a click
+            </li>
+          </ul>
+        </Split>
       </Section>
 
       <Section className="site-section--tint">
@@ -125,11 +185,11 @@ export function PublicHomePage() {
           description="Thirty-plus modules that cover the whole school — from the front office to the finance desk."
         />
         <div className="site-grid site-grid--4">
-          {SITE_MODULES.slice(0, 8).map((module) => (
-            <ModuleCard key={module.title} module={module} />
+          {SITE_MODULES.slice(0, 8).map((module, index) => (
+            <ModuleCard key={module.title} module={module} delay={index * 50} />
           ))}
         </div>
-        <div className="site-center">
+        <div className="site-center" {...{ 'data-reveal': '' }}>
           <Link to="/site/modules" className="site-textlink">
             Browse all modules <Icon name="arrow-right" size={15} />
           </Link>
@@ -143,7 +203,11 @@ export function PublicHomePage() {
         />
         <ol className="site-steps">
           {SITE_STEPS.map((step, index) => (
-            <li className="site-step" key={step.title}>
+            <li
+              className="site-step site-card--lift"
+              key={step.title}
+              {...{ 'data-reveal': '', style: { transitionDelay: `${index * 90}ms` } }}
+            >
               <span className="site-step__index">{index + 1}</span>
               <h3>{step.title}</h3>
               <p>{step.description}</p>

@@ -28,6 +28,7 @@ import { ResourceListPage } from './pages/ResourceListPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TeacherPortalPage } from './pages/TeacherPortalPage';
 import { TimetablePage } from './pages/TimetablePage';
+import { VehicleDetailsPage } from './pages/VehicleDetailsPage';
 import { PublicAboutPage } from './pages/public/PublicAboutPage';
 import { PublicContactPage } from './pages/public/PublicContactPage';
 import { PublicFaqPage } from './pages/public/PublicFaqPage';
@@ -77,6 +78,7 @@ export function App() {
                     <Route path="profile" element={<ProfilePage />} />
                     <Route path="invoices/new" element={<InvoiceCreatePage />} />
                     <Route path="payments/new" element={<PaymentCreatePage />} />
+                    <Route path="resource/vehicle" element={<VehicleDetailsPage />} />
                     <Route path="resource/:key" element={<ResourceListPage />} />
                     <Route path="*" element={<NotFoundPage />} />
                   </Route>

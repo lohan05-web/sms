@@ -3,7 +3,15 @@ import { Permission, Role } from '@smartschool/shared';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '../components/Icon';
-import { PageHeader, StatCard, Spinner, ErrorState, formatStatValue } from '../components/ui';
+import {
+  ErrorState,
+  PageHeader,
+  SkeletonPanels,
+  SkeletonStats,
+  Spinner,
+  StatCard,
+  formatStatValue,
+} from '../components/ui';
 import { api, buildQuery } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { monthOptions } from '../lib/attendanceTracker';
@@ -82,7 +90,7 @@ function JoiningChart({ points }: { points: JoiningMonthPoint[] }) {
         <div className="bar-row" key={point.month}>
           <span className="bar-row__label">{point.label}</span>
           <div className="bar-row__bars">
-            <div className="bar">
+            <div className="bar" title={`${point.label}: ${point.students} students joined`}>
               <div className="bar__track">
                 <div
                   className="bar__fill bar__fill--students"
@@ -91,7 +99,7 @@ function JoiningChart({ points }: { points: JoiningMonthPoint[] }) {
               </div>
               <span className="bar__value">{point.students}</span>
             </div>
-            <div className="bar">
+            <div className="bar" title={`${point.label}: ${point.teachers} teachers joined`}>
               <div className="bar__track">
                 <div
                   className="bar__fill bar__fill--teachers"
@@ -337,83 +345,96 @@ function QuickActions({ role }: { role: Role }) {
   );
 }
 
-export function DashboardPage() {
+/**
+ * The classic school overview (quick actions, joining stats, finance,
+ * admissions and attendance). Rendered on the legacy dashboard and folded into
+ * the university dashboard's "Operations" area.
+ */
+export function DashboardSections({
+  showQuickActions = true,
+  showJoining = true,
+}: { showQuickActions?: boolean; showJoining?: boolean } = {}) {
   const { currency } = useSettings();
   const { user } = useAuth();
   const state = useAsync<DashboardData>(() => api.get<DashboardData>('/reports/dashboard'), []);
 
   if (state.forbidden) return <ForbiddenPage />;
 
+  if (state.loading)
+    return (
+      <div className="dashboard">
+        <SkeletonStats count={5} />
+        <SkeletonPanels count={2} />
+      </div>
+    );
+  if (state.error) return <ErrorState message={state.error} onRetry={state.reload} />;
+  if (!state.data) return null;
+
+  const data = state.data;
+
+  return (
+    <div className="dashboard">
+      {showQuickActions && user ? <QuickActions role={user.role} /> : null}
+
+      {showJoining ? <JoiningSection /> : null}
+
+      <section className="panel">
+        <h2 className="panel__title">People &amp; assets</h2>
+        <div className="stat-grid">
+          {Object.entries(data.counts).map(([key, value]) => (
+            <StatCard key={key} label={titleCase(key)} value={formatStatValue(value)} />
+          ))}
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2 className="panel__title">Admissions &amp; requests</h2>
+        <div className="stat-grid">
+          <StatCard
+            label="Open admissions"
+            value={formatStatValue(data.pipeline.openAdmissions)}
+            hint="Enquiry, applied or under review"
+            icon="admissions"
+            tone="info"
+          />
+          <StatCard
+            label="Pending requests"
+            value={formatStatValue(data.pipeline.pendingRequests)}
+            hint="Awaiting action"
+            icon="requests"
+            tone="warning"
+          />
+        </div>
+      </section>
+
+      <section className="panel">
+        <h2 className="panel__title">Finance</h2>
+        <div className="stat-grid">
+          <StatCard label="Invoices" value={formatStatValue(data.finance.invoices)} />
+          <StatCard label="Total billed" value={formatCurrency(data.finance.totalBilled, currency)} />
+          <StatCard label="Collected" value={formatCurrency(data.finance.totalCollected, currency)} />
+          <StatCard
+            label="Outstanding"
+            value={formatCurrency(data.finance.totalOutstanding, currency)}
+          />
+          <StatCard
+            label="Collected this month"
+            value={formatCurrency(data.finance.collectedThisMonth, currency)}
+          />
+        </div>
+      </section>
+
+      <AttendancePanel title="Attendance today" card={data.attendanceToday} />
+      <AttendancePanel title="Attendance overall" card={data.attendanceOverall} />
+    </div>
+  );
+}
+
+export function DashboardPage() {
   return (
     <div className="page">
       <PageHeader title="Dashboard" subtitle="School overview at a glance" />
-
-      {state.loading ? (
-        <Spinner label="Loading dashboard…" />
-      ) : state.error ? (
-        <ErrorState message={state.error} onRetry={state.reload} />
-      ) : state.data ? (
-        <div className="dashboard">
-          {user ? <QuickActions role={user.role} /> : null}
-
-          <JoiningSection />
-
-          <section className="panel">
-            <h2 className="panel__title">People &amp; assets</h2>
-            <div className="stat-grid">
-              {Object.entries(state.data.counts).map(([key, value]) => (
-                <StatCard key={key} label={titleCase(key)} value={formatStatValue(value)} />
-              ))}
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2 className="panel__title">Admissions &amp; requests</h2>
-            <div className="stat-grid">
-              <StatCard
-                label="Open admissions"
-                value={formatStatValue(state.data.pipeline.openAdmissions)}
-                hint="Enquiry, applied or under review"
-                icon="admissions"
-                tone="info"
-              />
-              <StatCard
-                label="Pending requests"
-                value={formatStatValue(state.data.pipeline.pendingRequests)}
-                hint="Awaiting action"
-                icon="requests"
-                tone="warning"
-              />
-            </div>
-          </section>
-
-          <section className="panel">
-            <h2 className="panel__title">Finance</h2>
-            <div className="stat-grid">
-              <StatCard label="Invoices" value={formatStatValue(state.data.finance.invoices)} />
-              <StatCard
-                label="Total billed"
-                value={formatCurrency(state.data.finance.totalBilled, currency)}
-              />
-              <StatCard
-                label="Collected"
-                value={formatCurrency(state.data.finance.totalCollected, currency)}
-              />
-              <StatCard
-                label="Outstanding"
-                value={formatCurrency(state.data.finance.totalOutstanding, currency)}
-              />
-              <StatCard
-                label="Collected this month"
-                value={formatCurrency(state.data.finance.collectedThisMonth, currency)}
-              />
-            </div>
-          </section>
-
-          <AttendancePanel title="Attendance today" card={state.data.attendanceToday} />
-          <AttendancePanel title="Attendance overall" card={state.data.attendanceOverall} />
-        </div>
-      ) : null}
+      <DashboardSections />
     </div>
   );
 }

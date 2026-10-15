@@ -28,6 +28,33 @@ function employeeNo(seq: number): string {
   return `${TEACHER_PREFIX}-${String(seq).padStart(4, '0')}`;
 }
 
+// Deterministic cycles so a freshly seeded school shows a realistic spread of
+// academic ranks and engagement types on the dashboard.
+const DESIGNATION_CYCLE = [
+  'ASSISTANT_PROFESSOR',
+  'ASSOCIATE_PROFESSOR',
+  'LECTURER',
+  'ASSISTANT_PROFESSOR',
+  'PROFESSOR',
+  'LECTURER',
+  'ASSOCIATE_PROFESSOR',
+  'ASSISTANT_PROFESSOR',
+] as const;
+
+const EMPLOYMENT_CYCLE = [
+  'FULL_TIME',
+  'FULL_TIME',
+  'PART_TIME',
+  'FULL_TIME',
+  'CONTRACT',
+  'FULL_TIME',
+  'PART_TIME',
+  'VISITING',
+] as const;
+
+const designationFor = (seq: number) => DESIGNATION_CYCLE[(seq - 1) % DESIGNATION_CYCLE.length];
+const employmentFor = (seq: number) => EMPLOYMENT_CYCLE[(seq - 1) % EMPLOYMENT_CYCLE.length];
+
 async function createTeacher(
   schoolId: string,
   startSeq: number,
@@ -63,6 +90,8 @@ async function createTeacher(
       employeeNo: employee,
       joiningDate: new Date(`${new Date().getFullYear()}-06-01`),
       status: 'ACTIVE',
+      designation: designationFor(n),
+      employmentType: employmentFor(n),
     },
   });
   return { id: teacher.id, seq: n };

@@ -88,6 +88,12 @@ export const VehicleStatus = {
 } as const;
 export type VehicleStatus = (typeof VehicleStatus)[keyof typeof VehicleStatus];
 
+export const VehicleType = {
+  BUS: 'BUS',
+  VAN: 'VAN',
+} as const;
+export type VehicleType = (typeof VehicleType)[keyof typeof VehicleType];
+
 export const SubmissionStatus = {
   PENDING: 'PENDING',
   SUBMITTED: 'SUBMITTED',
@@ -123,6 +129,23 @@ export const AdmissionStatus = {
   ENROLLED: 'ENROLLED',
 } as const;
 export type AdmissionStatus = (typeof AdmissionStatus)[keyof typeof AdmissionStatus];
+
+export const Designation = {
+  PROFESSOR: 'PROFESSOR',
+  ASSOCIATE_PROFESSOR: 'ASSOCIATE_PROFESSOR',
+  ASSISTANT_PROFESSOR: 'ASSISTANT_PROFESSOR',
+  LECTURER: 'LECTURER',
+  OTHER: 'OTHER',
+} as const;
+export type Designation = (typeof Designation)[keyof typeof Designation];
+
+export const EmploymentType = {
+  FULL_TIME: 'FULL_TIME',
+  PART_TIME: 'PART_TIME',
+  CONTRACT: 'CONTRACT',
+  VISITING: 'VISITING',
+} as const;
+export type EmploymentType = (typeof EmploymentType)[keyof typeof EmploymentType];
 
 export const AdmissionSource = {
   WALK_IN: 'WALK_IN',

@@ -75,6 +75,8 @@ export const teachersService = {
     const schoolId = resolveSchoolScope(actor);
     if (schoolId) where.schoolId = schoolId;
     if (query.status) where.status = query.status;
+    if (query.designation) where.designation = query.designation;
+    if (query.employmentType) where.employmentType = query.employmentType;
     if (query.search) {
       where.OR = [
         { employeeNo: { contains: query.search } },
@@ -190,6 +192,8 @@ export const teachersService = {
           employeeNo: input.employeeNo,
           qualification: input.qualification,
           specialization: input.specialization,
+          designation: input.designation,
+          employmentType: input.employmentType,
           joiningDate: new Date(input.joiningDate as any),
         },
         include: { user: true },
@@ -232,6 +236,8 @@ export const teachersService = {
         data: {
           ...(input.qualification !== undefined ? { qualification: input.qualification } : {}),
           ...(input.specialization !== undefined ? { specialization: input.specialization } : {}),
+          ...(input.designation !== undefined ? { designation: input.designation } : {}),
+          ...(input.employmentType !== undefined ? { employmentType: input.employmentType } : {}),
           ...(input.status !== undefined ? { status: input.status as any } : {}),
         },
         include: { user: true },

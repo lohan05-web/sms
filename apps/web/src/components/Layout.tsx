@@ -1,5 +1,5 @@
 import { ROLE_LABELS } from '@smartschool/shared';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { initials } from '../lib/format';
@@ -10,6 +10,7 @@ import { Toaster } from './Toaster';
 
 const NAV_ICONS: Record<string, IconName> = {
   dashboard: 'dashboard',
+  'vehicle-details': 'bus',
   'teacher-portal': 'home',
   'parent-portal': 'home',
   'student-details': 'students',
@@ -40,7 +41,7 @@ const NAV_ICONS: Record<string, IconName> = {
 };
 
 const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
-  { title: null, keys: ['dashboard', 'teacher-portal', 'parent-portal', 'my-requests'] },
+  { title: null, keys: ['dashboard', 'vehicle-details', 'teacher-portal', 'parent-portal', 'my-requests'] },
   {
     title: 'Academics',
     keys: [
@@ -86,9 +87,11 @@ export function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [navOpen, setNavOpen] = useState(false);
+  const contentRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setNavOpen(false);
+    contentRef.current?.scrollTo({ top: 0 });
   }, [location.pathname]);
 
   const items = useMemo(() => (user ? navForRole(user.role) : []), [user]);
@@ -180,7 +183,7 @@ export function Layout() {
             <span className="avatar">{initials(user.firstName, user.lastName)}</span>
           </div>
         </header>
-        <main className="content">
+        <main className="content" ref={contentRef}>
           <Outlet />
         </main>
       </div>

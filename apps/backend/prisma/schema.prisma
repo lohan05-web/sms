@@ -47,6 +47,21 @@ enum EmploymentStatus {
   TERMINATED
 }
 
+enum Designation {
+  PROFESSOR
+  ASSOCIATE_PROFESSOR
+  ASSISTANT_PROFESSOR
+  LECTURER
+  OTHER
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  VISITING
+}
+
 enum AttendanceStatus {
   PRESENT
   ABSENT
@@ -112,6 +127,11 @@ enum VehicleStatus {
   ACTIVE
   MAINTENANCE
   INACTIVE
+}
+
+enum VehicleType {
+  BUS
+  VAN
 }
 
 enum NotificationType {
@@ -233,6 +253,7 @@ model School {
   invoices        Invoice[]
   books           Book[]
   vehicles        Vehicle[]
+  drivers         Driver[]
   transportRoutes TransportRoute[]
   notices         Notice[]
   auditLogs       AuditLog[]
@@ -445,6 +466,8 @@ model TeacherProfile {
   specialization String?
   joiningDate    DateTime         @db.Date
   status         EmploymentStatus @default(ACTIVE)
+  designation    Designation      @default(OTHER)
+  employmentType EmploymentType   @default(FULL_TIME)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -905,14 +928,37 @@ model BookLoan {
 // Transport
 // ---------------------------------------------------------------------------
 
+model Driver {
+  id            String   @id @default(cuid())
+  schoolId      String
+  driverCode    String
+  name          String
+  phone         String
+  licenseNumber String
+  licenseExpiry DateTime @db.Date
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  school   School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  vehicles Vehicle[]
+
+  @@unique([schoolId, driverCode])
+  @@unique([schoolId, licenseNumber])
+  @@index([schoolId])
+}
+
 model Vehicle {
   id              String        @id @default(cuid())
   schoolId        String
+  vehicleCode     String?
   plateNumber     String
   model           String?
+  type            VehicleType   @default(BUS)
   capacity        Int
   driverName      String?
   driverPhone     String?
+  driverId        String?
+  routeId         String?
   status          VehicleStatus @default(ACTIVE)
   insuranceExpiry DateTime?     @db.Date
   createdAt       DateTime      @default(now())
@@ -920,16 +966,26 @@ model Vehicle {
 
   school School           @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   routes TransportRoute[]
+  driver Driver?          @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  route  TransportRoute?  @relation("RouteVehicles", fields: [routeId], references: [id], onDelete: SetNull)
 
   @@unique([schoolId, plateNumber])
+  @@unique([schoolId, vehicleCode])
+  @@index([schoolId, routeId])
+  @@index([schoolId, driverId])
 }
 
 model TransportRoute {
   id          String   @id @default(cuid())
   schoolId    String
+  routeCode   String?
   name        String
   code        String
   description String?
+  startPoint  String?
+  endPoint    String?
+  pickupTime  String?
+  dropTime    String?
   fare        Decimal  @default(0) @db.Decimal(8, 2)
   vehicleId   String?
   createdAt   DateTime @default(now())
@@ -937,10 +993,12 @@ model TransportRoute {
 
   school        School                  @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   vehicle       Vehicle?                @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  vehicles      Vehicle[]               @relation("RouteVehicles")
   stops         RouteStop[]
   subscriptions TransportSubscription[]
 
   @@unique([schoolId, code])
+  @@unique([schoolId, routeCode])
 }
 
 model RouteStop {

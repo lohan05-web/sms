@@ -17,6 +17,11 @@ export function Modal({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  useEffect(() => {
+    document.body.classList.add('modal-open');
+    return () => document.body.classList.remove('modal-open');
+  }, []);
+
   return (
     <div className="modal">
       <button type="button" className="modal__backdrop" aria-label="Close" onClick={onClose} />

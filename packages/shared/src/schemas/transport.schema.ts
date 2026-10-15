@@ -1,23 +1,32 @@
 import { z } from 'zod';
-import { VehicleStatus, TransportStatus } from '@prisma/client';
+import { VehicleStatus, VehicleType, TransportStatus } from '@prisma/client';
 
 export const createVehicleSchema = z.object({
   schoolId: z.string().cuid().optional(),
+  vehicleCode: z.string().trim().min(1).max(30).optional(),
   plateNumber: z.string().trim().min(1).max(20),
   model: z.string().trim().max(50).optional(),
+  type: z.nativeEnum(VehicleType).default('BUS'),
   capacity: z.coerce.number().int().min(1),
   driverName: z.string().trim().max(100).optional(),
   driverPhone: z.string().trim().max(30).optional(),
+  driverId: z.string().cuid().optional().nullable(),
+  routeId: z.string().cuid().optional().nullable(),
   insuranceExpiry: z.coerce.date().optional(),
 });
 export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
 
 export const updateVehicleSchema = z
   .object({
+    vehicleCode: z.string().trim().min(1).max(30).optional(),
+    plateNumber: z.string().trim().min(1).max(20).optional(),
     model: z.string().trim().max(50).optional().nullable(),
+    type: z.nativeEnum(VehicleType).optional(),
     capacity: z.coerce.number().int().min(1).optional(),
     driverName: z.string().trim().max(100).optional().nullable(),
     driverPhone: z.string().trim().max(30).optional().nullable(),
+    driverId: z.string().cuid().optional().nullable(),
+    routeId: z.string().cuid().optional().nullable(),
     status: z.nativeEnum(VehicleStatus).optional(),
     insuranceExpiry: z.coerce.date().optional().nullable(),
   })
@@ -28,15 +37,33 @@ export const listVehiclesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   status: z.nativeEnum(VehicleStatus).optional(),
+  type: z.nativeEnum(VehicleType).optional(),
+  routeId: z.string().cuid().optional(),
+  driverId: z.string().cuid().optional(),
   search: z.string().trim().min(1).max(120).optional(),
 });
 export type ListVehiclesQuery = z.infer<typeof listVehiclesQuerySchema>;
 
+const stopsInputSchema = z
+  .union([z.string(), z.array(z.string())])
+  .optional()
+  .transform((value) => {
+    if (value === undefined) return undefined;
+    const list = Array.isArray(value) ? value : value.split(',');
+    return list.map((s) => s.trim()).filter((s) => s.length > 0);
+  });
+
 export const createTransportRouteSchema = z.object({
   schoolId: z.string().cuid().optional(),
+  routeCode: z.string().trim().min(1).max(30).optional(),
   name: z.string().trim().min(1).max(100),
-  code: z.string().trim().min(1).max(30),
+  code: z.string().trim().min(1).max(30).optional(),
   description: z.string().trim().max(255).optional(),
+  startPoint: z.string().trim().max(120).optional(),
+  endPoint: z.string().trim().max(120).optional(),
+  stops: stopsInputSchema,
+  pickupTime: z.string().trim().max(20).optional(),
+  dropTime: z.string().trim().max(20).optional(),
   fare: z.coerce.number().min(0).default(0),
   vehicleId: z.string().cuid().optional(),
 });
@@ -44,8 +71,15 @@ export type CreateTransportRouteInput = z.infer<typeof createTransportRouteSchem
 
 export const updateTransportRouteSchema = z
   .object({
+    routeCode: z.string().trim().min(1).max(30).optional(),
     name: z.string().trim().min(1).max(100).optional(),
+    code: z.string().trim().min(1).max(30).optional(),
     description: z.string().trim().max(255).optional().nullable(),
+    startPoint: z.string().trim().max(120).optional().nullable(),
+    endPoint: z.string().trim().max(120).optional().nullable(),
+    stops: stopsInputSchema,
+    pickupTime: z.string().trim().max(20).optional().nullable(),
+    dropTime: z.string().trim().max(20).optional().nullable(),
     fare: z.coerce.number().min(0).optional(),
     vehicleId: z.string().cuid().optional().nullable(),
   })
@@ -58,6 +92,41 @@ export const listTransportRoutesQuerySchema = z.object({
   search: z.string().trim().min(1).max(120).optional(),
 });
 export type ListTransportRoutesQuery = z.infer<typeof listTransportRoutesQuerySchema>;
+
+export const createDriverSchema = z.object({
+  schoolId: z.string().cuid().optional(),
+  driverCode: z.string().trim().min(1).max(30).optional(),
+  name: z.string().trim().min(1).max(100),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^[+]?[\d\s()-]{7,20}$/, 'Invalid phone number'),
+  licenseNumber: z.string().trim().min(1).max(40),
+  licenseExpiry: z.coerce.date(),
+});
+export type CreateDriverInput = z.infer<typeof createDriverSchema>;
+
+export const updateDriverSchema = z
+  .object({
+    driverCode: z.string().trim().min(1).max(30).optional(),
+    name: z.string().trim().min(1).max(100).optional(),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^[+]?[\d\s()-]{7,20}$/, 'Invalid phone number')
+      .optional(),
+    licenseNumber: z.string().trim().min(1).max(40).optional(),
+    licenseExpiry: z.coerce.date().optional(),
+  })
+  .refine((d) => Object.keys(d).length > 0, { message: 'At least one field must be provided' });
+export type UpdateDriverInput = z.infer<typeof updateDriverSchema>;
+
+export const listDriversQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().trim().min(1).max(120).optional(),
+});
+export type ListDriversQuery = z.infer<typeof listDriversQuerySchema>;
 
 export const createRouteStopSchema = z.object({
   routeId: z.string().cuid(),

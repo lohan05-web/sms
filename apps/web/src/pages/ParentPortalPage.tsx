@@ -1,7 +1,7 @@
 import type { ReportCard, OverallResult } from '@smartschool/shared';
 import { Link } from 'react-router-dom';
 import { TimetableDayList } from '../components/TimetableViews';
-import { EmptyState, ErrorState, PageHeader, Spinner, StatCard } from '../components/ui';
+import { EmptyState, ErrorState, PageHeader, SkeletonPanels, StatCard } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { formatCurrency, formatDate, humanize } from '../lib/format';
@@ -89,7 +89,12 @@ export function ParentPortalPage() {
   const { user } = useAuth();
   const state = useAsync<ParentOverview>(() => api.get<ParentOverview>('/parents/me/children'), []);
 
-  if (state.loading) return <Spinner label="Loading your children…" />;
+  if (state.loading)
+    return (
+      <div className="page">
+        <SkeletonPanels count={2} />
+      </div>
+    );
   if (state.error) return <ErrorState message={state.error} onRetry={state.reload} />;
   if (!state.data) return null;
 

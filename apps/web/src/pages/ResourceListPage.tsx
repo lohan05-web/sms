@@ -6,7 +6,7 @@ import { FormDialog } from '../components/FormDialog';
 import { Modal } from '../components/Modal';
 import { PhotoDialog } from '../components/PhotoDialog';
 import { Pagination } from '../components/Pagination';
-import { ErrorState, PageHeader, Spinner } from '../components/ui';
+import { ErrorState, PageHeader, SkeletonTable } from '../components/ui';
 import { api } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { initialFromFields, rowToValues, type FormValues } from '../lib/form';
@@ -282,7 +282,7 @@ function ResourceListView({ config, role }: { config: ResourceConfig; role: Role
       ) : null}
 
       {state.loading ? (
-        <Spinner label="Loading…" />
+        <SkeletonTable rows={6} />
       ) : state.error ? (
         <ErrorState message={state.error} onRetry={state.reload} />
       ) : state.data ? (

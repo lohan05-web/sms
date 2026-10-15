@@ -1,4 +1,8 @@
-import type { JoiningReportQuery, ReportCardQuery } from '@smartschool/shared';
+import type {
+  JoiningReportQuery,
+  ReportCardQuery,
+  UniversityDashboardQuery,
+} from '@smartschool/shared';
 import type { Request, Response } from 'express';
 import type { Actor } from '../users/users.service';
 import { reportsService } from './reports.service';
@@ -31,6 +35,13 @@ export const reportsController = {
   async reportCards(req: Request, res: Response) {
     const r = await reportsService.reportCards(
       req.query as unknown as ReportCardQuery,
+      actorFrom(req),
+    );
+    res.status(200).json({ success: true, data: r });
+  },
+  async university(req: Request, res: Response) {
+    const r = await reportsService.university(
+      req.query as unknown as UniversityDashboardQuery,
       actorFrom(req),
     );
     res.status(200).json({ success: true, data: r });

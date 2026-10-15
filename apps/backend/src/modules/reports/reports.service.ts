@@ -5,11 +5,21 @@ import type {
   JoiningReportQuery,
   ReportCardQuery,
   ReportRangeQuery,
+  UniversityDashboard,
+  UniversityDashboardQuery,
+  UniversityDesignationCount,
+  UniversityEmploymentCount,
 } from '@smartschool/shared';
 import {
+  DESIGNATIONS,
+  DESIGNATION_LABELS,
+  EMPLOYMENT_TYPES,
+  EMPLOYMENT_TYPE_LABELS,
+  Permission,
   attendanceCountsFromRecord,
   attendanceMetrics,
   buildReportCards,
+  hasPermission,
   monthInputValue,
   monthRange,
   type ReportCardInput,
@@ -142,6 +152,52 @@ function toReportRow(row: ExamResultRow): ReportCardInput {
     maxMarks: row.maxMarks as number | string,
     grade: row.grade,
   };
+}
+
+function toNumber(value: unknown): number {
+  if (value === null || value === undefined) return 0;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function round1(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
+function fullName(
+  user: { firstName?: string | null; lastName?: string | null } | null,
+): string | null {
+  if (!user) return null;
+  const name = [user.firstName, user.lastName].filter(Boolean).join(' ').trim();
+  return name || null;
+}
+
+/** Designation distribution with a percentage share of the teaching staff. */
+function designationCounts(
+  groups: readonly { designation: string; _count: { _all: number } }[],
+  total: number,
+): UniversityDesignationCount[] {
+  const counts = new Map(groups.map((group) => [group.designation, group._count._all]));
+  return DESIGNATIONS.map((designation) => {
+    const count = counts.get(designation) ?? 0;
+    return {
+      designation,
+      label: DESIGNATION_LABELS[designation],
+      count,
+      percentage: total > 0 ? round1((count / total) * 100) : 0,
+    };
+  });
+}
+
+function employmentCounts(
+  groups: readonly { employmentType: string; _count: { _all: number } }[],
+): UniversityEmploymentCount[] {
+  const counts = new Map(groups.map((group) => [group.employmentType, group._count._all]));
+  return EMPLOYMENT_TYPES.map((employmentType) => ({
+    employmentType,
+    label: EMPLOYMENT_TYPE_LABELS[employmentType],
+    count: counts.get(employmentType) ?? 0,
+  }));
 }
 
 export const reportsService = {
@@ -537,5 +593,323 @@ export const reportsService = {
         };
       }),
     };
+  },
+
+  /**
+   * Aggregated university overview. Every block is scoped to the actor's school
+   * and only the sections the role is permitted to read are returned, so a
+   * teacher never receives the staff directory and an accountant never receives
+   * teaching analytics.
+   */
+  async university(query: UniversityDashboardQuery, actor: Actor): Promise<UniversityDashboard> {
+    const schoolId = resolveSchoolScope(actor);
+    const schoolWhere = schoolId ? { schoolId } : {};
+    const canStudents = hasPermission(actor.role, Permission.STUDENT_READ);
+    const canTeachers = hasPermission(actor.role, Permission.TEACHER_READ);
+    const canExams =
+      hasPermission(actor.role, Permission.EXAM_READ) ||
+      hasPermission(actor.role, Permission.RESULT_READ);
+    const canAudit = hasPermission(actor.role, Permission.AUDIT_READ);
+
+    const academicYears = await prisma.academicYear.findMany({
+      where: schoolWhere,
+      orderBy: { startDate: 'desc' },
+    });
+    const selectedYear =
+      (query.academicYearId
+        ? academicYears.find((year) => year.id === query.academicYearId)
+        : academicYears.find((year) => year.isCurrent) ?? academicYears[0]) ?? null;
+    const academicYearId = selectedYear?.id;
+
+    const examWhere: Prisma.ExamWhereInput = { ...schoolWhere };
+    if (academicYearId) examWhere.academicYearId = academicYearId;
+    const resultWhere: Prisma.ExamResultWhereInput = {
+      ...(schoolId || academicYearId
+        ? {
+            exam: {
+              ...(schoolId ? { schoolId } : {}),
+              ...(academicYearId ? { academicYearId } : {}),
+            },
+          }
+        : {}),
+    };
+
+    const [studentActive, teacherTotal, courses, examTotal, resultAgg] = await Promise.all([
+      prisma.studentProfile.count({ where: { ...schoolWhere, status: 'ACTIVE' } }),
+      prisma.teacherProfile.count({ where: schoolWhere }),
+      prisma.subject.count({ where: schoolWhere }),
+      prisma.exam.count({ where: examWhere }),
+      prisma.examResult.aggregate({
+        where: resultWhere,
+        _sum: { marksObtained: true, maxMarks: true },
+        _count: { _all: true },
+      }),
+    ]);
+
+    const studentGenderGroups = canStudents
+      ? await prisma.studentProfile.groupBy({
+          by: ['gender'],
+          where: schoolWhere,
+          _count: { _all: true },
+        })
+      : [];
+
+    const totalObtained = toNumber(resultAgg._sum?.marksObtained);
+    const totalMax = toNumber(resultAgg._sum?.maxMarks);
+    const averageMarks = totalMax > 0 ? round1((totalObtained / totalMax) * 100) : 0;
+
+    const dashboard: UniversityDashboard = {
+      filters: { academicYearId },
+      academicYears: academicYears.map((year) => ({
+        id: year.id,
+        name: year.name,
+        isCurrent: year.isCurrent,
+      })),
+      academicYear: selectedYear
+        ? { id: selectedYear.id, name: selectedYear.name, isCurrent: selectedYear.isCurrent }
+        : null,
+      overview: {
+        students: studentActive,
+        teachers: teacherTotal,
+        courses,
+        exams: examTotal,
+        averageMarks,
+      },
+    };
+
+    if (canStudents) {
+      const genderCounts = new Map(
+        studentGenderGroups.map((group) => [group.gender, group._count._all]),
+      );
+      const [total, active, byClass, recent] = await Promise.all([
+        prisma.studentProfile.count({ where: schoolWhere }),
+        prisma.studentProfile.count({ where: { ...schoolWhere, status: 'ACTIVE' } }),
+        prisma.classLevel.findMany({
+          where: schoolWhere,
+          orderBy: { numericLevel: 'asc' },
+          include: { sections: { include: { _count: { select: { students: true } } } } },
+        }),
+        prisma.studentProfile.findMany({
+          where: schoolWhere,
+          take: 6,
+          orderBy: { admissionDate: 'desc' },
+          include: {
+            user: { select: { firstName: true, lastName: true } },
+            section: { select: { name: true, classLevel: { select: { name: true } } } },
+          },
+        }),
+      ]);
+
+      dashboard.students = {
+        total,
+        active,
+        male: genderCounts.get('MALE') ?? 0,
+        female: genderCounts.get('FEMALE') ?? 0,
+        byClass: byClass.map((level) => ({
+          id: level.id,
+          name: level.name,
+          count: level.sections.reduce((sum, section) => sum + section._count.students, 0),
+        })),
+        recent: recent.map((student) => ({
+          id: student.id,
+          name: fullName(student.user),
+          admissionNo: student.admissionNo,
+          rollNo: student.rollNo,
+          className: student.section?.classLevel?.name ?? null,
+          sectionName: student.section?.name ?? null,
+          status: student.status,
+          admissionDate: student.admissionDate.toISOString().slice(0, 10),
+        })),
+      };
+    }
+
+    if (canTeachers) {
+      const [teacherActive, designationGroups, employmentGroups, recent, assignments] =
+        await Promise.all([
+          prisma.teacherProfile.count({ where: { ...schoolWhere, status: 'ACTIVE' } }),
+          prisma.teacherProfile.groupBy({
+            by: ['designation'],
+            where: schoolWhere,
+            _count: { _all: true },
+          }),
+          prisma.teacherProfile.groupBy({
+            by: ['employmentType'],
+            where: schoolWhere,
+            _count: { _all: true },
+          }),
+          prisma.teacherProfile.findMany({
+            where: schoolWhere,
+            take: 6,
+            orderBy: { joiningDate: 'desc' },
+            include: {
+              user: { select: { firstName: true, lastName: true } },
+              assignments: { select: { subjectId: true, sectionId: true } },
+            },
+          }),
+          prisma.teacherAssignment.count({
+            where: {
+              ...(schoolId ? { teacher: { schoolId } } : {}),
+              ...(academicYearId ? { academicYearId } : {}),
+            },
+          }),
+        ]);
+
+      const byDesignation = designationCounts(designationGroups, teacherTotal);
+      const byEmploymentType = employmentCounts(employmentGroups);
+      const fullTime =
+        byEmploymentType.find((item) => item.employmentType === 'FULL_TIME')?.count ?? 0;
+      const partTime =
+        byEmploymentType.find((item) => item.employmentType === 'PART_TIME')?.count ?? 0;
+
+      dashboard.teachers = {
+        total: teacherTotal,
+        active: teacherActive,
+        fullTime,
+        partTime,
+        byDesignation,
+        byEmploymentType,
+        recent: recent.map((teacher) => ({
+          id: teacher.id,
+          name: fullName(teacher.user),
+          employeeNo: teacher.employeeNo,
+          designation: teacher.designation,
+          designationLabel: DESIGNATION_LABELS[teacher.designation],
+          employmentType: teacher.employmentType,
+          employmentTypeLabel: EMPLOYMENT_TYPE_LABELS[teacher.employmentType],
+          qualification: teacher.qualification,
+          specialization: teacher.specialization,
+          status: teacher.status,
+          subjects: new Set(teacher.assignments.map((item) => item.subjectId)).size,
+          sections: new Set(teacher.assignments.map((item) => item.sectionId)).size,
+          workload: teacher.assignments.length,
+        })),
+        workload: {
+          assignments,
+          average: teacherTotal > 0 ? round1(assignments / teacherTotal) : 0,
+        },
+      };
+
+      dashboard.roleAnalytics = { total: teacherTotal, byDesignation };
+    }
+
+    if (canExams) {
+      const [yearResults, recentExams, recentResults] = await Promise.all([
+        prisma.examResult.findMany({
+          where: resultWhere,
+          select: {
+            marksObtained: true,
+            maxMarks: true,
+            exam: { select: { startDate: true } },
+          },
+        }),
+        prisma.exam.findMany({
+          where: examWhere,
+          take: 5,
+          orderBy: { startDate: 'desc' },
+          include: {
+            classLevel: { select: { name: true } },
+            _count: { select: { results: true } },
+          },
+        }),
+        prisma.examResult.findMany({
+          where: resultWhere,
+          take: 8,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            exam: { select: { name: true } },
+            subject: { select: { name: true } },
+            student: {
+              select: {
+                admissionNo: true,
+                user: { select: { firstName: true, lastName: true } },
+              },
+            },
+          },
+        }),
+      ]);
+
+      const now = new Date();
+      const seriesKeys = selectedYear
+        ? monthsBetween(selectedYear.startDate, selectedYear.endDate).slice(-10)
+        : Array.from({ length: 6 }, (_, index) =>
+            monthInputValue(
+              new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (5 - index), 1)),
+            ),
+          );
+      const buckets = new Map<string, { obtained: number; max: number; results: number }>();
+      for (const key of seriesKeys) buckets.set(key, { obtained: 0, max: 0, results: 0 });
+
+      let passed = 0;
+      for (const row of yearResults) {
+        const obtained = toNumber(row.marksObtained);
+        const max = toNumber(row.maxMarks);
+        if (max > 0 && (obtained / max) * 100 >= 40) passed += 1;
+        const key = monthKey(row.exam.startDate);
+        const bucket = buckets.get(key);
+        if (!bucket) continue;
+        bucket.obtained += obtained;
+        bucket.max += max;
+        bucket.results += 1;
+      }
+
+      const performance = seriesKeys.map((key) => {
+        const bucket = buckets.get(key)!;
+        return {
+          month: key,
+          label: monthRange(key)?.label ?? key,
+          average: bucket.max > 0 ? round1((bucket.obtained / bucket.max) * 100) : 0,
+          results: bucket.results,
+        };
+      });
+
+      dashboard.exams = {
+        total: examTotal,
+        results: resultAgg._count._all,
+        averageMarks,
+        passRate: yearResults.length > 0 ? round1((passed / yearResults.length) * 100) : 0,
+        performance,
+        recent: recentExams.map((exam) => ({
+          id: exam.id,
+          name: exam.name,
+          type: exam.type,
+          startDate: exam.startDate.toISOString().slice(0, 10),
+          className: exam.classLevel?.name ?? null,
+          results: exam._count.results,
+        })),
+        recentResults: recentResults.map((result) => {
+          const obtained = toNumber(result.marksObtained);
+          const max = toNumber(result.maxMarks);
+          return {
+            id: result.id,
+            studentName: fullName(result.student?.user ?? null),
+            admissionNo: result.student?.admissionNo ?? null,
+            exam: result.exam?.name ?? '',
+            subject: result.subject?.name ?? '',
+            marksObtained: obtained,
+            maxMarks: max,
+            percentage: max > 0 ? round1((obtained / max) * 100) : 0,
+            grade: result.grade,
+          };
+        }),
+      };
+    }
+
+    if (canAudit) {
+      const logs = await prisma.auditLog.findMany({
+        where: schoolWhere,
+        take: 8,
+        orderBy: { createdAt: 'desc' },
+        include: { user: { select: { firstName: true, lastName: true } } },
+      });
+      dashboard.activity = logs.map((log) => ({
+        id: log.id,
+        action: log.action,
+        entity: log.entity,
+        actor: fullName(log.user),
+        createdAt: log.createdAt.toISOString(),
+      }));
+    }
+
+    return dashboard;
   },
 };

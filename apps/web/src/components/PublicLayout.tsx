@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { PUBLIC_NAV } from '../lib/publicContent';
+import { useReveal } from '../lib/useReveal';
 import { Icon } from './Icon';
 
 const PORTAL_LINKS = [
@@ -16,6 +17,8 @@ export function PublicLayout() {
   useEffect(() => {
     setNavOpen(false);
   }, [location.pathname]);
+
+  useReveal();
 
   return (
     <div className="site">

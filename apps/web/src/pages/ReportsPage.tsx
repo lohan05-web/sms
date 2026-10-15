@@ -1,5 +1,5 @@
 import { DataTable } from '../components/DataTable';
-import { ErrorState, PageHeader, Spinner, StatCard, formatStatValue } from '../components/ui';
+import { ErrorState, PageHeader, SkeletonPanels, StatCard, formatStatValue } from '../components/ui';
 import { api } from '../lib/api';
 import { formatCurrency, formatDate, humanize } from '../lib/format';
 import { useSettings } from '../lib/settings';
@@ -88,7 +88,7 @@ export function ReportsPage() {
       />
 
       {state.loading ? (
-        <Spinner label="Loading reports…" />
+        <SkeletonPanels count={3} />
       ) : state.error ? (
         <ErrorState message={state.error} onRetry={state.reload} />
       ) : state.data ? (

@@ -20,6 +20,7 @@ export type LookupKind =
   | 'routes'
   | 'routeStops'
   | 'vehicles'
+  | 'drivers'
   | 'users'
   | 'exams'
   | 'homework'
@@ -109,7 +110,14 @@ const SOURCES: Record<LookupKind, LookupSource> = {
     },
   },
   feeCategories: { path: '/fees/categories', label: (row) => str(row.name) },
-  routes: { path: '/transport-routes', label: (row) => str(row.name) },
+  routes: {
+    path: '/transport-routes',
+    label: (row) => {
+      const name = str(row.name);
+      const code = str(row.routeCode) || str(row.code);
+      return code ? `${name} (${code})` : name;
+    },
+  },
   routeStops: {
     path: '/route-stops',
     label: (row) => {
@@ -118,7 +126,22 @@ const SOURCES: Record<LookupKind, LookupSource> = {
       return route ? `${route} · ${name}` : name;
     },
   },
-  vehicles: { path: '/vehicles', label: (row) => str(row.plateNumber) },
+  vehicles: {
+    path: '/vehicles',
+    label: (row) => {
+      const plate = str(row.plateNumber);
+      const code = str(row.vehicleCode);
+      return code ? `${plate} (${code})` : plate;
+    },
+  },
+  drivers: {
+    path: '/drivers',
+    label: (row) => {
+      const name = str(row.name);
+      const code = str(row.driverCode);
+      return code ? `${name} (${code})` : name;
+    },
+  },
   users: {
     path: '/users',
     label: (row) => {

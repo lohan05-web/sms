@@ -18,6 +18,12 @@ export const NAV_ITEMS: NavItem[] = [
     permission: Permission.REPORT_READ,
   },
   {
+    key: 'vehicle-details',
+    label: 'Vehicle Details',
+    path: '/resource/vehicle',
+    permission: Permission.TRANSPORT_READ,
+  },
+  {
     key: 'student-details',
     label: 'Student Details',
     path: '/resource/students',

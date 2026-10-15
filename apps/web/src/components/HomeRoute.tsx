@@ -1,7 +1,7 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { defaultPathForRole } from '../lib/routing';
-import { DashboardPage } from '../pages/DashboardPage';
+import { UniversityDashboardPage } from '../pages/UniversityDashboardPage';
 
 export function HomeRoute() {
   const { user } = useAuth();
@@ -9,5 +9,5 @@ export function HomeRoute() {
 
   const path = defaultPathForRole(user.role);
   if (path !== '/') return <Navigate to={path} replace />;
-  return <DashboardPage />;
+  return <UniversityDashboardPage />;
 }
