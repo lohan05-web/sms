@@ -168,6 +168,36 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.PARENT],
   },
   {
+    key: 'parent-timetable',
+    label: 'Timetable',
+    path: '/parent/timetable',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-results',
+    label: 'Results',
+    path: '/parent/results',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-invoices',
+    label: 'Invoices',
+    path: '/parent/invoices',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-homework',
+    label: 'Homework',
+    path: '/parent/homework',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-vehicle',
+    label: 'Vehicle',
+    path: '/parent/vehicle',
+    roles: [Role.PARENT],
+  },
+  {
     key: 'my-requests',
     label: 'My Requests',
     path: '/requests',

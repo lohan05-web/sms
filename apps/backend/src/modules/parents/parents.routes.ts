@@ -49,3 +49,15 @@ parentsRouter.get(
   validate(childParamSchema, 'params'),
   asyncHandler(parentsController.syllabus),
 );
+parentsRouter.get(
+  '/me/children/:studentId/invoices',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  asyncHandler(parentsController.invoices),
+);
+parentsRouter.get(
+  '/me/children/:studentId/vehicle',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  asyncHandler(parentsController.vehicle),
+);

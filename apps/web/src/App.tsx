@@ -1,10 +1,12 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { Role } from '@smartschool/shared';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HomeRoute } from './components/HomeRoute';
 import { Layout } from './components/Layout';
 import { ProtectedLayout } from './components/ProtectedLayout';
 import { PublicLayout } from './components/PublicLayout';
 import { RealtimeProvider } from './components/RealtimeProvider';
+import { RequireRole } from './components/RequireRole';
 import { AuthProvider } from './lib/auth';
 import { SettingsProvider } from './lib/settings';
 import { AttendanceMarkPage } from './pages/AttendanceMarkPage';
@@ -20,6 +22,11 @@ import { MyRequestsPage } from './pages/MyRequestsPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { ParentPortalPage } from './pages/ParentPortalPage';
+import { ParentHomeworkPage } from './pages/parent/ParentHomeworkPage';
+import { ParentInvoicesPage } from './pages/parent/ParentInvoicesPage';
+import { ParentResultsPage } from './pages/parent/ParentResultsPage';
+import { ParentTimetablePage } from './pages/parent/ParentTimetablePage';
+import { ParentVehiclePage } from './pages/parent/ParentVehiclePage';
 import { PaymentCreatePage } from './pages/PaymentCreatePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ReportsPage } from './pages/ReportsPage';
@@ -62,6 +69,13 @@ export function App() {
                     <Route index element={<HomeRoute />} />
                     <Route path="teacher" element={<TeacherPortalPage />} />
                     <Route path="parent" element={<ParentPortalPage />} />
+                    <Route element={<RequireRole roles={[Role.PARENT]} />}>
+                      <Route path="parent/timetable" element={<ParentTimetablePage />} />
+                      <Route path="parent/results" element={<ParentResultsPage />} />
+                      <Route path="parent/invoices" element={<ParentInvoicesPage />} />
+                      <Route path="parent/homework" element={<ParentHomeworkPage />} />
+                      <Route path="parent/vehicle" element={<ParentVehiclePage />} />
+                    </Route>
                     <Route path="requests" element={<MyRequestsPage />} />
                     <Route path="reports" element={<ReportsPage />} />
                     <Route path="report-cards" element={<ReportCardsPage />} />

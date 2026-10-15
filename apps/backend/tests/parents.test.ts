@@ -15,6 +15,7 @@ const {
   timetableEntryCount,
   timetableEntryFindMany,
   syllabusUnitCount,
+  subscriptionFindMany,
 } = vi.hoisted(() => ({
   guardianFindFirst: vi.fn(),
   linkFindMany: vi.fn(),
@@ -30,6 +31,7 @@ const {
   timetableEntryCount: vi.fn(),
   timetableEntryFindMany: vi.fn(),
   syllabusUnitCount: vi.fn(),
+  subscriptionFindMany: vi.fn(),
 }));
 
 vi.mock('../src/lib/prisma', () => ({
@@ -44,6 +46,7 @@ vi.mock('../src/lib/prisma', () => ({
     homework: { count: homeworkCount },
     timetableEntry: { count: timetableEntryCount, findMany: timetableEntryFindMany },
     syllabusUnit: { count: syllabusUnitCount },
+    transportSubscription: { findMany: subscriptionFindMany },
   },
 }));
 
@@ -206,5 +209,132 @@ describe('parentsService child scoping', () => {
     resultFindMany.mockResolvedValue([]);
 
     await expect(parentsService.childResults(parent, 'stu-1')).resolves.toEqual([]);
+  });
+});
+
+describe('parentsService parent-only features', () => {
+  beforeEach(() => {
+    guardianFindFirst.mockReset();
+    linkFindFirst.mockReset();
+    invoiceFindMany.mockReset();
+    subscriptionFindMany.mockReset();
+  });
+
+  it('scopes invoices to the parent own child and blocks foreign students', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue(null);
+
+    await expect(parentsService.childInvoices(parent, 'not-mine')).rejects.toThrow(
+      'You can only view information about your own children',
+    );
+    expect(invoiceFindMany).not.toHaveBeenCalled();
+
+    linkFindFirst.mockResolvedValue({ id: 'link-1' });
+    invoiceFindMany.mockResolvedValue([{ id: 'inv-1' }]);
+    await expect(parentsService.childInvoices(parent, 'stu-1')).resolves.toEqual([{ id: 'inv-1' }]);
+    expect(invoiceFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { studentId: 'stu-1' } }),
+    );
+  });
+
+  it('scopes vehicle details to the parent own child and blocks foreign students', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue(null);
+
+    await expect(parentsService.childVehicle(parent, 'not-mine')).rejects.toThrow(
+      'You can only view information about your own children',
+    );
+    expect(subscriptionFindMany).not.toHaveBeenCalled();
+
+    linkFindFirst.mockResolvedValue({ id: 'link-1' });
+    subscriptionFindMany.mockResolvedValue([]);
+    await expect(parentsService.childVehicle(parent, 'stu-1')).resolves.toEqual([]);
+    expect(subscriptionFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { studentId: 'stu-1' } }),
+    );
+  });
+
+  it('maps a transport subscription to the child route, stops and vehicles', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue({ id: 'link-1' });
+    subscriptionFindMany.mockResolvedValue([
+      {
+        id: 'sub-1',
+        status: 'ACTIVE',
+        startDate: new Date('2026-01-01'),
+        endDate: null,
+        academicYear: { id: 'ay-1', name: '2026', isCurrent: true },
+        stop: {
+          id: 'stop-1',
+          name: 'Main Gate',
+          sequence: 1,
+          pickupTime: '07:00',
+          dropTime: '15:00',
+        },
+        route: {
+          id: 'r1',
+          code: 'R1',
+          name: 'North Route',
+          description: null,
+          startPoint: 'Depot',
+          endPoint: 'School',
+          pickupTime: '07:00',
+          dropTime: '15:00',
+          fare: 100,
+          stops: [
+            {
+              id: 'stop-1',
+              name: 'Main Gate',
+              sequence: 1,
+              pickupTime: '07:00',
+              dropTime: '15:00',
+            },
+          ],
+          vehicles: [
+            {
+              id: 'v1',
+              vehicleCode: 'VEH-1',
+              plateNumber: 'ABC-123',
+              model: 'Coaster',
+              type: 'BUS',
+              capacity: 40,
+              status: 'ACTIVE',
+              insuranceExpiry: null,
+              driver: {
+                id: 'd1',
+                driverCode: 'DRV-1',
+                name: 'Dan',
+                phone: '555',
+                licenseNumber: 'L1',
+              },
+              driverName: 'Dan',
+              driverPhone: '555',
+            },
+          ],
+        },
+      },
+    ]);
+
+    const result = await parentsService.childVehicle(parent, 'stu-1');
+    expect(result).toHaveLength(1);
+    expect(result[0]!.route?.name).toBe('North Route');
+    expect(result[0]!.route?.stops).toHaveLength(1);
+    expect(result[0]!.vehicles[0]).toMatchObject({ plateNumber: 'ABC-123', driverName: 'Dan' });
+  });
+
+  it('derives the parent identity from the verified actor, never from input', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue({ id: 'link-1' });
+    invoiceFindMany.mockResolvedValue([]);
+
+    await parentsService.childInvoices(
+      { id: 'token-subject', role: 'PARENT', schoolId: 's1' },
+      'stu-1',
+    );
+
+    expect(guardianFindFirst).toHaveBeenCalledWith({ where: { userId: 'token-subject' } });
+    expect(linkFindFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { guardianId: 'g1', studentId: 'stu-1' } }),
+    );
   });
 });

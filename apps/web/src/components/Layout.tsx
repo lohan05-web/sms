@@ -13,6 +13,11 @@ const NAV_ICONS: Record<string, IconName> = {
   'vehicle-details': 'bus',
   'teacher-portal': 'home',
   'parent-portal': 'home',
+  'parent-timetable': 'timetable',
+  'parent-results': 'marks',
+  'parent-invoices': 'finance',
+  'parent-homework': 'homework',
+  'parent-vehicle': 'bus',
   'student-details': 'students',
   admissions: 'admissions',
   requests: 'requests',
@@ -42,6 +47,18 @@ const NAV_ICONS: Record<string, IconName> = {
 
 const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
   { title: null, keys: ['dashboard', 'vehicle-details', 'teacher-portal', 'parent-portal', 'my-requests'] },
+  {
+    // Parent-only navigation. These keys resolve to role-restricted NAV_ITEMS,
+    // so the section stays invisible for every non-parent role.
+    title: 'My Child',
+    keys: [
+      'parent-timetable',
+      'parent-results',
+      'parent-invoices',
+      'parent-homework',
+      'parent-vehicle',
+    ],
+  },
   {
     title: 'Academics',
     keys: [

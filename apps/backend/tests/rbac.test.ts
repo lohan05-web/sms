@@ -50,5 +50,11 @@ describe('RBAC', () => {
     expect(hasPermission(Role.PARENT, Permission.RESULT_READ)).toBe(false);
     expect(hasPermission(Role.PARENT, Permission.INVOICE_READ)).toBe(false);
     expect(hasPermission(Role.PARENT, Permission.PARENT_MANAGE)).toBe(false);
+    // Parent-only features are served exclusively through the scoped
+    // /parents/me/... endpoints; parents never hold the generic module
+    // permissions, so the shared admin/teacher/student APIs stay closed.
+    expect(hasPermission(Role.PARENT, Permission.TIMETABLE_READ)).toBe(false);
+    expect(hasPermission(Role.PARENT, Permission.HOMEWORK_READ)).toBe(false);
+    expect(hasPermission(Role.PARENT, Permission.TRANSPORT_READ)).toBe(false);
   });
 });

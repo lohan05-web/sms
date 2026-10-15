@@ -10,6 +10,32 @@ const timetableInclude = {
   teacher: { select: { id: true, user: { select: { firstName: true, lastName: true } } } },
 } satisfies Prisma.TimetableEntryInclude;
 
+// A child's transport subscription, resolved all the way to the transport
+// route, its stops and the vehicles (with drivers) assigned to that route.
+// Only ever queried for a student already proven to belong to the parent.
+const vehicleInclude = {
+  route: {
+    include: {
+      stops: { orderBy: { sequence: 'asc' } },
+      vehicles: {
+        include: {
+          driver: {
+            select: {
+              id: true,
+              driverCode: true,
+              name: true,
+              phone: true,
+              licenseNumber: true,
+            },
+          },
+        },
+      },
+    },
+  },
+  stop: true,
+  academicYear: { select: { id: true, name: true, isCurrent: true } },
+} satisfies Prisma.TransportSubscriptionInclude;
+
 function emptyAttendance(): Record<AttendanceStatus, number> {
   return { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0, HALF_DAY: 0 };
 }
@@ -317,6 +343,96 @@ export const parentsService = {
       where: { sectionId: student.sectionId },
       orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }],
       include: timetableInclude,
+    });
+  },
+
+  /** Recent invoices for one of the parent's own children (never others'). */
+  async childInvoices(actor: Actor, studentId: string) {
+    await assertChild(actor, studentId);
+    return prisma.invoice.findMany({
+      where: { studentId },
+      orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+      take: 50,
+      include: {
+        items: { select: { id: true, description: true, amount: true } },
+        payments: {
+          select: { id: true, amount: true, method: true, reference: true, paidAt: true },
+          orderBy: { paidAt: 'desc' },
+        },
+      },
+    });
+  },
+
+  /** Transport/vehicle assignment for one of the parent's own children. */
+  async childVehicle(actor: Actor, studentId: string) {
+    await assertChild(actor, studentId);
+    const subscriptions = await prisma.transportSubscription.findMany({
+      where: { studentId },
+      orderBy: { createdAt: 'desc' },
+      include: vehicleInclude,
+    });
+
+    return subscriptions.map((subscription) => {
+      const { route, stop, academicYear } = subscription;
+      return {
+        id: subscription.id,
+        status: subscription.status,
+        startDate: subscription.startDate,
+        endDate: subscription.endDate,
+        academicYear: academicYear
+          ? { id: academicYear.id, name: academicYear.name, isCurrent: academicYear.isCurrent }
+          : null,
+        stop: stop
+          ? {
+              id: stop.id,
+              name: stop.name,
+              sequence: stop.sequence,
+              pickupTime: stop.pickupTime,
+              dropTime: stop.dropTime,
+            }
+          : null,
+        route: route
+          ? {
+              id: route.id,
+              code: route.code,
+              name: route.name,
+              description: route.description,
+              startPoint: route.startPoint,
+              endPoint: route.endPoint,
+              pickupTime: route.pickupTime,
+              dropTime: route.dropTime,
+              fare: route.fare,
+              stops: route.stops.map((item) => ({
+                id: item.id,
+                name: item.name,
+                sequence: item.sequence,
+                pickupTime: item.pickupTime,
+                dropTime: item.dropTime,
+              })),
+            }
+          : null,
+        vehicles: (route?.vehicles ?? []).map((vehicle) => ({
+          id: vehicle.id,
+          vehicleCode: vehicle.vehicleCode,
+          plateNumber: vehicle.plateNumber,
+          model: vehicle.model,
+          type: vehicle.type,
+          capacity: vehicle.capacity,
+          status: vehicle.status,
+          insuranceExpiry: vehicle.insuranceExpiry,
+          driver: vehicle.driver
+            ? {
+                id: vehicle.driver.id,
+                driverCode: vehicle.driver.driverCode,
+                name: vehicle.driver.name,
+                phone: vehicle.driver.phone,
+                licenseNumber: vehicle.driver.licenseNumber,
+              }
+            : null,
+          driverName: vehicle.driverName,
+          driverPhone: vehicle.driverPhone,
+        })),
+      };
     });
   },
 

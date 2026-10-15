@@ -27,6 +27,14 @@ export const parentsController = {
     const r = await parentsService.childTimetable(actorFrom(req), req.params.studentId as string);
     res.status(200).json({ success: true, data: r });
   },
+  async invoices(req: Request, res: Response) {
+    const r = await parentsService.childInvoices(actorFrom(req), req.params.studentId as string);
+    res.status(200).json({ success: true, data: r });
+  },
+  async vehicle(req: Request, res: Response) {
+    const r = await parentsService.childVehicle(actorFrom(req), req.params.studentId as string);
+    res.status(200).json({ success: true, data: r });
+  },
   async syllabus(req: Request, res: Response) {
     const r = await parentsService.childSyllabus(actorFrom(req), req.params.studentId as string);
     res.status(200).json({ success: true, data: r });

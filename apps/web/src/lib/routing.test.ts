@@ -101,6 +101,33 @@ describe('canAccessPath', () => {
     expect(canAccessPath(Role.ADMIN, '/parent')).toBe(false);
     expect(canAccessPath(Role.TEACHER, '/parent')).toBe(false);
   });
+
+  it('gates the five parent-only feature routes to the parent role', () => {
+    const parentPaths = [
+      '/parent/timetable',
+      '/parent/results',
+      '/parent/invoices',
+      '/parent/homework',
+      '/parent/vehicle',
+    ];
+    const otherRoles = [
+      Role.SUPER_ADMIN,
+      Role.PRINCIPAL,
+      Role.ADMIN,
+      Role.TEACHER,
+      Role.ACCOUNTANT,
+      Role.STUDENT,
+      Role.LIBRARIAN,
+      Role.TRANSPORT_MANAGER,
+    ];
+
+    for (const path of parentPaths) {
+      expect(canAccessPath(Role.PARENT, path), `parent ${path}`).toBe(true);
+      for (const role of otherRoles) {
+        expect(canAccessPath(role, path), `${role} ${path}`).toBe(false);
+      }
+    }
+  });
 });
 
 describe('resolveLoginTarget', () => {
