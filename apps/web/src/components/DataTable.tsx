@@ -15,7 +15,7 @@ export function DataTable({
 }) {
   if (rows.length === 0) return <EmptyState message={emptyMessage} />;
   return (
-    <div className="table-wrap">
+    <div className="table-wrap table-wrap--responsive">
       <table className="table">
         <thead>
           <tr>
@@ -29,9 +29,15 @@ export function DataTable({
           {rows.map((row, index) => (
             <tr key={String(row.id ?? index)}>
               {columns.map((column) => (
-                <td key={column.header}>{column.render(row)}</td>
+                <td key={column.header} data-label={column.header}>
+                  {column.render(row)}
+                </td>
               ))}
-              {actions ? <td className="table__actions">{actions(row)}</td> : null}
+              {actions ? (
+                <td className="table__actions" data-label="Actions">
+                  {actions(row)}
+                </td>
+              ) : null}
             </tr>
           ))}
         </tbody>

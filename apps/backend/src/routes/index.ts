@@ -3,6 +3,7 @@ import { authRouter } from '../modules/auth/auth.routes';
 import { healthRouter } from '../modules/health/health.routes';
 import { usersRouter } from '../modules/users/users.routes';
 import { studentsRouter } from '../modules/students/students.routes';
+import { admissionsRouter } from '../modules/admissions/admissions.routes';
 import { teachersRouter } from '../modules/teachers/teachers.routes';
 import { guardiansRouter } from '../modules/guardians/guardians.routes';
 import { parentsRouter } from '../modules/parents/parents.routes';
@@ -34,8 +35,12 @@ import { homeworkAttachmentsRouter } from '../modules/homework-attachments/homew
 import { homeworkSubmissionsRouter } from '../modules/homework-submissions/homework-submissions.routes';
 import { timetableRouter } from '../modules/timetable/timetable.routes';
 import { syllabusRouter } from '../modules/syllabus/syllabus.routes';
+import { lessonPlansRouter } from '../modules/lesson-plans/lesson-plans.routes';
+import { learningContentRouter } from '../modules/learning-content/learning-content.routes';
+import { serviceRequestsRouter } from '../modules/service-requests/service-requests.routes';
 import { notificationsRouter } from '../modules/notifications/notifications.routes';
 import { conversationsRouter } from '../modules/messaging/messaging.routes';
+import { contactRouter } from '../modules/contact/contact.routes';
 
 export const apiRouter = Router();
 
@@ -43,6 +48,7 @@ apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
 apiRouter.use('/users', usersRouter);
 apiRouter.use('/students', studentsRouter);
+apiRouter.use('/admissions', admissionsRouter);
 apiRouter.use('/teachers', teachersRouter);
 apiRouter.use('/guardians', guardiansRouter);
 apiRouter.use('/parents', parentsRouter);
@@ -74,5 +80,9 @@ apiRouter.use('/homework-attachments', homeworkAttachmentsRouter);
 apiRouter.use('/homework-submissions', homeworkSubmissionsRouter);
 apiRouter.use('/timetable', timetableRouter);
 apiRouter.use('/syllabus', syllabusRouter);
+apiRouter.use('/lesson-plans', lessonPlansRouter);
+apiRouter.use('/learning-content', learningContentRouter);
+apiRouter.use('/service-requests', serviceRequestsRouter);
 apiRouter.use('/notifications', notificationsRouter);
 apiRouter.use('/conversations', conversationsRouter);
+apiRouter.use('/contact', contactRouter);

@@ -9,11 +9,11 @@
     "declarationMap": false,
     "sourceMap": false,
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "paths": {
+      "vite": ["./node_modules/vite"],
       "@prisma/client": ["./src/stubs/prisma-client.ts"]
     }
   },
-  "include": ["src"],
+  "include": ["src", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

@@ -3,13 +3,16 @@ import type {
   JoiningBucket,
   JoiningReport,
   JoiningReportQuery,
+  ReportCardQuery,
   ReportRangeQuery,
 } from '@smartschool/shared';
 import {
   attendanceCountsFromRecord,
   attendanceMetrics,
+  buildReportCards,
   monthInputValue,
   monthRange,
+  type ReportCardInput,
 } from '@smartschool/shared';
 import type { AttendanceStatus, Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
@@ -95,6 +98,52 @@ function emptyAttendanceStatus(): Record<AttendanceStatus, number> {
   return { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0, HALF_DAY: 0 };
 }
 
+interface ReportCardStudentSummary {
+  id: string;
+  admissionNo: string;
+  rollNo: string | null;
+  name: string | null;
+}
+
+interface ExamResultRow {
+  studentId: string;
+  examId: string;
+  subjectId: string;
+  marksObtained: unknown;
+  maxMarks: unknown;
+  grade: string | null;
+  exam: { name: string; type: string | null; startDate: Date | null } | null;
+  subject: { name: string } | null;
+}
+
+function studentSummary(student: {
+  id: string;
+  admissionNo: string;
+  rollNo: string | null;
+  user: { firstName: string; lastName: string } | null;
+}): ReportCardStudentSummary {
+  return {
+    id: student.id,
+    admissionNo: student.admissionNo,
+    rollNo: student.rollNo,
+    name: student.user ? `${student.user.firstName} ${student.user.lastName}` : null,
+  };
+}
+
+function toReportRow(row: ExamResultRow): ReportCardInput {
+  return {
+    examId: row.examId,
+    examName: row.exam?.name ?? '',
+    examType: row.exam?.type ?? null,
+    date: row.exam?.startDate ?? null,
+    subjectId: row.subjectId,
+    subjectName: row.subject?.name ?? '',
+    marksObtained: row.marksObtained as number | string,
+    maxMarks: row.maxMarks as number | string,
+    grade: row.grade,
+  };
+}
+
 export const reportsService = {
   async dashboard(actor: Actor) {
     const schoolId = resolveSchoolScope(actor);
@@ -125,6 +174,8 @@ export const reportsService = {
       guardians,
       books,
       vehicles,
+      openAdmissions,
+      pendingRequests,
       invoiceAgg,
       invoiceGroups,
       paymentsAgg,
@@ -139,6 +190,10 @@ export const reportsService = {
       prisma.guardian.count({ where: schoolWhere }),
       prisma.book.count({ where: schoolWhere }),
       prisma.vehicle.count({ where: schoolWhere }),
+      prisma.admission.count({
+        where: { ...schoolWhere, status: { in: ['ENQUIRY', 'APPLIED', 'UNDER_REVIEW'] } },
+      }),
+      prisma.serviceRequest.count({ where: { ...schoolWhere, status: 'PENDING' } }),
       prisma.invoice.aggregate({
         where: invoiceWhere,
         _sum: { total: true, amountPaid: true, balance: true },
@@ -174,6 +229,10 @@ export const reportsService = {
         guardians,
         books,
         vehicles,
+      },
+      pipeline: {
+        openAdmissions,
+        pendingRequests,
       },
       finance: {
         invoices: invoiceAgg._count._all,
@@ -406,6 +465,77 @@ export const reportsService = {
         studentPercent: percentChange(current.students, previous.students),
         teacherPercent: percentChange(current.teachers, previous.teachers),
       },
+    };
+  },
+
+  /**
+   * Report cards built from existing exam results. Pass a `studentId` for a
+   * single printable card bundle, or a `sectionId` for every student in it.
+   */
+  async reportCards(query: ReportCardQuery, actor: Actor) {
+    const schoolId = resolveSchoolScope(actor);
+
+    if (query.studentId) {
+      const student = await prisma.studentProfile.findUnique({
+        where: { id: query.studentId },
+        include: { user: { select: { firstName: true, lastName: true } } },
+      });
+      if (!student) throw ApiError.notFound('Student not found');
+      if (schoolId && student.schoolId !== schoolId) throw ApiError.forbidden('Access denied');
+      const rows = await prisma.examResult.findMany({
+        where: { studentId: student.id },
+        include: { exam: true, subject: true },
+        orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+      });
+      const built = buildReportCards(rows.map(toReportRow));
+      return {
+        student: studentSummary(student),
+        reportCards: built.reportCards,
+        overall: built.overall,
+      };
+    }
+
+    const sectionId = query.sectionId as string;
+    const section = await prisma.section.findUnique({
+      where: { id: sectionId },
+      include: { classLevel: true },
+    });
+    if (!section) throw ApiError.notFound('Section not found');
+    if (schoolId && section.classLevel.schoolId !== schoolId) {
+      throw ApiError.forbidden('Access denied');
+    }
+
+    const students = await prisma.studentProfile.findMany({
+      where: { sectionId },
+      include: { user: { select: { firstName: true, lastName: true } } },
+      orderBy: [{ rollNo: 'asc' }, { admissionNo: 'asc' }],
+    });
+    const ids = students.map((student) => student.id);
+    const results: ExamResultRow[] = ids.length
+      ? await prisma.examResult.findMany({
+          where: { studentId: { in: ids } },
+          include: { exam: true, subject: true },
+          orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
+        })
+      : [];
+
+    const byStudent = new Map<string, ReportCardInput[]>();
+    for (const row of results) {
+      const list = byStudent.get(row.studentId) ?? [];
+      list.push(toReportRow(row));
+      byStudent.set(row.studentId, list);
+    }
+
+    return {
+      section: { id: section.id, name: section.name, classLevel: section.classLevel.name },
+      students: students.map((student) => {
+        const built = buildReportCards(byStudent.get(student.id) ?? []);
+        return {
+          student: studentSummary(student),
+          reportCards: built.reportCards,
+          overall: built.overall,
+        };
+      }),
     };
   },
 };

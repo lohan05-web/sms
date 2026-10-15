@@ -9,6 +9,8 @@ const {
   guardianCount,
   bookCount,
   vehicleCount,
+  admissionCount,
+  serviceRequestCount,
   invoiceAggregate,
   invoiceGroupBy,
   paymentAggregate,
@@ -25,6 +27,8 @@ const {
   guardianCount: vi.fn(),
   bookCount: vi.fn(),
   vehicleCount: vi.fn(),
+  admissionCount: vi.fn(),
+  serviceRequestCount: vi.fn(),
   invoiceAggregate: vi.fn(),
   invoiceGroupBy: vi.fn(),
   paymentAggregate: vi.fn(),
@@ -44,6 +48,8 @@ vi.mock('../src/lib/prisma', () => ({
     guardian: { count: guardianCount },
     book: { count: bookCount },
     vehicle: { count: vehicleCount },
+    admission: { count: admissionCount },
+    serviceRequest: { count: serviceRequestCount },
     invoice: { aggregate: invoiceAggregate, groupBy: invoiceGroupBy },
     payment: { aggregate: paymentAggregate },
     attendance: { groupBy: attendanceGroupBy },
@@ -67,6 +73,8 @@ describe('reportsService dashboard attendance', () => {
       guardianCount,
       bookCount,
       vehicleCount,
+      admissionCount,
+      serviceRequestCount,
       invoiceAggregate,
       invoiceGroupBy,
       paymentAggregate,
@@ -82,6 +90,8 @@ describe('reportsService dashboard attendance', () => {
     guardianCount.mockResolvedValue(0);
     bookCount.mockResolvedValue(0);
     vehicleCount.mockResolvedValue(0);
+    admissionCount.mockResolvedValue(0);
+    serviceRequestCount.mockResolvedValue(0);
     invoiceAggregate.mockResolvedValue({ _count: { _all: 0 }, _sum: {} });
     invoiceGroupBy.mockResolvedValue([]);
     paymentAggregate.mockResolvedValue({ _sum: { amount: null } });
@@ -117,6 +127,28 @@ describe('reportsService dashboard attendance', () => {
     for (const call of attendanceGroupBy.mock.calls) {
       expect(call[0].where.section).toEqual({ classLevel: { schoolId: 'school-1' } });
     }
+  });
+
+  it('reports open admissions and pending requests in the pipeline', async () => {
+    admissionCount.mockResolvedValue(4);
+    serviceRequestCount.mockResolvedValue(2);
+
+    const result = await reportsService.dashboard(admin);
+
+    expect(result.pipeline).toEqual({ openAdmissions: 4, pendingRequests: 2 });
+    expect(admissionCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          schoolId: 'school-1',
+          status: { in: ['ENQUIRY', 'APPLIED', 'UNDER_REVIEW'] },
+        }),
+      }),
+    );
+    expect(serviceRequestCount).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ schoolId: 'school-1', status: 'PENDING' }),
+      }),
+    );
   });
 });
 

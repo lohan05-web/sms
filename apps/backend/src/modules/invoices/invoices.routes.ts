@@ -1,6 +1,8 @@
 import {
   Permission,
   createInvoiceSchema,
+  feeDeskQuerySchema,
+  generateInvoicesSchema,
   idSchema,
   listInvoicesQuerySchema,
   updateInvoiceSchema,
@@ -21,6 +23,18 @@ invoicesRouter.get(
   requirePermission(Permission.INVOICE_READ),
   validate(listInvoicesQuerySchema, 'query'),
   asyncHandler(invoicesController.list),
+);
+invoicesRouter.get(
+  '/fee-desk',
+  requirePermission(Permission.INVOICE_READ),
+  validate(feeDeskQuerySchema, 'query'),
+  asyncHandler(invoicesController.feeDesk),
+);
+invoicesRouter.post(
+  '/generate',
+  requirePermission(Permission.INVOICE_MANAGE),
+  validate(generateInvoicesSchema),
+  asyncHandler(invoicesController.generate),
 );
 invoicesRouter.get(
   '/:id',

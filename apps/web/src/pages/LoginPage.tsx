@@ -3,15 +3,18 @@ import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError, type LoginPortal } from '../lib/api';
 import { useAuth } from '../lib/auth';
 import { resolveLoginTarget } from '../lib/routing';
+import { Icon } from '../components/Icon';
 
 interface PortalLoginProps {
   portal: LoginPortal;
   title: string;
   subtitle: string;
   badge: string;
+  headline: string;
+  highlights: string[];
 }
 
-function PortalLogin({ portal, title, subtitle, badge }: PortalLoginProps) {
+function PortalLogin({ portal, title, subtitle, badge, headline, highlights }: PortalLoginProps) {
   const { user, loading, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -41,53 +44,78 @@ function PortalLogin({ portal, title, subtitle, badge }: PortalLoginProps) {
 
   return (
     <div className="auth">
-      <form className="auth__card" onSubmit={onSubmit}>
-        <div className="brand brand--stacked">
+      <aside className="auth__aside">
+        <div className="brand">
           <span className="brand__mark">SS</span>
           <span className="brand__text">SmartSchool</span>
         </div>
-        <h1 className="auth__title">{title}</h1>
-        <p className="auth__subtitle">{subtitle}</p>
-
-        {error ? <div className="alert alert--error">{error}</div> : null}
-
-        <label className="field">
-          <span className="field__label">Email</span>
-          <input
-            className="field__input"
-            type="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="you@school.edu"
-          />
-        </label>
-
-        <label className="field">
-          <span className="field__label">Password</span>
-          <input
-            className="field__input"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-          />
-        </label>
-
-        <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-
-        <p className="auth__subtitle">{badge}</p>
-        <div className="auth__links">
-          <Link to="/login">Admin</Link>
-          <Link to="/login/teacher">Teacher</Link>
-          <Link to="/login/parent">Parent</Link>
+        <div className="auth__aside-inner">
+          <h2 className="auth__tagline">{headline}</h2>
+          <ul className="auth__features">
+            {highlights.map((item) => (
+              <li key={item}>
+                <span className="auth__feature-icon">
+                  <Icon name="check" size={14} />
+                </span>
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
-      </form>
+        <p className="auth__aside-footer">
+          © {new Date().getFullYear()} SmartSchool · School Management System
+        </p>
+      </aside>
+
+      <main className="auth__main">
+        <form className="auth__card" onSubmit={onSubmit}>
+          <div className="brand brand--stacked">
+            <span className="brand__mark">SS</span>
+            <span className="brand__text">SmartSchool</span>
+          </div>
+          <h1 className="auth__title">{title}</h1>
+          <p className="auth__subtitle">{subtitle}</p>
+
+          {error ? <div className="alert alert--error">{error}</div> : null}
+
+          <label className="field">
+            <span className="field__label">Email</span>
+            <input
+              className="field__input"
+              type="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="you@school.edu"
+            />
+          </label>
+
+          <label className="field">
+            <span className="field__label">Password</span>
+            <input
+              className="field__input"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+            />
+          </label>
+
+          <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
+            {submitting ? 'Signing in…' : 'Sign in'}
+          </button>
+
+          <p className="auth__subtitle">{badge}</p>
+          <div className="auth__links">
+            <Link to="/login">Admin</Link>
+            <Link to="/login/teacher">Teacher</Link>
+            <Link to="/login/parent">Parent</Link>
+          </div>
+        </form>
+      </main>
     </div>
   );
 }
@@ -100,6 +128,12 @@ export function LoginPage() {
       title="Admin sign in"
       subtitle="Use your administrator account to continue."
       badge="Administrators manage teachers, parents and school data."
+      headline="Run your entire school from one place."
+      highlights={[
+        'Manage students, teachers, classes and sections',
+        'Track attendance, marks, homework and timetables',
+        'Monitor fees, invoices and financial performance',
+      ]}
     />
   );
 }
@@ -112,6 +146,12 @@ export function TeacherLoginPage() {
       title="Teacher sign in"
       subtitle="Sign in with the email and password issued by your admin."
       badge="Teacher accounts are created by an administrator."
+      headline="Everything you need for your classroom."
+      highlights={[
+        'Mark attendance in seconds',
+        'Record marks, grades and remarks',
+        'Assign homework and share resources',
+      ]}
     />
   );
 }
@@ -124,6 +164,12 @@ export function ParentLoginPage() {
       title="Parent sign in"
       subtitle="Sign in to follow your children's attendance, marks and results."
       badge="Parent accounts are created by an administrator."
+      headline="Stay close to your child's progress."
+      highlights={[
+        'Follow attendance and academic results',
+        'Review marks and teacher remarks',
+        'Keep up with homework and notices',
+      ]}
     />
   );
 }

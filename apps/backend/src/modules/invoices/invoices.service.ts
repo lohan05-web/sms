@@ -1,5 +1,7 @@
 ﻿import type {
   CreateInvoiceInput,
+  FeeDeskQuery,
+  GenerateInvoicesInput,
   ListInvoicesQuery,
   UpdateInvoiceInput,
 } from '@smartschool/shared';
@@ -126,5 +128,183 @@ export const invoicesService = {
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
     await prisma.invoice.delete({ where: { id } });
     return { success: true };
+  },
+
+  /** Issues one invoice per active student in a class/section from the fee structure. */
+  async generateInvoices(input: GenerateInvoicesInput, actor: Actor) {
+    const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
+    if (!schoolId) throw ApiError.badRequest('School is required');
+
+    let academicYearId = input.academicYearId;
+    if (!academicYearId) {
+      const current = await prisma.academicYear.findFirst({
+        where: { schoolId, isCurrent: true },
+      });
+      academicYearId =
+        current?.id ?? (await prisma.academicYear.findFirst({ where: { schoolId } }))?.id;
+    }
+    if (!academicYearId) throw ApiError.badRequest('Academic year required');
+
+    const structures = await prisma.feeStructure.findMany({
+      where: { schoolId, academicYearId, classLevelId: input.classLevelId },
+      include: { feeCategory: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    if (structures.length === 0) {
+      throw ApiError.badRequest('No fee structure found for this class and academic year');
+    }
+
+    const studentWhere: Prisma.StudentProfileWhereInput = { schoolId, status: 'ACTIVE' };
+    if (input.sectionId) studentWhere.sectionId = input.sectionId;
+    else studentWhere.section = { classLevelId: input.classLevelId };
+    const students = await prisma.studentProfile.findMany({
+      where: studentWhere,
+      select: { id: true },
+      orderBy: { admissionNo: 'asc' },
+    });
+
+    const structureIds = structures.map((structure) => structure.id);
+    const studentIds = students.map((student) => student.id);
+    const existing =
+      studentIds.length && structureIds.length
+        ? await prisma.invoiceItem.findMany({
+            where: {
+              feeStructureId: { in: structureIds },
+              invoice: { studentId: { in: studentIds }, academicYearId },
+            },
+            select: { invoice: { select: { studentId: true } } },
+          })
+        : [];
+    const alreadyInvoiced = new Set(existing.map((item) => item.invoice.studentId));
+
+    const issueDate = input.issueDate ?? new Date();
+    let created = 0;
+    let skipped = 0;
+
+    for (const [index, student] of students.entries()) {
+      if (alreadyInvoiced.has(student.id)) {
+        skipped += 1;
+        continue;
+      }
+      const subtotal = structures.reduce((sum, structure) => sum + Number(structure.amount), 0);
+      const total = Math.max(0, subtotal);
+      const invoiceNo = `INV-${Date.now()}-${index + 1}`;
+      const invoice = await prisma.invoice.create({
+        data: {
+          schoolId,
+          studentId: student.id,
+          academicYearId,
+          invoiceNo,
+          issueDate,
+          dueDate: input.dueDate,
+          subtotal,
+          discount: 0,
+          total,
+          balance: total,
+        },
+      });
+      await prisma.invoiceItem.createMany({
+        data: structures.map((structure) => ({
+          invoiceId: invoice.id,
+          description: `${structure.feeCategory.name} (${structure.frequency})`,
+          amount: structure.amount,
+          feeStructureId: structure.id,
+        })),
+      });
+      created += 1;
+    }
+
+    return { created, skipped, total: students.length, feeItems: structures.length };
+  },
+
+  /** Collection summary, per-class breakdown and the outstanding-balance defaulters list. */
+  async feeDesk(query: FeeDeskQuery, actor: Actor) {
+    const schoolId = resolveSchoolScope(actor);
+    const baseWhere: Prisma.InvoiceWhereInput = { status: { not: 'CANCELLED' } };
+    if (schoolId) baseWhere.schoolId = schoolId;
+    if (query.sectionId) baseWhere.student = { sectionId: query.sectionId };
+    else if (query.classLevelId) baseWhere.student = { section: { classLevelId: query.classLevelId } };
+
+    const [aggregate, statusGroups, classLevels, defaulters] = await Promise.all([
+      prisma.invoice.aggregate({
+        where: baseWhere,
+        _sum: { total: true, amountPaid: true, balance: true },
+        _count: { _all: true },
+      }),
+      prisma.invoice.groupBy({ by: ['status'], where: baseWhere, _count: { _all: true } }),
+      prisma.classLevel.findMany({
+        where: schoolId ? { schoolId } : {},
+        orderBy: { numericLevel: 'asc' },
+        select: { id: true, name: true },
+      }),
+      prisma.invoice.findMany({
+        where: { ...baseWhere, balance: { gt: 0 } },
+        orderBy: { balance: 'desc' },
+        take: 100,
+        include: {
+          student: {
+            include: {
+              user: { select: { firstName: true, lastName: true } },
+              section: { include: { classLevel: true } },
+            },
+          },
+        },
+      }),
+    ]);
+
+    const byStatus: Record<string, number> = {};
+    for (const group of statusGroups) byStatus[group.status] = group._count._all;
+
+    const byClassLevel = await Promise.all(
+      classLevels.map(async (level) => {
+        const where: Prisma.InvoiceWhereInput = {
+          ...baseWhere,
+          student: {
+            ...(query.sectionId ? { sectionId: query.sectionId } : {}),
+            section: { classLevelId: level.id },
+          },
+        };
+        const agg = await prisma.invoice.aggregate({
+          where,
+          _sum: { total: true, amountPaid: true, balance: true },
+          _count: { _all: true },
+        });
+        return {
+          id: level.id,
+          name: level.name,
+          invoices: agg._count._all,
+          billed: Number(agg._sum.total ?? 0),
+          collected: Number(agg._sum.amountPaid ?? 0),
+          outstanding: Number(agg._sum.balance ?? 0),
+        };
+      }),
+    );
+
+    return {
+      totals: {
+        invoices: aggregate._count._all,
+        billed: Number(aggregate._sum.total ?? 0),
+        collected: Number(aggregate._sum.amountPaid ?? 0),
+        outstanding: Number(aggregate._sum.balance ?? 0),
+      },
+      byStatus,
+      byClassLevel,
+      defaulters: defaulters.map((invoice) => {
+        const user = invoice.student.user;
+        return {
+          id: invoice.id,
+          invoiceNo: invoice.invoiceNo,
+          studentId: invoice.studentId,
+          studentName: user ? `${user.firstName} ${user.lastName}` : null,
+          admissionNo: invoice.student.admissionNo,
+          classLevel: invoice.student.section?.classLevel?.name ?? null,
+          section: invoice.student.section?.name ?? null,
+          dueDate: invoice.dueDate,
+          total: Number(invoice.total),
+          amountPaid: Number(invoice.amountPaid),
+          balance: Number(invoice.balance),
+        };
+      }),
+    };
   },
 };

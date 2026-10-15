@@ -114,5 +114,63 @@ export const Weekday = {
 } as const;
 export type Weekday = (typeof Weekday)[keyof typeof Weekday];
 
+export const AdmissionStatus = {
+  ENQUIRY: 'ENQUIRY',
+  APPLIED: 'APPLIED',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  ENROLLED: 'ENROLLED',
+} as const;
+export type AdmissionStatus = (typeof AdmissionStatus)[keyof typeof AdmissionStatus];
+
+export const AdmissionSource = {
+  WALK_IN: 'WALK_IN',
+  PHONE: 'PHONE',
+  WEBSITE: 'WEBSITE',
+  REFERRAL: 'REFERRAL',
+  ADVERTISEMENT: 'ADVERTISEMENT',
+  OTHER: 'OTHER',
+} as const;
+export type AdmissionSource = (typeof AdmissionSource)[keyof typeof AdmissionSource];
+
+export const LessonPlanStatus = {
+  DRAFT: 'DRAFT',
+  PLANNED: 'PLANNED',
+  IN_PROGRESS: 'IN_PROGRESS',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type LessonPlanStatus = (typeof LessonPlanStatus)[keyof typeof LessonPlanStatus];
+
+export const LearningContentType = {
+  LINK: 'LINK',
+  DOCUMENT: 'DOCUMENT',
+  VIDEO: 'VIDEO',
+  IMAGE: 'IMAGE',
+  NOTE: 'NOTE',
+} as const;
+export type LearningContentType = (typeof LearningContentType)[keyof typeof LearningContentType];
+
+export const ServiceRequestType = {
+  BONAFIDE_CERTIFICATE: 'BONAFIDE_CERTIFICATE',
+  TRANSFER_CERTIFICATE: 'TRANSFER_CERTIFICATE',
+  CHARACTER_CERTIFICATE: 'CHARACTER_CERTIFICATE',
+  STUDY_CERTIFICATE: 'STUDY_CERTIFICATE',
+  LEAVE: 'LEAVE',
+  COMPLAINT: 'COMPLAINT',
+  OTHER: 'OTHER',
+} as const;
+export type ServiceRequestType = (typeof ServiceRequestType)[keyof typeof ServiceRequestType];
+
+export const ServiceRequestStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED',
+} as const;
+export type ServiceRequestStatus = (typeof ServiceRequestStatus)[keyof typeof ServiceRequestStatus];
+
 export const Prisma = {};
 export type Prisma = unknown;

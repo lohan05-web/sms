@@ -1,11 +1,85 @@
 import { ROLE_LABELS } from '@smartschool/shared';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { initials } from '../lib/format';
-import { navForRole } from '../nav';
+import { navForRole, type NavItem } from '../nav';
+import { Icon, type IconName } from './Icon';
 import { NotificationBell } from './NotificationBell';
 import { Toaster } from './Toaster';
+
+const NAV_ICONS: Record<string, IconName> = {
+  dashboard: 'dashboard',
+  'teacher-portal': 'home',
+  'parent-portal': 'home',
+  'student-details': 'students',
+  admissions: 'admissions',
+  requests: 'requests',
+  'my-requests': 'requests',
+  'student-marks': 'marks',
+  mark: 'mark',
+  'teacher-details': 'teacher',
+  'parent-details': 'parents',
+  class: 'class',
+  sections: 'sections',
+  'class-roster': 'roster',
+  subject: 'subject',
+  attendance: 'attendance',
+  homework: 'homework',
+  'lesson-plans': 'lesson-plan',
+  'learning-content': 'learning-content',
+  books: 'books',
+  finance: 'finance',
+  'fee-desk': 'finance',
+  timetable: 'timetable',
+  notifications: 'bell',
+  messages: 'messages',
+  settings: 'settings',
+  reports: 'reports',
+  'report-cards': 'reports',
+};
+
+const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
+  { title: null, keys: ['dashboard', 'teacher-portal', 'parent-portal', 'my-requests'] },
+  {
+    title: 'Academics',
+    keys: [
+      'student-details',
+      'student-marks',
+      'mark',
+      'class',
+      'sections',
+      'class-roster',
+      'subject',
+      'attendance',
+      'homework',
+      'lesson-plans',
+      'learning-content',
+      'timetable',
+    ],
+  },
+  { title: 'People', keys: ['admissions', 'requests', 'teacher-details', 'parent-details'] },
+  { title: 'Operations', keys: ['books', 'finance', 'fee-desk'] },
+  { title: 'Reports', keys: ['reports', 'report-cards'] },
+  { title: 'Communication', keys: ['notifications', 'messages'] },
+  { title: 'System', keys: ['settings'] },
+];
+
+function groupNav(items: NavItem[]): { title: string | null; items: NavItem[] }[] {
+  const remaining = new Map(items.map((item) => [item.key, item]));
+  const groups: { title: string | null; items: NavItem[] }[] = [];
+
+  for (const section of NAV_SECTIONS) {
+    const groupItems = section.keys
+      .map((key) => remaining.get(key))
+      .filter((item): item is NavItem => Boolean(item));
+    groupItems.forEach((item) => remaining.delete(item.key));
+    if (groupItems.length > 0) groups.push({ title: section.title, items: groupItems });
+  }
+
+  if (remaining.size > 0) groups.push({ title: 'More', items: [...remaining.values()] });
+  return groups;
+}
 
 export function Layout() {
   const { user, logout } = useAuth();
@@ -17,8 +91,10 @@ export function Layout() {
     setNavOpen(false);
   }, [location.pathname]);
 
+  const items = useMemo(() => (user ? navForRole(user.role) : []), [user]);
+
   if (!user) return null;
-  const items = navForRole(user.role);
+  const groups = groupNav(items);
 
   const handleLogout = async () => {
     await logout();
@@ -32,19 +108,42 @@ export function Layout() {
           <span className="brand__mark">SS</span>
           <span className="brand__text">SmartSchool</span>
         </div>
-        <nav className="nav">
-          {items.map((item) => (
-            <NavLink
-              key={item.key}
-              to={item.path}
-              end={item.path === '/'}
-              className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}
-              onClick={() => setNavOpen(false)}
-            >
-              {item.label}
-            </NavLink>
+
+        <nav className="nav" aria-label="Main navigation">
+          {groups.map((group, index) => (
+            <div className="nav__section" key={group.title ?? `section-${index}`}>
+              {group.title ? <span className="nav__section-label">{group.title}</span> : null}
+              {group.items.map((item) => (
+                <NavLink
+                  key={item.key}
+                  to={item.path}
+                  end={item.path === '/'}
+                  className={({ isActive }) => `nav__link${isActive ? ' nav__link--active' : ''}`}
+                  onClick={() => setNavOpen(false)}
+                >
+                  <Icon name={NAV_ICONS[item.key] ?? 'dashboard'} size={18} />
+                  <span className="nav__link-label">{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
           ))}
         </nav>
+
+        <div className="sidebar__footer">
+          <div className="sidebar__user">
+            <span className="avatar">{initials(user.firstName, user.lastName)}</span>
+            <div className="sidebar__user-meta">
+              <span className="sidebar__user-name">
+                {user.firstName} {user.lastName}
+              </span>
+              <span className="sidebar__user-role">{ROLE_LABELS[user.role]}</span>
+            </div>
+          </div>
+          <button type="button" className="btn btn--ghost btn--block sidebar__logout" onClick={handleLogout}>
+            <Icon name="logout" size={16} />
+            Sign out
+          </button>
+        </div>
       </aside>
 
       {navOpen ? (
@@ -72,16 +171,13 @@ export function Layout() {
           <div className="topbar__spacer" />
           <NotificationBell />
           <div className="topbar__user">
-            <span className="avatar">{initials(user.firstName, user.lastName)}</span>
             <div className="topbar__meta">
               <span className="topbar__name">
                 {user.firstName} {user.lastName}
               </span>
               <span className="topbar__role">{ROLE_LABELS[user.role]}</span>
             </div>
-            <button type="button" className="btn btn--ghost" onClick={handleLogout}>
-              Sign out
-            </button>
+            <span className="avatar">{initials(user.firstName, user.lastName)}</span>
           </div>
         </header>
         <main className="content">

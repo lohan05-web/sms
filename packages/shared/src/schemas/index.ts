@@ -24,3 +24,8 @@ export * from './messaging.schema';
 export * from './homework.schema';
 export * from './timetable.schema';
 export * from './syllabus.schema';
+export * from './admission.schema';
+export * from './lesson-plan.schema';
+export * from './learning-content.schema';
+export * from './service-request.schema';
+export * from './contact.schema';

@@ -36,6 +36,18 @@ export const NAV_ITEMS: NavItem[] = [
     permission: Permission.RESULT_READ,
   },
   {
+    key: 'admissions',
+    label: 'Admissions',
+    path: '/resource/admissions',
+    permission: Permission.ADMISSION_READ,
+  },
+  {
+    key: 'requests',
+    label: 'Requests',
+    path: '/resource/service-requests',
+    permission: Permission.REQUEST_READ,
+  },
+  {
     key: 'teacher-details',
     label: 'Teacher Details',
     path: '/resource/teachers',
@@ -84,6 +96,18 @@ export const NAV_ITEMS: NavItem[] = [
     permission: Permission.HOMEWORK_READ,
   },
   {
+    key: 'lesson-plans',
+    label: 'Lesson Plans',
+    path: '/resource/lesson-plans',
+    permission: Permission.LESSON_READ,
+  },
+  {
+    key: 'learning-content',
+    label: 'Learning Content',
+    path: '/resource/learning-content',
+    permission: Permission.CONTENT_READ,
+  },
+  {
     key: 'books',
     label: 'Books',
     path: '/resource/books',
@@ -94,6 +118,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Finance',
     path: '/resource/payments',
     permission: Permission.PAYMENT_READ,
+  },
+  {
+    key: 'fee-desk',
+    label: 'Fee Desk',
+    path: '/fee-desk',
+    permission: Permission.INVOICE_READ,
   },
   {
     key: 'timetable',
@@ -132,10 +162,22 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.PARENT],
   },
   {
+    key: 'my-requests',
+    label: 'My Requests',
+    path: '/requests',
+    roles: [Role.PARENT, Role.STUDENT],
+  },
+  {
     key: 'reports',
     label: 'Reports',
     path: '/reports',
     permission: Permission.REPORT_READ,
+  },
+  {
+    key: 'report-cards',
+    label: 'Report Cards',
+    path: '/report-cards',
+    roles: [Role.PRINCIPAL, Role.ADMIN, Role.TEACHER],
   },
 ];
 

@@ -22,6 +22,16 @@ export const joiningReportQuerySchema = z.object({
 });
 export type JoiningReportQuery = z.infer<typeof joiningReportQuerySchema>;
 
+export const reportCardQuerySchema = z
+  .object({
+    studentId: z.string().cuid().optional(),
+    sectionId: z.string().cuid().optional(),
+  })
+  .refine((data) => Boolean(data.studentId) !== Boolean(data.sectionId), {
+    message: 'Provide exactly one of studentId or sectionId',
+  });
+export type ReportCardQuery = z.infer<typeof reportCardQuerySchema>;
+
 /** A count of people who joined, split by students and teachers. */
 export interface JoiningBucket {
   students: number;

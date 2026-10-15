@@ -150,6 +150,58 @@ enum Weekday {
   SUNDAY
 }
 
+enum AdmissionStatus {
+  ENQUIRY
+  APPLIED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  ENROLLED
+}
+
+enum AdmissionSource {
+  WALK_IN
+  PHONE
+  WEBSITE
+  REFERRAL
+  ADVERTISEMENT
+  OTHER
+}
+
+enum LessonPlanStatus {
+  DRAFT
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum LearningContentType {
+  LINK
+  DOCUMENT
+  VIDEO
+  IMAGE
+  NOTE
+}
+
+enum ServiceRequestType {
+  BONAFIDE_CERTIFICATE
+  TRANSFER_CERTIFICATE
+  CHARACTER_CERTIFICATE
+  STUDY_CERTIFICATE
+  LEAVE
+  COMPLAINT
+  OTHER
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
 // ---------------------------------------------------------------------------
 // Core: School & Users
 // ---------------------------------------------------------------------------
@@ -190,6 +242,10 @@ model School {
   timetableEntries TimetableEntry[]
   syllabusUnits   SyllabusUnit[]
   conversations   Conversation[]
+  admissions      Admission[]
+  lessonPlans     LessonPlan[]
+  learningContent LearningContent[]
+  serviceRequests ServiceRequest[]
 
   @@index([isActive])
 }
@@ -225,6 +281,11 @@ model User {
   conversationsCreated   Conversation[]            @relation("ConversationCreator")
   conversationMemberships ConversationParticipant[] @relation("ConversationParticipant")
   messagesSent           Message[]                 @relation("MessageSender")
+  admissionsCreated      Admission[]               @relation("AdmissionCreator")
+  lessonPlansCreated     LessonPlan[]              @relation("LessonPlanCreator")
+  learningContentCreated LearningContent[]         @relation("LearningContentCreator")
+  serviceRequestsRaised  ServiceRequest[]          @relation("ServiceRequestRequester")
+  serviceRequestsHandled ServiceRequest[]          @relation("ServiceRequestResolver")
 
   @@index([schoolId])
   @@index([role])
@@ -268,6 +329,7 @@ model AcademicYear {
   teacherAssignments     TeacherAssignment[]
   attendances            Attendance[]
   transportSubscriptions TransportSubscription[]
+  admissions             Admission[]
 
   @@unique([schoolId, name])
   @@index([schoolId])
@@ -302,6 +364,9 @@ model ClassLevel {
   feeStructures FeeStructure[]
   exams         Exam[]
   syllabusUnits SyllabusUnit[]
+  admissions    Admission[]
+  lessonPlans   LessonPlan[]
+  learningContent LearningContent[]
 
   @@unique([schoolId, name])
   @@index([schoolId])
@@ -325,6 +390,7 @@ model Section {
   attendances        Attendance[]
   homework           Homework[]
   timetableEntries   TimetableEntry[]
+  lessonPlans        LessonPlan[]
 
   @@unique([classLevelId, name])
   @@index([schoolId])
@@ -347,6 +413,8 @@ model Subject {
   homework           Homework[]
   timetableEntries   TimetableEntry[]
   syllabusUnits      SyllabusUnit[]
+  lessonPlans        LessonPlan[]
+  learningContent    LearningContent[]
 
   @@unique([schoolId, code])
   @@index([schoolId])
@@ -386,6 +454,7 @@ model TeacherProfile {
   sectionsAsTeacher Section[]           @relation("ClassTeacher")
   homework          Homework[]
   timetableEntries  TimetableEntry[]
+  lessonPlans       LessonPlan[]
 
   @@unique([schoolId, employeeNo])
   @@index([schoolId])
@@ -418,6 +487,7 @@ model StudentProfile {
   bookLoans              BookLoan[]
   transportSubscriptions TransportSubscription[]
   homeworkSubmissions    HomeworkSubmission[]
+  serviceRequests        ServiceRequest[]
 
   @@unique([schoolId, admissionNo])
   @@index([schoolId])
@@ -471,6 +541,139 @@ model TeacherAssignment {
   academicYear AcademicYear   @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, sectionId, subjectId, academicYearId])
+}
+
+// ---------------------------------------------------------------------------
+// Admissions & enquiries
+// ---------------------------------------------------------------------------
+
+model Admission {
+  id                 String          @id @default(cuid())
+  schoolId           String
+  applicantName      String
+  dateOfBirth        DateTime?       @db.Date
+  gender             Gender?
+  guardianName       String
+  guardianPhone      String
+  guardianEmail      String?
+  address            String?         @db.Text
+  previousSchool     String?
+  classLevelId       String?
+  academicYearId     String?
+  status             AdmissionStatus @default(ENQUIRY)
+  source             AdmissionSource @default(WALK_IN)
+  notes              String?         @db.Text
+  followUpDate       DateTime?       @db.Date
+  appliedAt          DateTime        @default(now())
+  decidedAt          DateTime?
+  enrolledStudentId  String?
+  createdById        String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+
+  school       School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  classLevel   ClassLevel?   @relation(fields: [classLevelId], references: [id], onDelete: SetNull)
+  academicYear AcademicYear? @relation(fields: [academicYearId], references: [id], onDelete: SetNull)
+  createdBy    User?         @relation("AdmissionCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([status])
+  @@index([classLevelId])
+  @@index([createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Lesson planning & learning content
+// ---------------------------------------------------------------------------
+
+model LessonPlan {
+  id              String           @id @default(cuid())
+  schoolId        String
+  subjectId       String
+  classLevelId    String
+  sectionId       String?
+  syllabusUnitId  String?
+  teacherId       String?
+  title           String
+  objectives      String?          @db.Text
+  activities      String?          @db.Text
+  resources       String?          @db.Text
+  assessment      String?          @db.Text
+  plannedDate     DateTime?        @db.Date
+  durationMinutes Int?
+  status          LessonPlanStatus @default(PLANNED)
+  notes           String?          @db.Text
+  createdById     String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  school       School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subject      Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classLevel   ClassLevel      @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  section      Section?        @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  syllabusUnit SyllabusUnit?   @relation(fields: [syllabusUnitId], references: [id], onDelete: SetNull)
+  teacher      TeacherProfile? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  createdBy    User?           @relation("LessonPlanCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([subjectId, classLevelId])
+  @@index([plannedDate])
+  @@index([status])
+}
+
+model LearningContent {
+  id           String               @id @default(cuid())
+  schoolId     String
+  subjectId    String?
+  classLevelId String?
+  title        String
+  description  String?              @db.Text
+  type         LearningContentType  @default(LINK)
+  url          String?              @db.Text
+  tags         String?
+  createdById  String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  school     School      @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  subject    Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  classLevel ClassLevel? @relation(fields: [classLevelId], references: [id], onDelete: SetNull)
+  createdBy  User?       @relation("LearningContentCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([subjectId])
+  @@index([type])
+}
+
+// ---------------------------------------------------------------------------
+// Service requests & certificates
+// ---------------------------------------------------------------------------
+
+model ServiceRequest {
+  id            String              @id @default(cuid())
+  schoolId      String
+  type          ServiceRequestType  @default(OTHER)
+  title         String
+  description   String?             @db.Text
+  status        ServiceRequestStatus @default(PENDING)
+  studentId     String?
+  requestedById String?
+  resolvedById  String?
+  response      String?             @db.Text
+  resolvedAt    DateTime?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  school      School          @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  student     StudentProfile? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  requestedBy User?           @relation("ServiceRequestRequester", fields: [requestedById], references: [id], onDelete: SetNull)
+  resolvedBy  User?           @relation("ServiceRequestResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([schoolId])
+  @@index([status])
+  @@index([type])
+  @@index([studentId])
+  @@index([requestedById])
 }
 
 // ---------------------------------------------------------------------------
@@ -988,8 +1191,28 @@ model SyllabusUnit {
   school     School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   subject    Subject    @relation(fields: [subjectId], references: [id], onDelete: Cascade)
   classLevel ClassLevel @relation(fields: [classLevelId], references: [id], onDelete: Cascade)
+  lessonPlans LessonPlan[]
 
   @@unique([subjectId, classLevelId, title])
   @@index([schoolId])
   @@index([subjectId, classLevelId])
+}
+
+// ---------------------------------------------------------------------------
+// Public website
+// ---------------------------------------------------------------------------
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String   @db.Text
+  source    String?  @default("website")
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+  @@index([createdAt])
 }

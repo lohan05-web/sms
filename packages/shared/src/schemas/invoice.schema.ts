@@ -39,3 +39,19 @@ export const listInvoicesQuerySchema = z.object({
   search: z.string().trim().min(1).max(120).optional(),
 });
 export type ListInvoicesQuery = z.infer<typeof listInvoicesQuerySchema>;
+
+export const generateInvoicesSchema = z.object({
+  schoolId: z.string().cuid().optional(),
+  academicYearId: z.string().cuid().optional(),
+  classLevelId: z.string().cuid(),
+  sectionId: z.string().cuid().optional(),
+  issueDate: z.coerce.date().optional(),
+  dueDate: z.coerce.date(),
+});
+export type GenerateInvoicesInput = z.infer<typeof generateInvoicesSchema>;
+
+export const feeDeskQuerySchema = z.object({
+  classLevelId: z.string().cuid().optional(),
+  sectionId: z.string().cuid().optional(),
+});
+export type FeeDeskQuery = z.infer<typeof feeDeskQuerySchema>;

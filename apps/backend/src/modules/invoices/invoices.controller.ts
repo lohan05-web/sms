@@ -1,3 +1,4 @@
+import type { FeeDeskQuery } from '@smartschool/shared';
 import type { Request, Response } from 'express';
 import type { Actor } from '../users/users.service';
 import { invoicesService } from './invoices.service';
@@ -29,6 +30,17 @@ export const invoicesController = {
   },
   async remove(req: Request, res: Response) {
     const r = await invoicesService.remove(req.params.id as string, actorFrom(req));
+    res.status(200).json({ success: true, data: r });
+  },
+  async generate(req: Request, res: Response) {
+    const r = await invoicesService.generateInvoices(req.body, actorFrom(req));
+    res.status(201).json({ success: true, data: r });
+  },
+  async feeDesk(req: Request, res: Response) {
+    const r = await invoicesService.feeDesk(
+      req.query as unknown as FeeDeskQuery,
+      actorFrom(req),
+    );
     res.status(200).json({ success: true, data: r });
   },
 };

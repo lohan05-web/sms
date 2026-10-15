@@ -1,10 +1,15 @@
 import type { JoiningMonthPoint, JoiningReport, JoiningYearPoint } from '@smartschool/shared';
+import { Permission, Role } from '@smartschool/shared';
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Icon, type IconName } from '../components/Icon';
 import { PageHeader, StatCard, Spinner, ErrorState, formatStatValue } from '../components/ui';
 import { api, buildQuery } from '../lib/api';
+import { useAuth } from '../lib/auth';
 import { monthOptions } from '../lib/attendanceTracker';
 import { useAsync } from '../lib/useAsync';
 import { formatCurrency } from '../lib/format';
+import { can } from '../lib/permissions';
 import { useSettings } from '../lib/settings';
 import { ForbiddenPage } from './ForbiddenPage';
 
@@ -17,6 +22,10 @@ interface AttendanceCard {
 
 interface DashboardData {
   counts: Record<string, number>;
+  pipeline: {
+    openAdmissions: number;
+    pendingRequests: number;
+  };
   finance: {
     invoices: number;
     totalBilled: number;
@@ -247,8 +256,90 @@ function JoiningSection() {
   );
 }
 
+interface QuickAction {
+  label: string;
+  description: string;
+  to: string;
+  icon: IconName;
+  permission?: Permission;
+  roles?: readonly Role[];
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    label: 'Fee Desk',
+    description: 'Collection, outstanding and defaulters',
+    to: '/fee-desk',
+    icon: 'finance',
+    permission: Permission.INVOICE_READ,
+  },
+  {
+    label: 'New Invoice',
+    description: 'Issue a fee invoice',
+    to: '/invoices/new',
+    icon: 'plus',
+    permission: Permission.INVOICE_MANAGE,
+  },
+  {
+    label: 'Record Payment',
+    description: 'Log a fee payment',
+    to: '/payments/new',
+    icon: 'check',
+    permission: Permission.PAYMENT_MANAGE,
+  },
+  {
+    label: 'Report Cards',
+    description: 'Build and print result cards',
+    to: '/report-cards',
+    icon: 'reports',
+    roles: [Role.PRINCIPAL, Role.ADMIN, Role.TEACHER],
+  },
+  {
+    label: 'Admissions',
+    description: 'Enquiries and applications',
+    to: '/resource/admissions',
+    icon: 'admissions',
+    permission: Permission.ADMISSION_READ,
+  },
+  {
+    label: 'Requests',
+    description: 'Certificates and service requests',
+    to: '/resource/service-requests',
+    icon: 'requests',
+    permission: Permission.REQUEST_READ,
+  },
+];
+
+function QuickActions({ role }: { role: Role }) {
+  const actions = QUICK_ACTIONS.filter((action) => {
+    if (action.roles && !action.roles.includes(role)) return false;
+    return !action.permission || can(role, action.permission);
+  });
+  if (actions.length === 0) return null;
+
+  return (
+    <section className="panel">
+      <h2 className="panel__title">Quick actions</h2>
+      <div className="quick-actions">
+        {actions.map((action) => (
+          <Link key={action.to} className="action-card" to={action.to}>
+            <span className="action-card__icon">
+              <Icon name={action.icon} size={18} />
+            </span>
+            <span className="action-card__body">
+              <span className="action-card__label">{action.label}</span>
+              <span className="action-card__desc">{action.description}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function DashboardPage() {
   const { currency } = useSettings();
+  const { user } = useAuth();
   const state = useAsync<DashboardData>(() => api.get<DashboardData>('/reports/dashboard'), []);
 
   if (state.forbidden) return <ForbiddenPage />;
@@ -263,6 +354,8 @@ export function DashboardPage() {
         <ErrorState message={state.error} onRetry={state.reload} />
       ) : state.data ? (
         <div className="dashboard">
+          {user ? <QuickActions role={user.role} /> : null}
+
           <JoiningSection />
 
           <section className="panel">
@@ -271,6 +364,26 @@ export function DashboardPage() {
               {Object.entries(state.data.counts).map(([key, value]) => (
                 <StatCard key={key} label={titleCase(key)} value={formatStatValue(value)} />
               ))}
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2 className="panel__title">Admissions &amp; requests</h2>
+            <div className="stat-grid">
+              <StatCard
+                label="Open admissions"
+                value={formatStatValue(state.data.pipeline.openAdmissions)}
+                hint="Enquiry, applied or under review"
+                icon="admissions"
+                tone="info"
+              />
+              <StatCard
+                label="Pending requests"
+                value={formatStatValue(state.data.pipeline.pendingRequests)}
+                hint="Awaiting action"
+                icon="requests"
+                tone="warning"
+              />
             </div>
           </section>
 
