@@ -27,6 +27,7 @@
     "prisma:assign-classes": "tsx prisma/assign-student-classes.ts",
     "prisma:assign-teachers": "tsx prisma/assign-teacher-classes.ts",
     "prisma:backfill-designations": "tsx prisma/backfill-teacher-designations.ts",
+    "smoke:exam-result": "tsx scripts/smoke-exam-result.ts",
     "postinstall": "prisma generate"
   },
   "prisma": {
