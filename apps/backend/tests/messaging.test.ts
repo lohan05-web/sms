@@ -14,6 +14,12 @@ const {
   messageCount,
   userFindMany,
   notificationCreateMany,
+  teacherProfileFindUnique,
+  studentProfileFindMany,
+  guardianFindFirst,
+  studentGuardianFindFirst,
+  studentProfileFindUnique,
+  teacherAssignmentFindFirst,
 } = vi.hoisted(() => ({
   participantFindUnique: vi.fn(),
   participantFindMany: vi.fn(),
@@ -28,6 +34,12 @@ const {
   messageCount: vi.fn(),
   userFindMany: vi.fn(),
   notificationCreateMany: vi.fn(),
+  teacherProfileFindUnique: vi.fn(),
+  studentProfileFindMany: vi.fn(),
+  guardianFindFirst: vi.fn(),
+  studentGuardianFindFirst: vi.fn(),
+  studentProfileFindUnique: vi.fn(),
+  teacherAssignmentFindFirst: vi.fn(),
 }));
 
 vi.mock('../src/lib/prisma', () => ({
@@ -51,6 +63,11 @@ vi.mock('../src/lib/prisma', () => ({
     },
     user: { findMany: userFindMany },
     notification: { createMany: notificationCreateMany },
+    teacherProfile: { findUnique: teacherProfileFindUnique },
+    studentProfile: { findMany: studentProfileFindMany, findUnique: studentProfileFindUnique },
+    guardian: { findFirst: guardianFindFirst },
+    studentGuardian: { findFirst: studentGuardianFindFirst },
+    teacherAssignment: { findFirst: teacherAssignmentFindFirst },
   },
 }));
 
@@ -59,6 +76,7 @@ import type { Actor } from '../src/modules/users/users.service';
 
 const admin: Actor = { id: 'u1', role: 'ADMIN', schoolId: 'school-1' };
 const parent: Actor = { id: 'u2', role: 'PARENT', schoolId: 'school-1' };
+const teacher: Actor = { id: 'u-teacher', role: 'TEACHER', schoolId: 'school-1' };
 
 const conversation = (overrides: Record<string, unknown> = {}) => ({
   id: 'c1',
@@ -108,6 +126,8 @@ describe('messagingService', () => {
     messageCount.mockReset();
     userFindMany.mockReset();
     notificationCreateMany.mockResolvedValue({ count: 1 });
+    teacherProfileFindUnique.mockReset();
+    studentProfileFindMany.mockReset();
   });
 
   it('creates a conversation with the actor and selected users', async () => {
@@ -192,5 +212,223 @@ describe('messagingService', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.unreadCount).toBe(2);
     expect(result.total).toBe(1);
+  });
+});
+
+describe('messagingService.createForStudents', () => {
+  beforeEach(() => {
+    participantFindUnique.mockReset();
+    participantFindMany.mockReset();
+    participantCount.mockReset();
+    participantUpdate.mockReset();
+    conversationFindUnique.mockReset();
+    conversationCreate.mockReset();
+    conversationUpdate.mockReset();
+    conversationDelete.mockReset();
+    messageCreate.mockReset();
+    messageFindMany.mockReset();
+    messageCount.mockReset();
+    userFindMany.mockReset();
+    notificationCreateMany.mockResolvedValue({ count: 1 });
+    teacherProfileFindUnique.mockReset();
+    studentProfileFindMany.mockReset();
+  });
+
+  /** A teacher assigned to section `sec1`, subject `sub1`, class `cl1`. */
+  const teacherScope = () => ({
+    id: 'tp1',
+    assignments: [{ sectionId: 'sec1', subjectId: 'sub1', section: { classLevelId: 'cl1' } }],
+    sectionsAsTeacher: [],
+  });
+
+  it('starts a conversation with students in a section the teacher teaches', async () => {
+    teacherProfileFindUnique.mockResolvedValue(teacherScope());
+    studentProfileFindMany.mockResolvedValue([
+      { id: 'st1', sectionId: 'sec1', userId: 'su1' },
+      { id: 'st2', sectionId: 'sec1', userId: 'su2' },
+    ]);
+    conversationCreate.mockResolvedValue(conversation({ subject: 'Field trip' }));
+
+    const result = await messagingService.createForStudents(
+      { subject: 'Field trip', body: 'Bring consent forms', sectionIds: ['sec1'] },
+      teacher,
+    );
+
+    expect(result.subject).toBe('Field trip');
+    expect(conversationCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          schoolId: 'school-1',
+          createdById: 'u-teacher',
+          participants: expect.objectContaining({
+            create: expect.arrayContaining([
+              expect.objectContaining({ userId: 'u-teacher' }),
+              expect.objectContaining({ userId: 'su1' }),
+              expect.objectContaining({ userId: 'su2' }),
+            ]),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('rejects a section the teacher is not assigned to', async () => {
+    teacherProfileFindUnique.mockResolvedValue(teacherScope());
+
+    await expect(
+      messagingService.createForStudents(
+        { subject: 'Hi', body: 'Hello', sectionIds: ['sec-other'] },
+        teacher,
+      ),
+    ).rejects.toThrow('You are not assigned to this section');
+    expect(studentProfileFindMany).not.toHaveBeenCalled();
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects an individually picked student outside the teacher sections', async () => {
+    teacherProfileFindUnique.mockResolvedValue(teacherScope());
+    studentProfileFindMany.mockResolvedValue([
+      { id: 'st9', sectionId: 'sec-other', userId: 'su9' },
+    ]);
+
+    await expect(
+      messagingService.createForStudents(
+        { subject: 'Hi', body: 'Hello', studentIds: ['st9'] },
+        teacher,
+      ),
+    ).rejects.toThrow('One or more selected students are not in your classes');
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects a student id that does not exist in the school', async () => {
+    teacherProfileFindUnique.mockResolvedValue(teacherScope());
+    studentProfileFindMany.mockResolvedValue([]);
+
+    await expect(
+      messagingService.createForStudents(
+        { subject: 'Hi', body: 'Hello', studentIds: ['st-missing'] },
+        teacher,
+      ),
+    ).rejects.toThrow('One or more selected students are not in your classes');
+  });
+
+  it('refuses to message when no selected student has a linked account', async () => {
+    teacherProfileFindUnique.mockResolvedValue(teacherScope());
+    studentProfileFindMany.mockResolvedValue([{ id: 'st1', sectionId: 'sec1', userId: null }]);
+
+    await expect(
+      messagingService.createForStudents(
+        { subject: 'Hi', body: 'Hello', sectionIds: ['sec1'] },
+        teacher,
+      ),
+    ).rejects.toThrow('None of the selected students have a linked account yet');
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+
+  it('refuses non-teacher actors', async () => {
+    await expect(
+      messagingService.createForStudents(
+        { subject: 'Hi', body: 'Hello', sectionIds: ['sec1'] },
+        admin,
+      ),
+    ).rejects.toThrow('Only teachers can message students');
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+});
+
+describe('messagingService.createForTeacher', () => {
+  beforeEach(() => {
+    conversationCreate.mockReset();
+    messageCreate.mockReset();
+    notificationCreateMany.mockResolvedValue({ count: 1 });
+    guardianFindFirst.mockReset();
+    studentGuardianFindFirst.mockReset();
+    studentProfileFindUnique.mockReset();
+    teacherAssignmentFindFirst.mockReset();
+  });
+
+  /** The parent is linked to `stu-1`, who sits in `sec1` and is taught by `tp-1`. */
+  function parentReachesTeacher() {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    studentGuardianFindFirst.mockResolvedValue({ id: 'link-1' });
+    studentProfileFindUnique.mockResolvedValue({
+      id: 'stu-1',
+      sectionId: 'sec1',
+      schoolId: 'school-1',
+    });
+    teacherAssignmentFindFirst.mockResolvedValue({
+      id: 'asg-1',
+      teacher: { userId: 'u-teacher' },
+    });
+    conversationCreate.mockResolvedValue(conversation({ subject: 'Homework' }));
+  }
+
+  it("starts a conversation with a teacher of the parent's own child", async () => {
+    parentReachesTeacher();
+
+    const result = await messagingService.createForTeacher(
+      { studentId: 'stu-1', teacherId: 'tp-1', subject: 'Homework', body: 'Question' },
+      parent,
+    );
+
+    expect(result.subject).toBe('Homework');
+    expect(conversationCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          schoolId: 'school-1',
+          createdById: 'u2',
+          participants: expect.objectContaining({
+            create: expect.arrayContaining([
+              expect.objectContaining({ userId: 'u2' }),
+              expect.objectContaining({ userId: 'u-teacher' }),
+            ]),
+          }),
+        }),
+      }),
+    );
+  });
+
+  it('refuses a child who is not linked to the parent', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    studentGuardianFindFirst.mockResolvedValue(null);
+
+    await expect(
+      messagingService.createForTeacher(
+        { studentId: 'stu-other', teacherId: 'tp-1', subject: 'Hi', body: 'Hello' },
+        parent,
+      ),
+    ).rejects.toThrow('You can only message teachers about your own children');
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+
+  it('refuses a teacher who does not teach the child', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    studentGuardianFindFirst.mockResolvedValue({ id: 'link-1' });
+    studentProfileFindUnique.mockResolvedValue({
+      id: 'stu-1',
+      sectionId: 'sec1',
+      schoolId: 'school-1',
+    });
+    teacherAssignmentFindFirst.mockResolvedValue(null);
+
+    await expect(
+      messagingService.createForTeacher(
+        { studentId: 'stu-1', teacherId: 'tp-other', subject: 'Hi', body: 'Hello' },
+        parent,
+      ),
+    ).rejects.toThrow('That teacher does not teach your child');
+    expect(conversationCreate).not.toHaveBeenCalled();
+  });
+
+  it('rejects actors without a parent profile', async () => {
+    guardianFindFirst.mockResolvedValue(null);
+
+    await expect(
+      messagingService.createForTeacher(
+        { studentId: 'stu-1', teacherId: 'tp-1', subject: 'Hi', body: 'Hello' },
+        teacher,
+      ),
+    ).rejects.toThrow('No parent profile is linked to this account');
+    expect(conversationCreate).not.toHaveBeenCalled();
   });
 });

@@ -24,6 +24,12 @@ import { prisma } from '../../lib/prisma';
 import { emitToSchool } from '../../lib/realtime';
 import { paginate, toSkipTake } from '../../utils/pagination';
 import { notifyUsers } from '../notifications/notifications.service';
+import {
+  assertClassLevelInScope,
+  assertSectionInScope,
+  assertStudentInScope,
+  resolveTeacherScope,
+} from '../teachers/teacher-scope';
 import type { Actor } from '../users/users.service';
 
 const SUMMARY_MAX_RECORDS = 5000;
@@ -102,6 +108,19 @@ export const attendancesService = {
       period = { kind: 'month', from: range.from, to: range.to, label: range.label };
     }
 
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      if (query.sectionId) assertSectionInScope(teacherScope, query.sectionId);
+      if (query.classLevelId) assertClassLevelInScope(teacherScope, query.classLevelId);
+      if (query.studentId) {
+        const requested = await prisma.studentProfile.findUnique({
+          where: { id: query.studentId },
+          select: { sectionId: true },
+        });
+        if (requested) assertStudentInScope(teacherScope, requested);
+      }
+    }
+
     const sectionScope: Prisma.SectionWhereInput = {};
     if (schoolId) sectionScope.classLevel = { schoolId };
     if (query.classLevelId) sectionScope.classLevelId = query.classLevelId;
@@ -109,6 +128,7 @@ export const attendancesService = {
     const where: Prisma.AttendanceWhereInput = { date: { gte: from, lte: to } };
     if (Object.keys(sectionScope).length > 0) where.section = sectionScope;
     if (query.sectionId) where.sectionId = query.sectionId;
+    else if (teacherScope) where.sectionId = { in: teacherScope.sectionIds };
     if (query.studentId) where.studentId = query.studentId;
 
     const records = await prisma.attendance.findMany({
@@ -134,6 +154,10 @@ export const attendancesService = {
     if (query.studentId) studentWhere.id = query.studentId;
     if (query.sectionId) studentWhere.sectionId = query.sectionId;
     else if (query.classLevelId) studentWhere.section = { classLevelId: query.classLevelId };
+    // Teachers additionally never see students outside their own sections.
+    if (teacherScope && !query.sectionId) {
+      studentWhere.sectionId = { in: teacherScope.sectionIds };
+    }
     const recordIds = [...byStudent.keys()];
     studentWhere.OR = [
       { status: 'ACTIVE' },
@@ -194,7 +218,25 @@ export const attendancesService = {
     if (query.classLevelId) {
       where.section = { ...(where.section as any), classLevelId: query.classLevelId };
     }
-    if (query.sectionId) where.sectionId = query.sectionId;
+    // Teachers only ever see attendance for their own sections; requested
+    // filters are validated against that scope instead of trusted.
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      if (query.classLevelId) assertClassLevelInScope(teacherScope, query.classLevelId);
+      if (query.studentId) {
+        const requested = await prisma.studentProfile.findUnique({
+          where: { id: query.studentId },
+          select: { sectionId: true },
+        });
+        if (requested) assertStudentInScope(teacherScope, requested);
+      }
+      if (query.sectionId) {
+        assertSectionInScope(teacherScope, query.sectionId);
+        where.sectionId = query.sectionId;
+      } else {
+        where.sectionId = { in: teacherScope.sectionIds };
+      }
+    } else if (query.sectionId) where.sectionId = query.sectionId;
     if (query.studentId) where.studentId = query.studentId;
     if (query.date) where.date = query.date;
     const items = await prisma.attendance.findMany({
@@ -216,6 +258,8 @@ export const attendancesService = {
     const scope = resolveSchoolScope(actor);
     if (scope && att.section.classLevel.schoolId !== scope)
       throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertSectionInScope(teacherScope, att.sectionId);
     return att;
   },
   async create(input: CreateAttendanceInput, actor: Actor) {
@@ -227,8 +271,18 @@ export const attendancesService = {
     });
     if (!section || section.classLevel.schoolId !== schoolId)
       throw ApiError.badRequest('Invalid section');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertSectionInScope(teacherScope, input.sectionId);
     const student = await prisma.studentProfile.findUnique({ where: { id: input.studentId } });
     if (!student || student.schoolId !== schoolId) throw ApiError.badRequest('Invalid student');
+    if (teacherScope) {
+      // A teacher may only mark attendance for students of their own sections,
+      // and can never record it on behalf of somebody else.
+      assertStudentInScope(teacherScope, student);
+      if (student.sectionId !== input.sectionId) {
+        throw ApiError.badRequest('Student is not in the selected section');
+      }
+    }
     if (student.sectionId && student.sectionId !== input.sectionId) {
       // Be tolerant if sectionId differs in legacy data? Keep as is for stability
       // throw ApiError.badRequest('Student is not in the selected section');
@@ -247,7 +301,7 @@ export const attendancesService = {
         date: input.date,
         status: input.status,
         remarks: input.remark,
-        recordedById: input.takenById || actor.id,
+        recordedById: teacherScope ? actor.id : input.takenById || actor.id,
       },
     });
     emitToSchool(schoolId, SOCKET_EVENTS.ATTENDANCE_MARKED, {
@@ -287,6 +341,8 @@ export const attendancesService = {
     const scope = resolveSchoolScope(actor);
     if (scope && existing.section.classLevel.schoolId !== scope)
       throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertSectionInScope(teacherScope, existing.sectionId);
     const att = await prisma.attendance.update({
       where: { id },
       data: {
@@ -331,6 +387,8 @@ export const attendancesService = {
     const scope = resolveSchoolScope(actor);
     if (scope && existing.section.classLevel.schoolId !== scope)
       throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertSectionInScope(teacherScope, existing.sectionId);
     await prisma.attendance.delete({ where: { id } });
     return { success: true };
   },

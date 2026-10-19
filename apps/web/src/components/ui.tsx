@@ -30,16 +30,27 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
 export function EmptyState({
   message,
   icon = 'inbox',
+  hint,
+  illustration,
 }: {
   message: string;
   icon?: IconName;
+  /** Optional secondary line giving the user a next step. */
+  hint?: string;
+  /** Optional artwork shown in place of the icon bubble. */
+  illustration?: ReactNode;
 }) {
   return (
     <div className="state state--empty">
-      <span className="state__icon">
-        <Icon name={icon} size={24} />
-      </span>
+      {illustration ? (
+        <span className="state__art">{illustration}</span>
+      ) : (
+        <span className="state__icon">
+          <Icon name={icon} size={24} />
+        </span>
+      )}
       <p>{message}</p>
+      {hint ? <span className="state__hint">{hint}</span> : null}
     </div>
   );
 }

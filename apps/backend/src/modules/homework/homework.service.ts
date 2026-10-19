@@ -7,6 +7,13 @@ import type { Prisma } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
 import { paginate, toSkipTake } from '../../utils/pagination';
+import {
+  assertHomeworkInScope,
+  assertSectionInScope,
+  assertSubjectInScope,
+  assertTeacherIdIsSelf,
+  resolveTeacherScope,
+} from '../teachers/teacher-scope';
 import type { Actor } from '../users/users.service';
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
@@ -65,6 +72,16 @@ export const homeworkService = {
     if (query.subjectId) where.subjectId = query.subjectId;
     if (query.teacherId) where.teacherId = query.teacherId;
     if (query.search) where.title = { contains: query.search };
+    // Teachers only ever see homework for their own sections and subjects, and
+    // a requested teacher id may only ever be their own.
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      if (query.teacherId) assertTeacherIdIsSelf(teacherScope, query.teacherId);
+      if (query.sectionId) assertSectionInScope(teacherScope, query.sectionId);
+      if (query.subjectId) assertSubjectInScope(teacherScope, query.subjectId);
+      if (!query.sectionId) where.sectionId = { in: teacherScope.sectionIds };
+      if (!query.subjectId) where.subjectId = { in: teacherScope.subjectIds };
+    }
     if (query.from || query.to) {
       where.dueDate = {};
       if (query.from) where.dueDate.gte = query.from;
@@ -103,21 +120,32 @@ export const homeworkService = {
     if (!homework) throw ApiError.notFound('Homework not found');
     const scope = resolveSchoolScope(actor);
     if (scope && homework.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertHomeworkInScope(teacherScope, homework);
     return homework;
   },
 
   async create(input: CreateHomeworkInput, actor: Actor) {
     const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      // A teacher may only set homework for their own sections and subjects,
+      // and it is always attributed to themselves.
+      assertSectionInScope(teacherScope, input.sectionId);
+      assertSubjectInScope(teacherScope, input.subjectId);
+      assertTeacherIdIsSelf(teacherScope, input.teacherId);
+    }
+    const teacherId = teacherScope ? teacherScope.profileId : (input.teacherId ?? null);
     await assertSection(input.sectionId, schoolId);
     await assertSubject(input.subjectId, schoolId);
-    await assertTeacher(input.teacherId, schoolId);
+    await assertTeacher(teacherId, schoolId);
     const homework = await prisma.homework.create({
       data: {
         schoolId,
         sectionId: input.sectionId,
         subjectId: input.subjectId,
-        teacherId: input.teacherId ?? null,
+        teacherId,
         title: input.title,
         description: input.description ?? null,
         materials: input.materials ?? null,
@@ -141,6 +169,13 @@ export const homeworkService = {
     if (!existing) throw ApiError.notFound('Homework not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      assertHomeworkInScope(teacherScope, existing);
+      if (input.sectionId) assertSectionInScope(teacherScope, input.sectionId);
+      if (input.subjectId) assertSubjectInScope(teacherScope, input.subjectId);
+      if (input.teacherId !== undefined) assertTeacherIdIsSelf(teacherScope, input.teacherId);
+    }
     if (input.sectionId) await assertSection(input.sectionId, existing.schoolId);
     if (input.subjectId) await assertSubject(input.subjectId, existing.schoolId);
     if (input.teacherId !== undefined) await assertTeacher(input.teacherId, existing.schoolId);
@@ -166,6 +201,8 @@ export const homeworkService = {
     if (!existing) throw ApiError.notFound('Homework not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertHomeworkInScope(teacherScope, existing);
     await prisma.homework.delete({ where: { id } });
     return { success: true };
   },

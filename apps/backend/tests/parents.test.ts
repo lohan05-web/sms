@@ -5,6 +5,7 @@ const {
   linkFindMany,
   linkFindFirst,
   studentProfileFindUnique,
+  studentProfileUpdate,
   attendanceGroupBy,
   attendanceFindMany,
   attendanceFindFirst,
@@ -21,6 +22,7 @@ const {
   linkFindMany: vi.fn(),
   linkFindFirst: vi.fn(),
   studentProfileFindUnique: vi.fn(),
+  studentProfileUpdate: vi.fn(),
   attendanceGroupBy: vi.fn(),
   attendanceFindMany: vi.fn(),
   attendanceFindFirst: vi.fn(),
@@ -38,7 +40,7 @@ vi.mock('../src/lib/prisma', () => ({
   prisma: {
     guardian: { findFirst: guardianFindFirst },
     studentGuardian: { findMany: linkFindMany, findFirst: linkFindFirst },
-    studentProfile: { findUnique: studentProfileFindUnique },
+    studentProfile: { findUnique: studentProfileFindUnique, update: studentProfileUpdate },
     attendance: { groupBy: attendanceGroupBy, findMany: attendanceFindMany, findFirst: attendanceFindFirst },
     examResult: { findMany: resultFindMany },
     invoice: { findMany: invoiceFindMany },
@@ -336,5 +338,52 @@ describe('parentsService parent-only features', () => {
     expect(linkFindFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { guardianId: 'g1', studentId: 'stu-1' } }),
     );
+  });
+});
+
+describe('parentsService child photo', () => {
+  beforeEach(() => {
+    guardianFindFirst.mockReset();
+    linkFindFirst.mockReset();
+    studentProfileUpdate.mockReset();
+  });
+
+  it('blocks a photo update for a child who is not linked to the parent', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue(null);
+
+    await expect(
+      parentsService.childPhoto(parent, 'someone-else', 'data:image/png;base64,KID'),
+    ).rejects.toThrow('You can only view information about your own children');
+    expect(studentProfileUpdate).not.toHaveBeenCalled();
+  });
+
+  it('stores the photo on the parent own child and clears it with null', async () => {
+    guardianFindFirst.mockResolvedValue({ id: 'g1' });
+    linkFindFirst.mockResolvedValue({ id: 'link-1' });
+    studentProfileUpdate.mockResolvedValue({
+      id: 'stu-1',
+      photoUrl: 'data:image/png;base64,KID',
+    });
+
+    await expect(
+      parentsService.childPhoto(parent, 'stu-1', 'data:image/png;base64,KID'),
+    ).resolves.toEqual({ id: 'stu-1', photoUrl: 'data:image/png;base64,KID' });
+    expect(studentProfileUpdate).toHaveBeenCalledWith({
+      where: { id: 'stu-1' },
+      data: { photoUrl: 'data:image/png;base64,KID' },
+      select: { id: true, photoUrl: true },
+    });
+
+    studentProfileUpdate.mockResolvedValue({ id: 'stu-1', photoUrl: null });
+    await expect(parentsService.childPhoto(parent, 'stu-1', null)).resolves.toEqual({
+      id: 'stu-1',
+      photoUrl: null,
+    });
+    expect(studentProfileUpdate).toHaveBeenLastCalledWith({
+      where: { id: 'stu-1' },
+      data: { photoUrl: null },
+      select: { id: true, photoUrl: true },
+    });
   });
 });

@@ -1,7 +1,8 @@
 import type { ComponentType } from 'react';
 import { View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Permission } from '@smartschool/shared';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Permission, Role } from '@smartschool/shared';
 
 import { Icon, type IconName } from '../components/Icon';
 import { Layout } from '../components/Layout';
@@ -25,6 +26,8 @@ const TABS: {
   label: string;
   icon: IconName;
   permission?: Permission;
+  /** Roles that never see this tab (teachers get their own portal instead). */
+  excludeRoles?: readonly Role[];
   /** Highlights the Notifications tab with the live unread counter. */
   badge?: boolean;
   /** Only shown when the role can open at least one academic module. */
@@ -36,6 +39,8 @@ const TABS: {
     label: 'Dashboard',
     icon: 'dashboard',
     permission: Permission.REPORT_READ,
+    // The web dashboard is excluded for teachers, who have `/teacher` instead.
+    excludeRoles: [Role.TEACHER],
   },
   {
     name: 'academics',
@@ -63,8 +68,9 @@ const TABS: {
 /** Wraps a tab screen in the shared shell so every tab has the same chrome. */
 function withLayout(Screen: ComponentType): ComponentType {
   function Wrapped() {
+    // The tab bar already covers the bottom safe-area inset.
     return (
-      <Layout>
+      <Layout bottomInset={false}>
         <Screen />
       </Layout>
     );
@@ -84,6 +90,7 @@ function TabIcon({ name, color, size }: { name: IconName; color: string; size: n
 export function MainTabs() {
   const { user } = useAuth();
   const { unread } = useRealtime();
+  const insets = useSafeAreaInsets();
   if (!user) return null;
 
   // Only the tabs the role may open; Profile is always available, so the set
@@ -91,6 +98,7 @@ export function MainTabs() {
   const hasAcademicModules = academicNavForRole(user.role).length > 0;
   const allowed = TABS.filter((tab) => {
     if (tab.academic && !hasAcademicModules) return false;
+    if (tab.excludeRoles && tab.excludeRoles.includes(user.role)) return false;
     if (tab.permission && !can(user.role, tab.permission)) return false;
     return true;
   });
@@ -105,10 +113,13 @@ export function MainTabs() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
+        // An explicit height overrides the tab bar's own safe-area handling, so
+        // the bottom inset has to be added by hand — otherwise the tab labels
+        // end up underneath Android's navigation bar.
         tabBarStyle: {
-          height: 58,
+          height: 58 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 6,
+          paddingBottom: 6 + insets.bottom,
           borderTopWidth: 1,
           borderTopColor: colors.border,
           backgroundColor: colors.surface,

@@ -4,6 +4,7 @@ import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '../components/Icon';
 import { Layout } from '../components/Layout';
@@ -21,12 +22,27 @@ import { InfoScreen } from '../screens/admin/InfoScreen';
 import { MessagesScreen } from '../screens/admin/AdminMessagesScreen';
 import { SettingsScreen } from '../screens/admin/AdminSettingsScreen';
 import { TeacherPortalScreen } from '../screens/teacher/TeacherPortalScreen';
+import { TeacherClassesScreen } from '../screens/teacher/TeacherClassesScreen';
+import { TeacherStudentsScreen } from '../screens/teacher/TeacherStudentsScreen';
+import { TeacherAttendanceScreen } from '../screens/teacher/TeacherAttendanceScreen';
+import { TeacherAttendanceMarkScreen } from '../screens/teacher/TeacherAttendanceMarkScreen';
+import { TeacherAssignmentsScreen } from '../screens/teacher/TeacherAssignmentsScreen';
+import { TeacherMarksScreen } from '../screens/teacher/TeacherMarksScreen';
+import { TeacherHomeworkScreen } from '../screens/teacher/TeacherHomeworkScreen';
+import { TeacherTimetableScreen } from '../screens/teacher/TeacherTimetableScreen';
+import { TeacherProfileScreen } from '../screens/teacher/TeacherProfileScreen';
+import { TeacherLessonPlanScreen } from '../screens/teacher/TeacherLessonPlanScreen';
+import { TeacherMessagesScreen } from '../screens/teacher/TeacherMessagesScreen';
 import { ParentPortalScreen } from '../screens/parent/ParentPortalScreen';
 import { ParentTimetableScreen } from '../screens/parent/ParentTimetableScreen';
 import { ParentResultsScreen } from '../screens/parent/ParentResultsScreen';
 import { ParentInvoicesScreen } from '../screens/parent/ParentInvoicesScreen';
 import { ParentHomeworkScreen } from '../screens/parent/ParentHomeworkScreen';
 import { ParentVehicleScreen } from '../screens/parent/ParentVehicleScreen';
+import { ParentAttendanceScreen } from '../screens/parent/ParentAttendanceScreen';
+import { ParentSyllabusScreen } from '../screens/parent/ParentSyllabusScreen';
+import { ParentTeachersScreen } from '../screens/parent/ParentTeachersScreen';
+import { ParentNoticesScreen } from '../screens/parent/ParentNoticesScreen';
 
 const Drawer = createDrawerNavigator();
 
@@ -52,12 +68,27 @@ function withLayout(ScreenComponent: ComponentType): ComponentType {
 /** Drawer screens that carry their own Layout (everything except the tab host). */
 const SCREEN_SHELLS: { route: string; component: ComponentType }[] = [
   { route: ROUTES.teacher.portal, component: TeacherPortalScreen },
+  { route: ROUTES.teacher.classes, component: TeacherClassesScreen },
+  { route: ROUTES.teacher.students, component: TeacherStudentsScreen },
+  { route: ROUTES.teacher.attendance, component: TeacherAttendanceScreen },
+  { route: ROUTES.teacher.attendanceMark, component: TeacherAttendanceMarkScreen },
+  { route: ROUTES.teacher.assignments, component: TeacherAssignmentsScreen },
+  { route: ROUTES.teacher.marks, component: TeacherMarksScreen },
+  { route: ROUTES.teacher.homework, component: TeacherHomeworkScreen },
+  { route: ROUTES.teacher.lessonPlans, component: TeacherLessonPlanScreen },
+  { route: ROUTES.teacher.timetable, component: TeacherTimetableScreen },
+  { route: ROUTES.teacher.profile, component: TeacherProfileScreen },
+  { route: ROUTES.teacher.messages, component: TeacherMessagesScreen },
   { route: ROUTES.parent.portal, component: ParentPortalScreen },
   { route: ROUTES.parent.timetable, component: ParentTimetableScreen },
   { route: ROUTES.parent.results, component: ParentResultsScreen },
   { route: ROUTES.parent.invoices, component: ParentInvoicesScreen },
   { route: ROUTES.parent.homework, component: ParentHomeworkScreen },
   { route: ROUTES.parent.vehicle, component: ParentVehicleScreen },
+  { route: ROUTES.parent.attendance, component: ParentAttendanceScreen },
+  { route: ROUTES.parent.syllabus, component: ParentSyllabusScreen },
+  { route: ROUTES.parent.teachers, component: ParentTeachersScreen },
+  { route: ROUTES.parent.notices, component: ParentNoticesScreen },
   { route: ROUTES.admin.students, component: StudentDetailsScreen },
   { route: ROUTES.admin.marks, component: MarkManagementScreen },
   { route: ROUTES.admin.resource, component: ResourceListScreen },
@@ -98,6 +129,7 @@ export function MainNavigator() {
 /** Custom drawer content: profile header, role-filtered sections, sign-out. */
 function DrawerContent({ state, navigation }: DrawerContentComponentProps) {
   const { user, logout } = useAuth();
+  const insets = useSafeAreaInsets();
   if (!user) return null;
 
   const activeScreen = currentScreenName(state);
@@ -121,7 +153,7 @@ function DrawerContent({ state, navigation }: DrawerContentComponentProps) {
   return (
     <View style={styles.drawer}>
       <Pressable
-        style={styles.profileHeader}
+        style={[styles.profileHeader, { paddingTop: 20 + insets.top }]}
         onPress={openProfile}
         accessibilityRole="button"
         accessibilityLabel={`${name}, ${role}. Open profile`}
@@ -180,7 +212,7 @@ function DrawerContent({ state, navigation }: DrawerContentComponentProps) {
         ))}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: 12 + insets.bottom }]}>
         <Pressable
           style={styles.drawerSignOut}
           accessibilityRole="button"
@@ -228,6 +260,7 @@ const styles = {
     alignItems: 'center',
     gap: 12,
     paddingHorizontal: 16,
+    // Overridden with the top safe-area inset in the component.
     paddingTop: 20,
     paddingBottom: 16,
     backgroundColor: colors.primarySoft,
@@ -315,6 +348,7 @@ const styles = {
     borderTopWidth: 1,
     borderTopColor: colors.border,
     padding: 12,
+    // The bottom padding is extended with the safe-area inset in the component.
   },
   drawerSignOut: {
     flexDirection: 'row',

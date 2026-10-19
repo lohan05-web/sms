@@ -8,6 +8,11 @@ import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
 import { paginate, toSkipTake } from '../../utils/pagination';
 import { hashPassword } from '../../utils/password';
+import {
+  assertSectionInScope,
+  assertStudentInScope,
+  resolveTeacherScope,
+} from '../teachers/teacher-scope';
 import type { Actor } from '../users/users.service';
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
@@ -47,7 +52,17 @@ export const studentsService = {
     const where: Prisma.StudentProfileWhereInput = {};
     const schoolId = resolveSchoolScope(actor);
     if (schoolId) where.schoolId = schoolId;
-    if (query.sectionId) where.sectionId = query.sectionId;
+    // Teachers only ever see the students of their own sections; an explicitly
+    // requested section is validated against that scope instead of trusted.
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      if (query.sectionId) {
+        assertSectionInScope(teacherScope, query.sectionId);
+        where.sectionId = query.sectionId;
+      } else {
+        where.sectionId = { in: teacherScope.sectionIds };
+      }
+    } else if (query.sectionId) where.sectionId = query.sectionId;
     if (query.status) where.status = query.status;
     if (query.search) {
       where.OR = [
@@ -79,6 +94,8 @@ export const studentsService = {
     if (!student) throw ApiError.notFound('Student not found');
     const scope = resolveSchoolScope(actor);
     if (scope && student.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertStudentInScope(teacherScope, student);
     return student;
   },
   async create(input: CreateStudentInput, actor: Actor) {

@@ -53,8 +53,8 @@
   --info-soft: #e0f2fe;
   --info-ink: #075985;
 
-  /* Sidebar (always dark for contrast) */
-  --sidebar-bg: linear-gradient(180deg, #131c31 0%, #0b1220 100%);
+  /* Sidebar (always dark for contrast) — navy sliding into purple */
+  --sidebar-bg: linear-gradient(180deg, #0f1a3d 0%, #191247 62%, #241452 100%);
   --sidebar-text: #ccd5e6;
   --sidebar-muted: #8593ac;
   --sidebar-border: rgba(255, 255, 255, 0.07);
@@ -116,11 +116,631 @@
     --info-soft: rgba(56, 189, 248, 0.16);
     --info-ink: #7dd3fc;
 
-    --sidebar-bg: linear-gradient(180deg, #0f1830 0%, #080e1c 100%);
+    --sidebar-bg: linear-gradient(180deg, #0b1434 0%, #140d2e 65%, #1c103c 100%);
 
     --shadow: 0 8px 26px rgba(0, 0, 0, 0.42);
     --shadow-lg: 0 26px 55px rgba(0, 0, 0, 0.55);
     --ring: 0 0 0 4px rgba(99, 102, 241, 0.28);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2b. Theme: "navy" — the Teacher portal palette
+   Applied with `data-theme="navy"` on <html> (see Layout). Every rule in this
+   block is scoped, so Admin / Student / Parent keep the default palette
+   untouched while teachers get the deep-navy, blue/cyan/violet look.
+   -------------------------------------------------------------------------- */
+:root[data-theme='navy'] {
+  color-scheme: dark;
+
+  /* Surfaces — deep navy lit by cool blue/violet glows */
+  --bg: #060c1c;
+  --bg-gradient:
+    radial-gradient(1100px 540px at 92% -14%, rgba(99, 102, 241, 0.26) 0%, transparent 58%),
+    radial-gradient(820px 460px at -10% 6%, rgba(34, 211, 238, 0.12) 0%, transparent 60%),
+    radial-gradient(760px 520px at 50% 118%, rgba(124, 58, 237, 0.16) 0%, transparent 62%);
+  --surface: #0c1430;
+  --surface-2: #101a3c;
+  --surface-3: #16234a;
+  --overlay: rgba(3, 7, 20, 0.78);
+
+  /* Lines */
+  --border: #1b2a52;
+  --border-strong: #2a3a6b;
+
+  /* Text */
+  --text: #e9eefc;
+  --text-secondary: #b4c1dc;
+  --text-muted: #8090ae;
+
+  /* Brand — blue leads, violet + cyan accent */
+  --primary: #3b82f6;
+  --primary-hover: #2563eb;
+  --primary-soft: rgba(59, 130, 246, 0.16);
+  --primary-contrast: #ffffff;
+  --accent: #22d3ee;
+
+  /* Status */
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.15);
+  --success-ink: #6ee7b7;
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
+  --warning-ink: #fcd34d;
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.15);
+  --danger-ink: #fca5a5;
+  --info: #22d3ee;
+  --info-soft: rgba(34, 211, 238, 0.15);
+  --info-ink: #67e8f9;
+
+  /* Sidebar — deep blue sliding into violet, with a violet bloom */
+  --sidebar-bg:
+    radial-gradient(520px 300px at 118% -8%, rgba(139, 92, 246, 0.5) 0%, transparent 64%),
+    linear-gradient(176deg, #0a1330 0%, #161248 54%, #251258 100%);
+  --sidebar-text: #c8d4f0;
+  --sidebar-muted: #8593bd;
+  --sidebar-border: rgba(148, 163, 218, 0.14);
+  --sidebar-hover: rgba(129, 140, 248, 0.12);
+  --sidebar-active-bg: linear-gradient(90deg, rgba(59, 130, 246, 0.32), rgba(139, 92, 246, 0.24));
+  --sidebar-active-text: #ffffff;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.44);
+  --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 16px 36px -14px rgba(0, 0, 0, 0.66);
+  --shadow-lg: 0 30px 64px rgba(0, 0, 0, 0.62);
+  --ring: 0 0 0 4px rgba(59, 130, 246, 0.26);
+
+  --gradient-brand: linear-gradient(135deg, #2563eb 0%, #7c3aed 52%, #06b6d4 100%);
+}
+
+/* --- Navy chrome: sidebar, topbar, navigation ---------------------------- */
+:root[data-theme='navy'] .topbar {
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+:root[data-theme='navy'] .nav__section-label {
+  letter-spacing: 0.13em;
+  color: var(--sidebar-muted);
+}
+
+:root[data-theme='navy'] .nav__link {
+  position: relative;
+  border-radius: var(--radius-sm);
+  margin: 1px 0;
+}
+
+:root[data-theme='navy'] .nav__link::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, #22d3ee, #8b5cf6);
+  transform: translateY(-50%);
+  transition: height 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-theme='navy'] .nav__link:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+  transform: translateX(2px);
+}
+
+:root[data-theme='navy'] .nav__link:hover::before {
+  height: 40%;
+}
+
+:root[data-theme='navy'] .nav__link--active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-active-text);
+  box-shadow:
+    inset 0 0 0 1px rgba(148, 163, 218, 0.16),
+    0 8px 18px -10px rgba(59, 130, 246, 0.9);
+}
+
+:root[data-theme='navy'] .nav__link--active::before {
+  height: 56%;
+}
+
+:root[data-theme='navy'] .nav__link--active svg {
+  color: #a5f3fc;
+}
+
+:root[data-theme='navy'] .sidebar__user {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--sidebar-border);
+}
+
+/* --- Navy surfaces: panels, headers, tables, action tiles ---------------- */
+:root[data-theme='navy'] .panel {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.026), rgba(255, 255, 255, 0)),
+    var(--surface);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+:root[data-theme='navy'] .panel:hover {
+  border-color: color-mix(in srgb, #3b82f6 30%, var(--border));
+  box-shadow:
+    var(--shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+:root[data-theme='navy'] .page-header__icon {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 58%, #06b6d4 135%);
+  box-shadow: 0 10px 24px -10px rgba(59, 130, 246, 0.85);
+}
+
+:root[data-theme='navy'] .table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+:root[data-theme='navy'] .action-card {
+  background: var(--surface-2);
+}
+
+:root[data-theme='navy'] .action-card:hover {
+  border-color: color-mix(in srgb, #22d3ee 40%, var(--border));
+}
+
+/* Use background-color (not the shorthand) so the <select> chevron, which is
+   drawn with background-image, is preserved. */
+:root[data-theme='navy'] .field__input {
+  background-color: var(--surface-2);
+}
+
+/* Recharts falls back to near-black axis text, which disappears on navy. */
+:root[data-theme='navy'] .recharts-text {
+  fill: var(--text-muted);
+}
+
+:root[data-theme='navy'] .recharts-surface:focus {
+  outline: none;
+}
+
+/* The teacher hero keeps its own gradient — add cool accents + a cyan bloom
+   so it sits in the same palette as the navy chrome around it. */
+:root[data-theme='navy'] .teacher-hero {
+  background:
+    radial-gradient(680px 300px at 92% 120%, rgba(34, 211, 238, 0.28) 0%, transparent 62%),
+    radial-gradient(900px 260px at 8% -40%, rgba(255, 255, 255, 0.16), transparent 62%),
+    linear-gradient(115deg, #0b1638 0%, #241a6b 52%, #4a1d95 100%);
+  box-shadow:
+    0 24px 50px -26px rgba(36, 26, 107, 0.95),
+    inset 0 0 0 1px rgba(148, 163, 218, 0.16);
+}
+
+:root[data-theme='navy'] .teacher-hero__panel {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* --- Navy stat cards: 4-up on desktop → 2-up → 1-up ---------------------- */
+/* The generic .stat-grid uses auto-fill, which leaves a 4-card row looking
+   sparse on wide screens. The teacher portal pins an explicit column count so
+   the four summary cards always fill their row, then halves responsively. */
+:root[data-theme='navy'] .stat-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1180px) {
+  :root[data-theme='navy'] .stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  :root[data-theme='navy'] .stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2c. Theme: "parent" — the Parent portal palette
+   Navy blue + white with soft blue accents. Light, airy surfaces over a
+   deep-navy sidebar; applied with `data-theme="parent"` on <html> (see Layout).
+   Every rule is scoped, so Admin / Student / Teacher keep the default palette.
+   -------------------------------------------------------------------------- */
+:root[data-theme='parent'] {
+  color-scheme: light;
+
+  /* Brand — navy blue leads, sky accent */
+  --primary: #1d4ed8;
+  --primary-hover: #1a44bf;
+  --primary-soft: #e5edfe;
+  --primary-contrast: #ffffff;
+  --accent: #0ea5e9;
+
+  --info: #0369a1;
+  --info-soft: #e0f2fe;
+  --info-ink: #075985;
+
+  /* Sidebar — deep navy with a soft blue bloom */
+  --sidebar-bg:
+    radial-gradient(520px 300px at 118% -8%, rgba(37, 99, 235, 0.42) 0%, transparent 64%),
+    linear-gradient(178deg, #0b1c46 0%, #122a63 58%, #16357a 100%);
+  --sidebar-text: #cdd9f2;
+  --sidebar-muted: #8b9cbf;
+  --sidebar-border: rgba(148, 175, 224, 0.16);
+  --sidebar-hover: rgba(96, 145, 245, 0.14);
+  --sidebar-active-bg: linear-gradient(90deg, rgba(37, 99, 235, 0.42), rgba(14, 165, 233, 0.22));
+  --sidebar-active-text: #ffffff;
+
+  --ring: 0 0 0 4px rgba(29, 78, 216, 0.18);
+  --gradient-brand: linear-gradient(135deg, #1d4ed8 0%, #0ea5e9 100%);
+}
+
+/* --- Hero banner: navy gradient with a soft sky bloom -------------------- */
+.parent-hero {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 26px 28px;
+  border-radius: var(--radius-xl);
+  color: #fff;
+  background:
+    radial-gradient(680px 300px at 92% 120%, rgba(14, 165, 233, 0.34) 0%, transparent 62%),
+    radial-gradient(900px 260px at 8% -40%, rgba(255, 255, 255, 0.16), transparent 62%),
+    linear-gradient(115deg, #0b1c46 0%, #16357a 55%, #1d4ed8 100%);
+  box-shadow: 0 20px 44px -24px rgba(22, 53, 122, 0.85);
+  overflow: hidden;
+}
+
+.parent-hero__text {
+  min-width: 0;
+}
+
+/* Avatar + name sit together on the left of the hero. */
+.parent-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.parent-hero__identity-body {
+  min-width: 0;
+}
+
+.parent-hero__avatar-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.parent-hero__avatar {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 24px;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+}
+
+.parent-hero__avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.parent-hero__avatar-edit {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #1d4ed8;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 4px 12px -3px rgba(6, 16, 39, 0.7);
+  transition:
+    transform 0.16s ease,
+    background 0.16s ease;
+}
+
+.parent-hero__avatar-edit:hover {
+  background: #1a44bf;
+  transform: translateY(-1px);
+}
+
+.parent-hero__avatar-edit:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .parent-hero__avatar {
+    width: 62px;
+    height: 62px;
+    font-size: 20px;
+  }
+}
+
+.parent-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.parent-hero__title {
+  margin: 6px 0 4px;
+  font-size: 28px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.parent-hero__subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.parent-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Keep the hero buttons legible against the dark gradient. */
+.parent-hero .btn--primary {
+  background: #fff;
+  color: #16357a;
+}
+
+.parent-hero .btn--primary:hover:not(:disabled) {
+  background: #eef4ff;
+}
+
+.parent-hero .btn--ghost {
+  border-color: rgba(255, 255, 255, 0.28);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.parent-hero .btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.parent-hero__panel {
+  display: grid;
+  gap: 3px;
+  min-width: 176px;
+  padding: 18px 22px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+}
+
+.parent-hero__panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.parent-hero__panel-value {
+  font-size: 30px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.parent-hero__panel-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+/* --- Child switcher chips ------------------------------------------------ */
+.parent-children {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.parent-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition:
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.2s ease;
+}
+
+.parent-child:hover {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+
+.parent-child--active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.parent-child__avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.parent-child__avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.parent-child__name {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.parent-child__meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* --- Summary tiles: 3-up on desktop → 2-up → 1-up ------------------------ */
+.parent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+@media (max-width: 1100px) {
+  .parent-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .parent-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- Compact list rows used across the parent dashboard ------------------ */
+.parent-list {
+  display: grid;
+  gap: 10px;
+}
+
+.parent-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.parent-row__main {
+  min-width: 0;
+}
+
+.parent-row__title {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.parent-row__meta {
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.parent-row__aside {
+  flex: 0 0 auto;
+  text-align: right;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+/* --- Navy cards: consistent 24px padding --------------------------------- */
+:root[data-theme='navy'] .panel {
+  padding: 24px;
+}
+
+/* Section heading used inside a panel: icon + title + description.
+   Global and reusable (not navy-scoped) — introduced by the teacher portal
+   but safe for any role. */
+.panel__heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.panel__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.panel__heading .panel__title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.panel__desc {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* --- Responsive fallbacks for the navy shell ----------------------------- */
+@media (max-width: 760px) {
+  .page__body {
+    gap: 18px;
+  }
+
+  :root[data-theme='navy'] .panel {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root[data-theme='navy'] .topbar {
+    padding-inline: 16px;
   }
 }
 
@@ -486,6 +1106,15 @@ a:hover {
   max-width: 1360px;
   margin: 0 auto;
   animation: page-in 0.28s ease both;
+}
+
+/* Vertical rhythm for the sections stacked inside a page. `.page` itself has
+   no gap, so the teacher scaffold wraps its sections here to keep the stat
+   grid and cards from touching each other. */
+.page__body {
+  display: grid;
+  gap: 22px;
+  align-content: start;
 }
 
 @keyframes page-in {
@@ -1247,6 +1876,25 @@ select.field__input[multiple] {
 
 .state--empty .state__icon {
   background: var(--surface-3);
+  color: var(--text-muted);
+}
+
+/* Optional illustrated empty state. The artwork ships its own dark backdrop,
+   so it is clipped into a card — used by the teacher portal, whose navy
+   palette matches it. Icon-based states are unchanged. */
+.state__art {
+  display: block;
+  width: min(280px, 100%);
+  border-radius: var(--radius);
+  overflow: hidden;
+  line-height: 0;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.state__hint {
+  margin: 0;
+  max-width: 48ch;
+  font-size: 12.5px;
   color: var(--text-muted);
 }
 
@@ -6559,6 +7207,376 @@ body.modal-open {
 
   .vehicle-kpi:hover {
     transform: none;
+  }
+}
+
+/* ==========================================================================
+   Teacher portal — dedicated dashboard & role-scoped pages
+   ========================================================================== */
+
+/* Inline label + control used by the teacher page toolbars */
+.field--inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field--inline .field__label {
+  white-space: nowrap;
+}
+
+.avatar--lg {
+  width: 64px;
+  height: 64px;
+  font-size: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+/* --- Hero banner --------------------------------------------------------- */
+.teacher-hero {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 26px 28px;
+  border-radius: var(--radius-xl);
+  color: #fff;
+  background:
+    radial-gradient(900px 260px at 8% -40%, rgba(255, 255, 255, 0.14), transparent 62%),
+    linear-gradient(115deg, #101c3f 0%, #2c1a6e 55%, #4c1d95 100%);
+  box-shadow: 0 20px 44px -24px rgba(44, 26, 110, 0.85);
+  overflow: hidden;
+}
+
+.teacher-hero__text {
+  min-width: 0;
+}
+
+.teacher-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.teacher-hero__title {
+  margin: 6px 0 4px;
+  font-size: 28px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.teacher-hero__subtitle {
+  margin: 0;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.teacher-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* Keep the hero buttons legible against the dark gradient. */
+.teacher-hero .btn--primary {
+  background: #fff;
+  color: #2d1a78;
+}
+
+.teacher-hero .btn--primary:hover:not(:disabled) {
+  background: #f2f0ff;
+}
+
+.teacher-hero .btn--ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.teacher-hero .btn--ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.teacher-hero__panel {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  text-align: center;
+  min-width: 200px;
+  padding: 18px 24px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(6px);
+}
+
+.teacher-hero__panel-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.teacher-hero__panel-value {
+  font-size: 30px;
+  font-weight: 760;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.teacher-hero__panel-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+/* --- Two-up panels ------------------------------------------------------- */
+.teacher-columns,
+.teacher-split {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.teacher-chart-card__title {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- Attendance donut ---------------------------------------------------- */
+.attendance-donut {
+  display: grid;
+  grid-template-columns: minmax(0, 230px) 1fr;
+  gap: 20px;
+  align-items: center;
+}
+
+.attendance-donut__chart {
+  position: relative;
+}
+
+.attendance-donut__total {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  pointer-events: none;
+}
+
+.attendance-donut__total strong {
+  display: block;
+  font-size: 24px;
+  line-height: 1.1;
+}
+
+.attendance-donut__total span {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.attendance-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 11px;
+}
+
+.attendance-legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.attendance-legend__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+.attendance-legend__label {
+  color: var(--text-secondary);
+}
+
+.attendance-legend__value {
+  margin-left: auto;
+  font-weight: 650;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  margin-right: 7px;
+  vertical-align: middle;
+}
+
+/* --- Class cards --------------------------------------------------------- */
+.class-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
+  gap: 14px;
+}
+
+.class-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.class-card__badge {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.class-card__title {
+  margin: 0 0 2px;
+  font-size: 15px;
+}
+
+.class-card__meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.class-card__subjects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0;
+}
+
+.class-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* --- Homework / announcements -------------------------------------------- */
+.homework-card {
+  padding: 16px 18px;
+}
+
+.homework-card .panel__title {
+  margin-bottom: 0;
+}
+
+.homework-card__actions {
+  margin-top: 12px;
+}
+
+.announcements {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.announcement {
+  padding: 13px 15px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.announcement__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.announcement__title {
+  margin: 0;
+  font-size: 14px;
+}
+
+.announcement__body {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.announcement__time {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* --- Profile card -------------------------------------------------------- */
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.profile-card__body {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-card__name {
+  margin: 0;
+  font-size: 20px;
+}
+
+.profile-card__meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* --- Responsive tweaks --------------------------------------------------- */
+@media (max-width: 760px) {
+  .teacher-hero {
+    padding: 22px 20px;
+  }
+
+  .teacher-hero__title {
+    font-size: 23px;
+  }
+
+  .teacher-columns,
+  .teacher-split {
+    grid-template-columns: 1fr;
+  }
+
+  .attendance-donut {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .attendance-legend {
+    width: 100%;
   }
 }
 

@@ -1,3 +1,4 @@
+import { EmptyState } from './ui';
 import {
   buildWeekGrid,
   dayLabel,
@@ -20,7 +21,12 @@ export function TimetableDayList({
   emptyMessage?: string;
 }) {
   if (entries.length === 0) {
-    return <p className="muted">{emptyMessage ?? 'No classes scheduled yet.'}</p>;
+    return (
+      <EmptyState
+        message={emptyMessage ?? 'No classes scheduled yet.'}
+        icon="timetable"
+      />
+    );
   }
   const groups = groupTimetableByDay(entries);
   return (
@@ -61,7 +67,13 @@ export function TimetableDayList({
 /** Time-slot × weekday grid for a single section's week. */
 export function TimetableWeekGrid({ entries }: { entries: readonly TimetableItem[] }) {
   if (entries.length === 0) {
-    return <p className="muted">No classes scheduled for this section yet.</p>;
+    return (
+      <EmptyState
+        message="No classes are scheduled for this week yet."
+        hint="The weekly grid fills in once periods are allocated to your classes."
+        icon="timetable"
+      />
+    );
   }
   const { days, slots, cell } = buildWeekGrid(entries);
   return (

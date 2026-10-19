@@ -1,6 +1,8 @@
 import {
   Permission,
   createConversationSchema,
+  createParentConversationSchema,
+  createTeacherConversationSchema,
   idSchema,
   listConversationsQuerySchema,
   listMessagesQuerySchema,
@@ -35,6 +37,25 @@ conversationsRouter.post(
   requirePermission(Permission.MESSAGE_MANAGE),
   validate(createConversationSchema),
   asyncHandler(messagingController.create),
+);
+// Teacher compose: `MESSAGE_MANAGE` is an administrator capability, so teachers
+// use this scoped route instead. The service derives their sections from the
+// session and rejects any student outside them.
+conversationsRouter.post(
+  '/students',
+  requirePermission(Permission.MESSAGE_READ),
+  validate(createTeacherConversationSchema),
+  asyncHandler(messagingController.createForStudents),
+);
+// Parent compose: `MESSAGE_MANAGE` is an administrator capability, so a parent
+// who wants to contact a teacher uses this scoped route instead. The service
+// derives their children and the child's teachers from the session and rejects
+// anyone outside them.
+conversationsRouter.post(
+  '/teachers',
+  requirePermission(Permission.MESSAGE_READ),
+  validate(createParentConversationSchema),
+  asyncHandler(messagingController.createForTeacher),
 );
 conversationsRouter.get(
   '/:id',

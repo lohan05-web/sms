@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HeroScene, AnalyticsArt } from '../../components/illustrations';
+import { StatusBarTone } from '../../components/StatusBarTone';
 import {
   FeatureCard,
   PageHero,
@@ -28,12 +30,15 @@ const SITE_LINKS: { label: string; route: string }[] = [
 
 export function PublicHomeScreen() {
   const navigation = useNavigation<{ navigate: (route: string, params?: object) => void }>();
+  const insets = useSafeAreaInsets();
   return (
     <>
+      <StatusBarTone barStyle="light-content" />
       <PageHero
         eyebrow="SmartSchool"
         title="The all-in-one school platform"
         description="Run admissions, academics, finance and communication from one place — on the web, the classroom and the parent portal."
+        topInset={insets.top}
       >
         <View style={styles.heroActions}>
           <Pressable

@@ -2,6 +2,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import type { ComponentType } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROUTES } from './routes';
 import {
   PublicAboutScreen,
@@ -27,9 +28,10 @@ const Stack = createStackNavigator();
  */
 function withScroll(Component: ComponentType) {
   function Page() {
+    const insets = useSafeAreaInsets();
     return (
       <ScrollView
-        contentContainerStyle={styles.page}
+        contentContainerStyle={[styles.page, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         <Component />
@@ -108,6 +110,7 @@ export function PublicNavigator() {
 
 const styles = StyleSheet.create({
   page: {
+    // Extended with the bottom safe-area inset in the component.
     paddingBottom: 32,
   },
   headerSignIn: {

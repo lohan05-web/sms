@@ -8,6 +8,12 @@ export interface NavItem {
   permission?: Permission;
   /** When set, only these roles see the item (used for portal-only pages). */
   roles?: readonly Role[];
+  /**
+   * When set, these roles never see the item even though they hold the
+   * permission — used to hide generic pages in favour of the dedicated
+   * role-scoped equivalents (e.g. `/teacher/*` for teachers).
+   */
+  excludeRoles?: readonly Role[];
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -16,6 +22,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     path: '/',
     permission: Permission.REPORT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'vehicle-details',
@@ -28,18 +35,21 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Student Details',
     path: '/resource/students',
     permission: Permission.STUDENT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'student-marks',
     label: 'Student Marks',
     path: '/resource/exam-results',
     permission: Permission.RESULT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'mark',
     label: 'Mark',
     path: '/exams/marks',
     permission: Permission.RESULT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'admissions',
@@ -70,36 +80,42 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Class',
     path: '/resource/classes',
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'sections',
     label: 'Sections',
     path: '/resource/sections',
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'class-roster',
     label: 'Class Roster',
     path: '/class-roster',
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'subject',
     label: 'Subject',
     path: '/resource/subjects',
     permission: Permission.SUBJECT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'attendance',
     label: 'Attendance',
     path: '/resource/attendances',
     permission: Permission.ATTENDANCE_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'homework',
     label: 'Homework',
     path: '/resource/homework',
     permission: Permission.HOMEWORK_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'lesson-plans',
@@ -136,18 +152,21 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Timetable',
     path: '/timetable',
     permission: Permission.TIMETABLE_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'notifications',
     label: 'Notifications',
     path: '/notifications',
     permission: Permission.NOTIFICATION_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'messages',
     label: 'Messages',
     path: '/messages',
     permission: Permission.MESSAGE_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'settings',
@@ -157,8 +176,68 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     key: 'teacher-portal',
-    label: 'My Dashboard',
+    label: 'Dashboard',
     path: '/teacher',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-classes',
+    label: 'My Classes',
+    path: '/teacher/classes',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-students',
+    label: 'My Students',
+    path: '/teacher/students',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-attendance',
+    label: 'Attendance',
+    path: '/teacher/attendance',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-assignments',
+    label: 'Assignments',
+    path: '/teacher/assignments',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-marks',
+    label: 'Marks & Grades',
+    path: '/teacher/marks',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-homework',
+    label: 'Homework',
+    path: '/teacher/homework',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-timetable',
+    label: 'Timetable',
+    path: '/teacher/timetable',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-messages',
+    label: 'Messages',
+    path: '/teacher/messages',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-notifications',
+    label: 'Notifications',
+    path: '/teacher/notifications',
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-profile',
+    label: 'My Profile',
+    path: '/teacher/profile',
     roles: [Role.TEACHER],
   },
   {
@@ -198,6 +277,30 @@ export const NAV_ITEMS: NavItem[] = [
     roles: [Role.PARENT],
   },
   {
+    key: 'parent-attendance',
+    label: 'Attendance',
+    path: '/parent/attendance',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-syllabus',
+    label: 'Syllabus',
+    path: '/parent/syllabus',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-teachers',
+    label: 'Teachers',
+    path: '/parent/teachers',
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-notices',
+    label: 'Announcements',
+    path: '/parent/announcements',
+    roles: [Role.PARENT],
+  },
+  {
     key: 'my-requests',
     label: 'My Requests',
     path: '/requests',
@@ -220,6 +323,7 @@ export const NAV_ITEMS: NavItem[] = [
 export function navForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => {
     if (item.roles && !item.roles.includes(role)) return false;
+    if (item.excludeRoles && item.excludeRoles.includes(role)) return false;
     return !item.permission || can(role, item.permission);
   });
 }

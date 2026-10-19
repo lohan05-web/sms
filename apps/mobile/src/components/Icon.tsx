@@ -3,6 +3,7 @@ import {
   Bell,
   BookOpen,
   Bus,
+  Camera,
   CalendarClock,
   CalendarDays,
   ChartColumn,
@@ -32,6 +33,7 @@ import {
   MessagesSquare,
   MoreHorizontal,
   NotebookPen,
+  Pencil,
   Phone,
   Plus,
   Receipt,
@@ -120,7 +122,9 @@ export type IconName =
   | 'trending-down'
   | 'calendar-check'
   | 'receipt'
-  | 'graduation';
+  | 'graduation'
+  | 'camera'
+  | 'edit';
 
 const ICONS: Record<IconName, LucideIcon> = {
   dashboard: LayoutDashboard,
@@ -181,6 +185,8 @@ const ICONS: Record<IconName, LucideIcon> = {
   'calendar-check': CalendarCheck,
   receipt: Receipt,
   graduation: GraduationCap,
+  camera: Camera,
+  edit: Pencil,
 };
 
 export interface IconProps {

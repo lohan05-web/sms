@@ -446,4 +446,22 @@ export const parentsService = {
       include: { subject: { select: { id: true, name: true, code: true } } },
     });
   },
+
+  /**
+   * Set (or clear) the photo of one of the parent's own children.
+   *
+   * Reuses the data-URL convention the admin Students screen established: the
+   * browser resizes and reads the image, then this stores the small string on
+   * `StudentProfile.photoUrl`. Only that one column is touched, and only after
+   * the child is proven to belong to the signed-in parent — so a parent can
+   * never change another family's student.
+   */
+  async childPhoto(actor: Actor, studentId: string, photoUrl: string | null) {
+    await assertChild(actor, studentId);
+    return prisma.studentProfile.update({
+      where: { id: studentId },
+      data: { photoUrl: photoUrl ? photoUrl : null },
+      select: { id: true, photoUrl: true },
+    });
+  },
 };

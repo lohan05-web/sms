@@ -52,14 +52,22 @@ export function PageHero({
   title,
   description,
   children,
+  topInset = 0,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   children?: ReactNode;
+  /**
+   * Extra top padding, in points. The marketing home screen is rendered without
+   * a stack header, so it passes the status-bar inset here: the hero paints the
+   * dark surface behind the (translucent) status bar, and the inset has to be
+   * added to the hero itself rather than to the scroll container.
+   */
+  topInset?: number;
 }) {
   return (
-    <View style={styles.hero}>
+    <View style={[styles.hero, topInset > 0 ? { paddingTop: 32 + topInset } : null]}>
       <Text style={styles.eyebrow}>{eyebrow}</Text>
       <Text style={styles.heroTitle}>{title}</Text>
       <Text style={styles.heroLead}>{description}</Text>

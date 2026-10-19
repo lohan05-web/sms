@@ -1,5 +1,7 @@
 import type {
   CreateConversationInput,
+  CreateParentConversationInput,
+  CreateTeacherConversationInput,
   ListConversationsQuery,
   ListMessagesQuery,
   SendMessageInput,
@@ -11,6 +13,11 @@ import { prisma } from '../../lib/prisma';
 import { emitToUser } from '../../lib/realtime';
 import { paginate, toSkipTake } from '../../utils/pagination';
 import { notifyUsers } from '../notifications/notifications.service';
+import {
+  assertSectionInScope,
+  resolveTeacherScope,
+  type TeacherScope,
+} from '../teachers/teacher-scope';
 import type { Actor } from '../users/users.service';
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
@@ -121,6 +128,49 @@ async function resolveRecipients(
   return [...ids];
 }
 
+/**
+ * Resolves the user accounts a teacher may message, enforcing the teacher's own
+ * data scope. Every requested section must be one the teacher teaches, and every
+ * requested or section-derived student must sit inside one of those sections —
+ * anything else is a 403 rather than a silently dropped recipient.
+ *
+ * Students without a linked user account cannot receive an in-app message, so
+ * they are skipped; if that leaves nobody the caller is told so instead of being
+ * handed a conversation that went nowhere.
+ */
+async function resolveStudentRecipients(
+  input: CreateTeacherConversationInput,
+  scope: TeacherScope,
+  schoolId: string,
+): Promise<string[]> {
+  const sectionIds = input.sectionIds ?? [];
+  const studentIds = input.studentIds ?? [];
+  for (const sectionId of sectionIds) assertSectionInScope(scope, sectionId);
+
+  const matches: Prisma.StudentProfileWhereInput[] = [];
+  if (sectionIds.length) matches.push({ sectionId: { in: sectionIds } });
+  if (studentIds.length) matches.push({ id: { in: studentIds } });
+
+  const students = await prisma.studentProfile.findMany({
+    where: { schoolId, status: 'ACTIVE', OR: matches },
+    select: { id: true, sectionId: true, userId: true },
+  });
+
+  const foundIds = new Set(students.map((student) => student.id));
+  for (const studentId of studentIds) {
+    if (!foundIds.has(studentId)) {
+      throw ApiError.forbidden('One or more selected students are not in your classes');
+    }
+  }
+  for (const student of students) {
+    if (!student.sectionId || !scope.sectionIds.includes(student.sectionId)) {
+      throw ApiError.forbidden('One or more selected students are not in your classes');
+    }
+  }
+
+  return [...new Set(students.map((s) => s.userId).filter((id): id is string => Boolean(id)))];
+}
+
 function emitNewMessage(
   participantIds: string[],
   actor: Actor,
@@ -135,6 +185,52 @@ function emitNewMessage(
       message,
     });
   }
+}
+
+/**
+ * Persists a conversation plus its first message, notifies every recipient and
+ * pushes the realtime event. Shared by the administrator compose path and the
+ * teacher-to-students path so both get identical notification behaviour.
+ */
+async function persistConversation(
+  schoolId: string,
+  actor: Actor,
+  subject: string,
+  body: string,
+  recipients: string[],
+) {
+  const participantIds = [...new Set([actor.id, ...recipients])];
+  const conversation = await prisma.conversation.create({
+    data: {
+      schoolId,
+      createdById: actor.id,
+      subject,
+      lastMessageAt: new Date(),
+      participants: {
+        create: participantIds.map((userId) => ({
+          userId,
+          lastReadAt: userId === actor.id ? new Date() : null,
+        })),
+      },
+      messages: {
+        create: { senderId: actor.id, body },
+      },
+    },
+    include: conversationInclude,
+  });
+
+  const firstMessage = conversation.messages[0];
+  void notifyUsers(recipients, {
+    schoolId,
+    type: 'MESSAGE',
+    title: conversation.subject,
+    body,
+    data: { conversationId: conversation.id, subject: conversation.subject },
+  });
+  if (firstMessage) {
+    emitNewMessage(recipients, actor, conversation, firstMessage);
+  }
+  return shapeConversation(conversation, new Date(), 0);
 }
 
 export const messagingService = {
@@ -210,39 +306,79 @@ export const messagingService = {
     const recipients = (await resolveRecipients(input, schoolId)).filter((id) => id !== actor.id);
     if (recipients.length === 0)
       throw ApiError.badRequest('Select at least one recipient in your school');
+    return persistConversation(schoolId, actor, input.subject, input.body, recipients);
+  },
 
-    const participantIds = [...new Set([actor.id, ...recipients])];
-    const conversation = await prisma.conversation.create({
-      data: {
-        schoolId,
-        createdById: actor.id,
-        subject: input.subject,
-        lastMessageAt: new Date(),
-        participants: {
-          create: participantIds.map((userId) => ({
-            userId,
-            lastReadAt: userId === actor.id ? new Date() : null,
-          })),
-        },
-        messages: {
-          create: { senderId: actor.id, body: input.body },
-        },
-      },
-      include: conversationInclude,
-    });
+  /**
+   * Teacher compose path: start a conversation with students in the sections the
+   * signed-in teacher teaches.
+   *
+   * Gated on `MESSAGE_READ` (which teachers hold) rather than `MESSAGE_MANAGE`,
+   * because the scope below — not a broad permission — is what makes this safe.
+   * Unlike `create`, the recipients are derived from the teacher's own sections
+   * and cannot be widened to arbitrary users or whole roles.
+   */
+  async createForStudents(input: CreateTeacherConversationInput, actor: Actor) {
+    const scope = await resolveTeacherScope(actor);
+    if (!scope) throw ApiError.forbidden('Only teachers can message students');
+    if (!actor.schoolId) throw ApiError.forbidden('Your account is not linked to a school');
 
-    const firstMessage = conversation.messages[0];
-    void notifyUsers(recipients, {
-      schoolId,
-      type: 'MESSAGE',
-      title: conversation.subject,
-      body: input.body,
-      data: { conversationId: conversation.id, subject: conversation.subject },
+    const recipients = (await resolveStudentRecipients(input, scope, actor.schoolId)).filter(
+      (id) => id !== actor.id,
+    );
+    if (recipients.length === 0)
+      throw ApiError.badRequest('None of the selected students have a linked account yet');
+
+    return persistConversation(actor.schoolId, actor, input.subject, input.body, recipients);
+  },
+
+  /**
+   * Parent compose path: start a conversation with one of the child's teachers.
+   *
+   * Gated on `MESSAGE_READ` (which parents hold) rather than `MESSAGE_MANAGE`,
+   * because the scope below — not a broad permission — is what makes this safe.
+   * The child must be linked to the signed-in parent, and the teacher must hold
+   * an assignment for the child's section; the backend re-derives both, so a
+   * parent can never message an arbitrary account or another family's teacher.
+   */
+  async createForTeacher(input: CreateParentConversationInput, actor: Actor) {
+    if (!actor.schoolId) throw ApiError.forbidden('Your account is not linked to a school');
+
+    const guardian = await prisma.guardian.findFirst({ where: { userId: actor.id } });
+    if (!guardian) throw ApiError.forbidden('No parent profile is linked to this account');
+
+    const link = await prisma.studentGuardian.findFirst({
+      where: { guardianId: guardian.id, studentId: input.studentId },
     });
-    if (firstMessage) {
-      emitNewMessage(recipients, actor, conversation, firstMessage);
+    if (!link) {
+      throw ApiError.forbidden('You can only message teachers about your own children');
     }
-    return shapeConversation(conversation, new Date(), 0);
+
+    const student = await prisma.studentProfile.findUnique({
+      where: { id: input.studentId },
+      select: { id: true, sectionId: true, schoolId: true },
+    });
+    if (!student || student.schoolId !== actor.schoolId) {
+      throw ApiError.notFound('Student not found');
+    }
+    if (!student.sectionId) {
+      throw ApiError.badRequest('This child is not assigned to a class yet');
+    }
+
+    const assignment = await prisma.teacherAssignment.findFirst({
+      where: { sectionId: student.sectionId, teacherId: input.teacherId },
+      include: { teacher: { select: { userId: true } } },
+    });
+    if (!assignment) throw ApiError.forbidden('That teacher does not teach your child');
+
+    const recipients = [assignment.teacher.userId].filter(
+      (id): id is string => Boolean(id) && id !== actor.id,
+    );
+    if (recipients.length === 0) {
+      throw ApiError.badRequest('This teacher has no linked account yet');
+    }
+
+    return persistConversation(actor.schoolId, actor, input.subject, input.body, recipients);
   },
 
   async sendMessage(id: string, input: SendMessageInput, actor: Actor) {

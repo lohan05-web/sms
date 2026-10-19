@@ -66,7 +66,9 @@ describe('navForRole', () => {
     expect(accountant).not.toContain('timetable');
     const teacher = navForRole(Role.TEACHER).map((item) => item.key);
     expect(teacher).not.toContain('teacher-details');
-    expect(teacher).toContain('timetable');
+    // Teachers get their own timetable page instead of the generic one.
+    expect(teacher).not.toContain('timetable');
+    expect(teacher).toContain('teacher-timetable');
   });
 
   it('shows parent details, notifications and messages to admins', () => {
@@ -105,14 +107,17 @@ describe('navForRole', () => {
 
   it('gates subjects behind the subject permission', () => {
     expect(navForRole(Role.STUDENT).map((item) => item.key)).not.toContain('subject');
-    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('subject');
+    // Teachers see the dedicated assignments page rather than the generic list.
+    const teacher = navForRole(Role.TEACHER).map((item) => item.key);
+    expect(teacher).not.toContain('subject');
+    expect(teacher).toContain('teacher-assignments');
   });
 
   it('shows homework to staff and gates it behind the homework permission', () => {
     expect(navForRole(Role.ADMIN).find((item) => item.key === 'homework')?.path).toBe(
       '/resource/homework',
     );
-    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('homework');
+    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('teacher-homework');
     expect(navForRole(Role.ACCOUNTANT).map((item) => item.key)).not.toContain('homework');
   });
 
@@ -133,13 +138,49 @@ describe('navForRole', () => {
     expect(navForRole(Role.ADMIN).find((item) => item.key === 'class-roster')?.path).toBe(
       '/class-roster',
     );
-    expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('class-roster');
+    // Teachers use the dedicated classes/students pages instead of the roster.
+    const teacher = navForRole(Role.TEACHER).map((item) => item.key);
+    expect(teacher).not.toContain('class-roster');
+    expect(teacher).toContain('teacher-classes');
+    expect(teacher).toContain('teacher-students');
     expect(navForRole(Role.STUDENT).map((item) => item.key)).not.toContain('class-roster');
   });
 
   it('shows the teacher portal only to teachers', () => {
     expect(navForRole(Role.TEACHER).map((item) => item.key)).toContain('teacher-portal');
     expect(navForRole(Role.ADMIN).map((item) => item.key)).not.toContain('teacher-portal');
+  });
+
+  it('shows every dedicated teacher page only to teachers', () => {
+    const teacherKeys = navForRole(Role.TEACHER).map((item) => item.key);
+    for (const key of [
+      'teacher-classes',
+      'teacher-students',
+      'teacher-attendance',
+      'teacher-assignments',
+      'teacher-marks',
+      'teacher-homework',
+      'teacher-timetable',
+      'teacher-messages',
+      'teacher-notifications',
+      'teacher-profile',
+    ]) {
+      expect(teacherKeys, `teacher should see ${key}`).toContain(key);
+    }
+    for (const role of [
+      Role.SUPER_ADMIN,
+      Role.PRINCIPAL,
+      Role.ADMIN,
+      Role.STUDENT,
+      Role.PARENT,
+      Role.ACCOUNTANT,
+      Role.LIBRARIAN,
+      Role.TRANSPORT_MANAGER,
+    ]) {
+      const keys = navForRole(role).map((item) => item.key);
+      expect(keys, `${role} should not see teacher-classes`).not.toContain('teacher-classes');
+      expect(keys, `${role} should not see teacher-profile`).not.toContain('teacher-profile');
+    }
   });
 
   it('shows the parent portal only to parents', () => {

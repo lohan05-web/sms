@@ -39,4 +39,12 @@ export const parentsController = {
     const r = await parentsService.childSyllabus(actorFrom(req), req.params.studentId as string);
     res.status(200).json({ success: true, data: r });
   },
+  async photo(req: Request, res: Response) {
+    const r = await parentsService.childPhoto(
+      actorFrom(req),
+      req.params.studentId as string,
+      (req.body as { photoUrl?: string | null }).photoUrl ?? null,
+    );
+    res.status(200).json({ success: true, data: r });
+  },
 };

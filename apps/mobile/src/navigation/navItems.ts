@@ -17,6 +17,13 @@ export interface NavItem {
   anyPermission?: readonly Permission[];
   /** When set, only these roles see the item (used for portal-only pages). */
   roles?: readonly Role[];
+  /**
+   * When set, these roles never see the item even though they hold the
+   * permission — used to hide generic modules in favour of the dedicated
+   * role-scoped equivalents (e.g. `teacher-*` for teachers), mirroring the web
+   * sidebar's `excludeRoles`.
+   */
+  excludeRoles?: readonly Role[];
 }
 
 /** Convenience: a module that opens inside the bottom-tab navigator. */
@@ -35,6 +42,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Dashboard',
     ...tab(ROUTES.admin.dashboard),
     permission: Permission.REPORT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'academics',
@@ -64,12 +72,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Student Details',
     route: ROUTES.admin.students,
     permission: Permission.STUDENT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'student-marks',
     label: 'Student Marks',
     ...resource('exam-results'),
     permission: Permission.RESULT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'mark',
@@ -79,6 +89,7 @@ export const NAV_ITEMS: NavItem[] = [
     // (read-only view); teachers and super admins also hold `result:manage`.
     permission: Permission.EXAM_READ,
     anyPermission: [Permission.RESULT_READ, Permission.RESULT_MANAGE],
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'admissions',
@@ -109,42 +120,52 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Classes',
     ...resource('classes'),
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'sections',
     label: 'Sections',
     ...resource('sections'),
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'class-roster',
     label: 'Class Roster',
     ...resource('class-roster'),
     permission: Permission.CLASS_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'subject',
     label: 'Subjects',
     ...resource('subjects'),
     permission: Permission.SUBJECT_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'attendance',
     label: 'Attendance',
     ...resource('attendances'),
     permission: Permission.ATTENDANCE_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'homework',
     label: 'Homework',
     ...resource('homework'),
     permission: Permission.HOMEWORK_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'lesson-plans',
     label: 'Lesson Plans',
     ...resource('lesson-plans'),
     permission: Permission.LESSON_READ,
+    // Teachers get the scoped `teacher-lesson-plans` page instead, so the
+    // school-wide resource module is hidden from them — same pattern as the
+    // other teacher-replaced modules above.
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'learning-content',
@@ -169,6 +190,7 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Timetable',
     ...resource('timetable'),
     permission: Permission.TIMETABLE_READ,
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'notifications',
@@ -181,17 +203,153 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Messages',
     route: ROUTES.admin.messages,
     permission: Permission.MESSAGE_READ,
+    // Teachers get the scoped `teacher-messages` page instead.
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'profile',
     label: 'Profile',
     ...tab(ROUTES.admin.profile),
+    // Teachers get the dedicated employment profile instead (`teacher-profile`),
+    // mirroring the web sidebar's "My Profile" entry.
+    excludeRoles: [Role.TEACHER],
   },
   {
     key: 'settings',
     label: 'Settings',
     route: ROUTES.admin.settings,
     permission: Permission.SCHOOL_READ,
+  },
+
+  /* ---------------------------------------------------------------------- */
+  /* Teacher-only, role-scoped pages. These replace the generic modules a      */
+  /* teacher would otherwise be shown; the generic equivalents above are       */
+  /* hidden with `excludeRoles: [Role.TEACHER]`, exactly like the web sidebar. */
+  /* ---------------------------------------------------------------------- */
+  {
+    key: 'teacher-classes',
+    label: 'My Classes',
+    route: ROUTES.teacher.classes,
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-students',
+    label: 'My Students',
+    route: ROUTES.teacher.students,
+    roles: [Role.TEACHER],
+    permission: Permission.STUDENT_READ,
+  },
+  {
+    key: 'teacher-attendance',
+    label: 'Attendance',
+    route: ROUTES.teacher.attendance,
+    roles: [Role.TEACHER],
+    permission: Permission.ATTENDANCE_READ,
+  },
+  {
+    key: 'teacher-assignments',
+    label: 'Assignments',
+    route: ROUTES.teacher.assignments,
+    roles: [Role.TEACHER],
+  },
+  {
+    key: 'teacher-marks',
+    label: 'Marks & Grades',
+    route: ROUTES.teacher.marks,
+    roles: [Role.TEACHER],
+    permission: Permission.RESULT_READ,
+  },
+  {
+    key: 'teacher-homework',
+    label: 'Homework',
+    route: ROUTES.teacher.homework,
+    roles: [Role.TEACHER],
+    permission: Permission.HOMEWORK_READ,
+  },
+  {
+    key: 'teacher-lesson-plans',
+    label: 'Lesson Plans',
+    route: ROUTES.teacher.lessonPlans,
+    roles: [Role.TEACHER],
+    permission: Permission.LESSON_READ,
+  },
+  {
+    key: 'teacher-messages',
+    label: 'Messages',
+    route: ROUTES.teacher.messages,
+    roles: [Role.TEACHER],
+    permission: Permission.MESSAGE_READ,
+  },
+  {
+    key: 'teacher-timetable',
+    label: 'Timetable',
+    route: ROUTES.teacher.timetable,
+    roles: [Role.TEACHER],
+    permission: Permission.TIMETABLE_READ,
+  },
+  {
+    key: 'teacher-profile',
+    label: 'My Profile',
+    route: ROUTES.teacher.profile,
+    roles: [Role.TEACHER],
+  },
+  // --- Parent portal -------------------------------------------------------
+  // Every entry is parent-only and reads the scoped /parents/me/children/*
+  // endpoints, so a parent can never reach another family's data. The
+  // `Overview` entry already exists above as `parent-portal` ("My Children").
+  {
+    key: 'parent-attendance',
+    label: 'Attendance',
+    route: ROUTES.parent.attendance,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-homework',
+    label: 'Homework',
+    route: ROUTES.parent.homework,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-timetable',
+    label: 'Timetable',
+    route: ROUTES.parent.timetable,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-results',
+    label: 'Results',
+    route: ROUTES.parent.results,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-syllabus',
+    label: 'Syllabus',
+    route: ROUTES.parent.syllabus,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-invoices',
+    label: 'Fees & invoices',
+    route: ROUTES.parent.invoices,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-teachers',
+    label: 'Teachers',
+    route: ROUTES.parent.teachers,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-notices',
+    label: 'Announcements',
+    route: ROUTES.parent.notices,
+    roles: [Role.PARENT],
+  },
+  {
+    key: 'parent-vehicle',
+    label: 'Transport',
+    route: ROUTES.parent.vehicle,
+    roles: [Role.PARENT],
   },
 ];
 
@@ -202,6 +360,7 @@ export function can(role: Role, permission: Permission): boolean {
 export function navForRole(role: Role): NavItem[] {
   return NAV_ITEMS.filter((item) => {
     if (item.roles && !item.roles.includes(role)) return false;
+    if (item.excludeRoles && item.excludeRoles.includes(role)) return false;
     if (item.permission && !can(role, item.permission)) return false;
     if (item.anyPermission && !item.anyPermission.some((permission) => can(role, permission))) {
       return false;
@@ -215,11 +374,25 @@ export const NAV_ICONS: Record<string, IconName> = {
   dashboard: 'dashboard',
   academics: 'subject',
   'teacher-portal': 'home',
+  'teacher-classes': 'class',
+  'teacher-students': 'students',
+  'teacher-attendance': 'attendance',
+  'teacher-assignments': 'subject',
+  'teacher-marks': 'marks',
+  'teacher-homework': 'homework',
+  'teacher-lesson-plans': 'lesson-plan',
+  'teacher-messages': 'messages',
+  'teacher-timetable': 'timetable',
+  'teacher-profile': 'teacher',
   'parent-portal': 'home',
+  'parent-attendance': 'attendance',
+  'parent-homework': 'homework',
   'parent-timetable': 'timetable',
   'parent-results': 'marks',
   'parent-invoices': 'finance',
-  'parent-homework': 'homework',
+  'parent-syllabus': 'subject',
+  'parent-teachers': 'teacher',
+  'parent-notices': 'bell',
   'parent-vehicle': 'bus',
   'vehicle-details': 'bus',
   'student-details': 'students',
@@ -268,7 +441,39 @@ export const ACADEMIC_MODULE_KEYS = [
 const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
   {
     title: 'Overview',
-    keys: ['dashboard'],
+    keys: ['dashboard', 'teacher-portal', 'parent-portal'],
+  },
+  {
+    // Parent-only section. Other roles never hold these keys, so their drawers
+    // are unchanged and the section simply disappears for them.
+    title: 'My Child',
+    keys: [
+      'parent-attendance',
+      'parent-homework',
+      'parent-timetable',
+      'parent-results',
+      'parent-syllabus',
+      'parent-invoices',
+      'parent-teachers',
+      'parent-vehicle',
+      'parent-notices',
+    ],
+  },
+  {
+    // Teacher-only. The section is skipped for every other role because none
+    // of its keys survive `navForRole`, so admin/parent drawers are unchanged.
+    title: 'Teaching',
+    keys: [
+      'teacher-classes',
+      'teacher-students',
+      'teacher-attendance',
+      'teacher-assignments',
+      'teacher-marks',
+      'teacher-homework',
+      'teacher-lesson-plans',
+      'teacher-messages',
+      'teacher-timetable',
+    ],
   },
   {
     title: 'Academics',
@@ -291,7 +496,7 @@ const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
   },
   {
     title: 'Account',
-    keys: ['notifications', 'profile', 'settings'],
+    keys: ['teacher-profile', 'notifications', 'profile', 'settings'],
   },
 ];
 

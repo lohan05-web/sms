@@ -101,6 +101,7 @@ export function StatCard({
   tone = 'primary',
   onPress,
   style,
+  iconColor,
 }: {
   label: string;
   value: ReactNode;
@@ -109,6 +110,8 @@ export function StatCard({
   tone?: StatTone;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  /** Override the icon colour (e.g. the Parent portal's blue accent). */
+  iconColor?: string;
 }) {
   const content = (
     <>
@@ -118,7 +121,7 @@ export function StatCard({
         </Text>
         {icon ? (
           <View style={styles.statCardIcon}>
-            <Icon name={icon} size={18} color={colors.primary} />
+            <Icon name={icon} size={18} color={iconColor ?? colors.primary} />
           </View>
         ) : null}
       </View>

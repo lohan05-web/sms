@@ -39,6 +39,14 @@ export const messagingController = {
     const r = await messagingService.create(req.body, actorFrom(req));
     res.status(201).json({ success: true, data: r });
   },
+  async createForStudents(req: Request, res: Response) {
+    const r = await messagingService.createForStudents(req.body, actorFrom(req));
+    res.status(201).json({ success: true, data: r });
+  },
+  async createForTeacher(req: Request, res: Response) {
+    const r = await messagingService.createForTeacher(req.body, actorFrom(req));
+    res.status(201).json({ success: true, data: r });
+  },
   async sendMessage(req: Request, res: Response) {
     const r = await messagingService.sendMessage(
       req.params.id as string,

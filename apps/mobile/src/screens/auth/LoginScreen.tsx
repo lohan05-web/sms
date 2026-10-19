@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '../../components/Icon';
 import { type LoginPortal } from '../../lib/api';
@@ -24,10 +25,13 @@ const PORTAL_HEADLINES: Record<LoginPortal, string> = {
 
 export function LoginScreen({ portal = 'admin' }: { portal?: LoginPortal }) {
   const [selected, setSelected] = useState<LoginPortal>(portal);
+  // The stack header above this screen already covers the top inset; only the
+  // bottom one (Android navigation bar) has to be added here.
+  const insets = useSafeAreaInsets();
 
   return (
     <LinearGradient colors={colors.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.screen}>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: 24 + insets.bottom }]}>
         <View style={styles.brandRow}>
           <View style={styles.brandMark}>
             <Icon name="shield" size={22} color={colors.white} />
@@ -178,6 +182,7 @@ const styles = {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
+    // The bottom padding is extended with the safe-area inset in the component.
     gap: 14,
   },
   brandRow: {

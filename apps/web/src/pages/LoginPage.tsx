@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ApiError, type LoginPortal } from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -23,6 +23,22 @@ function PortalLogin({ portal, title, subtitle, badge, headline, highlights }: P
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // The teacher portal runs on the scoped "navy" palette (see index.css §2b)
+  // so the sign-in screen matches the dashboard waiting behind it. Admin and
+  // parent sign-in keep the default theme.
+  const navyTheme = portal === 'teacher';
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!navyTheme) {
+      delete root.dataset.theme;
+      return;
+    }
+    root.dataset.theme = 'navy';
+    return () => {
+      delete root.dataset.theme;
+    };
+  }, [navyTheme]);
 
   if (!loading && user) {
     return <Navigate to={resolveLoginTarget(user.role, from)} replace />;

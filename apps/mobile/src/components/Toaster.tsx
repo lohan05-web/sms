@@ -1,16 +1,22 @@
 import type { DrawerNavigationProp } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRealtime } from './RealtimeProvider';
 import { humanize } from '../lib/format';
 
 /**
  * Toast queue rendered at the bottom of the screen. Tapping a toast marks the
- * underlying notification as read.
+ * underlying notification as read. The bottom offset includes the safe-area
+ * inset so toasts never hide behind Android's navigation bar; screens inside
+ * the bottom-tab host pass `bottomInset={false}` so the tab bar is not counted
+ * twice.
  */
-export function Toaster() {
+export function Toaster({ bottomInset = true }: { bottomInset?: boolean } = {}) {
   const { toasts, dismiss } = useRealtime();
   const navigation = useNavigation<DrawerNavigationProp<Record<string, object | undefined>>>();
+  const insets = useSafeAreaInsets();
+  const bottom = bottomInset ? insets.bottom : 0;
 
   if (toasts.length === 0) return null;
 
@@ -20,7 +26,10 @@ export function Toaster() {
   };
 
   return (
-    <View style={styles.toastStack} pointerEvents="box-none">
+    <View
+      style={[styles.toastStack, { bottom: bottom + 16 }]}
+      pointerEvents="box-none"
+    >
       {toasts.map((toast) => (
         <View key={toast.id} style={styles.toast}>
           <Pressable onPress={() => open(toast.id)} style={styles.toastMain}>
@@ -42,6 +51,7 @@ const styles = {
     position: 'absolute' as const,
     left: 0,
     right: 0,
+    // Overridden with the bottom safe-area inset in the component.
     bottom: 16,
     paddingHorizontal: 12,
     gap: 8,

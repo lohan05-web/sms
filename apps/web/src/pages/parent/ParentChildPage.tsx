@@ -113,6 +113,7 @@ export function ParentChildPage<T>({
     <div className="page">
       {header}
 
+      <div className="page__body">
       <section className="panel">
         <label className="field">
           <span className="field__label">Child</span>
@@ -143,6 +144,7 @@ export function ParentChildPage<T>({
           render(data)
         )}
       </section>
+      </div>
     </div>
   );
 }

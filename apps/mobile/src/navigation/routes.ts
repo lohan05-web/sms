@@ -38,6 +38,28 @@ export const ROUTES = {
   },
   teacher: {
     portal: 'teacher-portal',
+    /** My Classes — the sections the teacher is allocated. */
+    classes: 'teacher-classes',
+    /** My Students — students across the teacher's sections. */
+    students: 'teacher-students',
+    /** Attendance summary for the teacher's own sections. */
+    attendance: 'teacher-attendance',
+    /** Attendance register editor (shared `/attendance/mark` equivalent). */
+    attendanceMark: 'attendance-mark',
+    /** Class–subject teaching allocations. */
+    assignments: 'teacher-assignments',
+    /** Exam results for the teacher's class levels. */
+    marks: 'teacher-marks',
+    /** Homework authored by the teacher. */
+    homework: 'teacher-homework',
+    /** Lesson plans authored/managed by the teacher. */
+    lessonPlans: 'teacher-lesson-plans',
+    /** Weekly grid + day-by-day teaching timetable. */
+    timetable: 'teacher-timetable',
+    /** Teacher employment profile. */
+    profile: 'teacher-profile',
+    /** Messages for the signed-in teacher. */
+    messages: 'teacher-messages',
   },
   parent: {
     portal: 'parent-portal',
@@ -46,6 +68,10 @@ export const ROUTES = {
     invoices: 'parent-invoices',
     homework: 'parent-homework',
     vehicle: 'parent-vehicle',
+    attendance: 'parent-attendance',
+    syllabus: 'parent-syllabus',
+    teachers: 'parent-teachers',
+    notices: 'parent-notices',
   },
 } as const;
 

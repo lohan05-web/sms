@@ -47,6 +47,22 @@ describe('parent-only API access control', () => {
     }
   });
 
+  it('restricts the child photo endpoint to parents only', async () => {
+    const path = `/api/v1/parents/me/children/${CHILD}/photo`;
+
+    const anonymous = await request(app).patch(path).send({ photoUrl: null });
+    expect(anonymous.status).toBe(401);
+
+    for (const role of NON_PARENT_ROLES) {
+      const token = signAccessToken({ sub: `user-${role}`, role, schoolId: 'school-1' });
+      const res = await request(app)
+        .patch(path)
+        .set('Authorization', `Bearer ${token}`)
+        .send({ photoUrl: null });
+      expect(res.status, `${role} as ${path}`).toBe(403);
+    }
+  });
+
   it('does not leak parent records to admins through the parent API', async () => {
     const token = signAccessToken({ sub: 'admin-1', role: 'ADMIN', schoolId: 'school-1' });
     const res = await request(app)

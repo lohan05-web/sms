@@ -67,13 +67,70 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
   onUnauthorized = handler;
 }
 
+/**
+ * Upper bound on a single API call.
+ *
+ * A phone is not guaranteed to reach the backend (wrong LAN IP, off Wi-Fi,
+ * backend stopped). Without a timeout the underlying `fetch` never settles, so
+ * the sign-in button stayed on "Signing in…" forever and the screen could not
+ * recover. Aborting the request turns an unreachable host into an ordinary,
+ * catchable error the caller can show.
+ */
+const REQUEST_TIMEOUT_MS = 20_000;
+
+/** True when a fetch failed because we aborted it (timeout or caller cancel). */
+function wasAborted(error: unknown): boolean {
+  return (
+    error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')
+  );
+}
+
+/**
+ * Translates a low-level fetch failure into a friendly, catchable `ApiError`
+ * so screens such as the login form can explain what went wrong instead of
+ * spinning indefinitely. `status: 0` marks a transport-level failure (no HTTP
+ * response was received), which is distinct from a 4xx/5xx API error.
+ */
+function toNetworkError(error: unknown): ApiError {
+  if (wasAborted(error)) {
+    return new ApiError(
+      `The server took too long to respond (${API_BASE}). Make sure the phone is on the same Wi-Fi as the computer and that the backend allows connections.`,
+      0,
+      'REQUEST_TIMEOUT',
+    );
+  }
+  return new ApiError(
+    `Cannot reach the SmartSchool server at ${API_BASE}. Make sure the phone is on the same Wi-Fi as the computer.`,
+    0,
+    'NETWORK_ERROR',
+  );
+}
+
+/** `fetch` bounded by a timeout, forwarding any caller-supplied abort signal. */
+async function fetchWithTimeout(url: string, init: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const external = init.signal ?? null;
+  const forwardAbort = () => controller.abort();
+  if (external) {
+    if (external.aborted) controller.abort();
+    else external.addEventListener('abort', forwardAbort);
+  }
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+    external?.removeEventListener('abort', forwardAbort);
+  }
+}
+
 let refreshPromise: Promise<string | null> | null = null;
 
 function refreshAccessToken(): Promise<string | null> {
   if (!refreshPromise) {
     refreshPromise = (async () => {
       try {
-        const res = await fetch(`${API_BASE}/auth/refresh`, {
+        const res = await fetchWithTimeout(`${API_BASE}/auth/refresh`, {
           method: 'POST',
           credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -118,7 +175,17 @@ async function send(
   }
   if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers, credentials: 'include' });
+  let res: Response;
+  try {
+    res = await fetchWithTimeout(`${API_BASE}${path}`, {
+      ...init,
+      headers,
+      credentials: 'include',
+    });
+  } catch (error) {
+    // Timeout / offline: surface a readable error instead of hanging forever.
+    throw toNetworkError(error);
+  }
 
   if (res.status === 401 && retry && !path.startsWith('/auth/')) {
     const token = await refreshAccessToken();

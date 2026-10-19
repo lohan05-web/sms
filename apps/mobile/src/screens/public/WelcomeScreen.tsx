@@ -1,14 +1,17 @@
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '../../components/Icon';
+import { StatusBarTone } from '../../components/StatusBarTone';
 import { HeroScene } from '../../components/illustrations';
 import { ROUTES } from '../../navigation/routes';
 import { colors, radius, shadow } from '../../theme';
 
 export function WelcomeScreen() {
   const navigation = useNavigation<{ navigate: (route: string, params?: object) => void }>();
+  const insets = useSafeAreaInsets();
 
   const onRegister = () => {
     Alert.alert(
@@ -20,7 +23,14 @@ export function WelcomeScreen() {
 
   return (
     <LinearGradient colors={colors.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <StatusBarTone barStyle="light-content" />
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 32 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.brandRow}>
           <View style={styles.brandMark}>
             <Icon name="shield" size={22} color={colors.white} />
@@ -74,8 +84,7 @@ const styles = {
   scroll: {
     flexGrow: 1,
     paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 32,
+    // Top/bottom padding is extended with the safe-area insets in the component.
     gap: 20,
   },
   brandRow: {

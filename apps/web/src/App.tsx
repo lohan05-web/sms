@@ -27,6 +27,10 @@ import { ParentInvoicesPage } from './pages/parent/ParentInvoicesPage';
 import { ParentResultsPage } from './pages/parent/ParentResultsPage';
 import { ParentTimetablePage } from './pages/parent/ParentTimetablePage';
 import { ParentVehiclePage } from './pages/parent/ParentVehiclePage';
+import { ParentAttendancePage } from './pages/parent/ParentAttendancePage';
+import { ParentSyllabusPage } from './pages/parent/ParentSyllabusPage';
+import { ParentTeachersPage } from './pages/parent/ParentTeachersPage';
+import { ParentAnnouncementsPage } from './pages/parent/ParentAnnouncementsPage';
 import { PaymentCreatePage } from './pages/PaymentCreatePage';
 import { ProfilePage } from './pages/ProfilePage';
 import { ReportsPage } from './pages/ReportsPage';
@@ -34,6 +38,16 @@ import { ReportCardsPage } from './pages/ReportCardsPage';
 import { ResourceListPage } from './pages/ResourceListPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { TeacherPortalPage } from './pages/TeacherPortalPage';
+import { TeacherAssignmentsPage } from './pages/teacher/TeacherAssignmentsPage';
+import { TeacherAttendancePage } from './pages/teacher/TeacherAttendancePage';
+import { TeacherClassesPage } from './pages/teacher/TeacherClassesPage';
+import { TeacherHomeworkPage } from './pages/teacher/TeacherHomeworkPage';
+import { TeacherMarksPage } from './pages/teacher/TeacherMarksPage';
+import { TeacherMessagesPage } from './pages/teacher/TeacherMessagesPage';
+import { TeacherNotificationsPage } from './pages/teacher/TeacherNotificationsPage';
+import { TeacherProfilePage } from './pages/teacher/TeacherProfilePage';
+import { TeacherStudentsPage } from './pages/teacher/TeacherStudentsPage';
+import { TeacherTimetablePage } from './pages/teacher/TeacherTimetablePage';
 import { TimetablePage } from './pages/TimetablePage';
 import { VehicleDetailsPage } from './pages/VehicleDetailsPage';
 import { PublicAboutPage } from './pages/public/PublicAboutPage';
@@ -68,6 +82,18 @@ export function App() {
                   <Route element={<Layout />}>
                     <Route index element={<HomeRoute />} />
                     <Route path="teacher" element={<TeacherPortalPage />} />
+                    <Route element={<RequireRole roles={[Role.TEACHER]} />}>
+                      <Route path="teacher/classes" element={<TeacherClassesPage />} />
+                      <Route path="teacher/students" element={<TeacherStudentsPage />} />
+                      <Route path="teacher/attendance" element={<TeacherAttendancePage />} />
+                      <Route path="teacher/assignments" element={<TeacherAssignmentsPage />} />
+                      <Route path="teacher/marks" element={<TeacherMarksPage />} />
+                      <Route path="teacher/homework" element={<TeacherHomeworkPage />} />
+                      <Route path="teacher/timetable" element={<TeacherTimetablePage />} />
+                      <Route path="teacher/messages" element={<TeacherMessagesPage />} />
+                      <Route path="teacher/notifications" element={<TeacherNotificationsPage />} />
+                      <Route path="teacher/profile" element={<TeacherProfilePage />} />
+                    </Route>
                     <Route path="parent" element={<ParentPortalPage />} />
                     <Route element={<RequireRole roles={[Role.PARENT]} />}>
                       <Route path="parent/timetable" element={<ParentTimetablePage />} />
@@ -75,6 +101,10 @@ export function App() {
                       <Route path="parent/invoices" element={<ParentInvoicesPage />} />
                       <Route path="parent/homework" element={<ParentHomeworkPage />} />
                       <Route path="parent/vehicle" element={<ParentVehiclePage />} />
+                      <Route path="parent/attendance" element={<ParentAttendancePage />} />
+                      <Route path="parent/syllabus" element={<ParentSyllabusPage />} />
+                      <Route path="parent/teachers" element={<ParentTeachersPage />} />
+                      <Route path="parent/announcements" element={<ParentAnnouncementsPage />} />
                     </Route>
                     <Route path="requests" element={<MyRequestsPage />} />
                     <Route path="reports" element={<ReportsPage />} />

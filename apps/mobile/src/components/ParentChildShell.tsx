@@ -1,14 +1,18 @@
 import { useState, type ReactNode } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import { api } from '../lib/api';
+import { initials } from '../lib/format';
 import { useAsync } from '../lib/useAsync';
-import { EmptyState, ErrorState, PageHeader, SkeletonPanels } from './ui';
+import { ParentEmpty, ParentError, ParentHeader, ParentPage, ParentSelectChip } from './parent/parentUi';
+import { SkeletonPanels } from './ui';
 
 export interface ParentChild {
   id: string;
   admissionNo: string;
   name: string | null;
+  /** The child's saved photo (a small data URL), or null. */
+  photoUrl?: string | null;
   className: string | null;
   sectionName: string | null;
 }
@@ -24,6 +28,15 @@ export function childLabel(child: ParentChild): string {
   return klass ? `${name} — ${klass}` : name;
 }
 
+/** Two-letter avatar fallback derived from the child's name or admission no. */
+function childInitials(child: ParentChild): string {
+  if (child.name) {
+    const [first, ...rest] = child.name.split(' ');
+    return initials(first, rest.join(' ')) || child.admissionNo.slice(0, 2).toUpperCase();
+  }
+  return child.admissionNo.slice(0, 2).toUpperCase();
+}
+
 interface ParentChildShellProps<T> {
   title: string;
   subtitle?: string;
@@ -36,7 +49,8 @@ interface ParentChildShellProps<T> {
 /**
  * Shared shell for the parent-only feature screens. Pulls the signed-in
  * parent's children, lets them pick one, and loads the feature from the
- * scoped `/parents/me/children/:id/...` endpoint.
+ * scoped `/parents/me/children/:id/...` endpoint. Rendered in the parent
+ * palette so every child page reads as part of the same portal.
  */
 export function ParentChildShell<T>({
   title,
@@ -63,20 +77,30 @@ export function ParentChildShell<T>({
 
   if (childrenState.loading) {
     return (
-      <>
-        <PageHeader title={title} subtitle={subtitle} />
+      <ParentPage>
+        <ParentHeader title={title} subtitle={subtitle} />
         <SkeletonPanels count={1} />
-      </>
+      </ParentPage>
     );
   }
   if (childrenState.error) {
     return (
-      <ErrorState message={childrenState.error} onRetry={childrenState.reload} />
+      <ParentPage>
+        <ParentHeader title={title} subtitle={subtitle} />
+        <ParentError message={childrenState.error} onRetry={childrenState.reload} />
+      </ParentPage>
     );
   }
   if (children.length === 0) {
     return (
-      <EmptyState message="No children are linked to your account yet. Please contact the school office." />
+      <ParentPage>
+        <ParentHeader title={title} subtitle={subtitle} />
+        <ParentEmpty
+          icon="parents"
+          message="No children are linked to your account yet."
+          hint="Please contact the school office to link your children."
+        />
+      </ParentPage>
     );
   }
 
@@ -84,17 +108,19 @@ export function ParentChildShell<T>({
   const showEmpty = data !== null && (isEmpty ? isEmpty(data) : false);
 
   return (
-    <>
-      <PageHeader title={title} subtitle={subtitle} />
+    <ParentPage>
+      <ParentHeader title={title} subtitle={subtitle} />
 
       {children.length > 1 ? (
-        <View style={styles.chips}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {children.map((child) => (
-            <Chip
+            <ParentSelectChip
               key={child.id}
               label={childLabel(child)}
               active={child.id === childId}
               onPress={() => setSelectedChildId(child.id)}
+              photoUrl={child.photoUrl}
+              initials={childInitials(child)}
             />
           ))}
         </View>
@@ -103,62 +129,14 @@ export function ParentChildShell<T>({
       {state.loading ? (
         <SkeletonPanels count={1} />
       ) : state.forbidden ? (
-        <EmptyState message="Your account cannot view this page." icon="lock" />
+        <ParentEmpty icon="lock" message="Your account cannot view this page." />
       ) : state.error ? (
-        <ErrorState message={state.error} onRetry={state.reload} />
+        <ParentError message={state.error} onRetry={state.reload} />
       ) : data === null ? null : showEmpty ? (
-        <EmptyState message={emptyMessage ?? 'Nothing to show yet.'} />
+        <ParentEmpty message={emptyMessage ?? 'Nothing to show yet.'} />
       ) : (
         render(data as T)
       )}
-    </>
+    </ParentPage>
   );
 }
-
-function Chip({
-  label,
-  active,
-  onPress,
-}: {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      style={[styles.chip, active ? styles.chipActive : null]}
-      accessibilityLabel={label}
-    >
-      <Text style={[styles.chipText, active ? styles.chipTextActive : null]}>{label}</Text>
-    </Pressable>
-  );
-}
-
-const styles = {
-  chips: {
-    flexDirection: 'row' as const,
-    flexWrap: 'wrap' as const,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#ffffff',
-  },
-  chipActive: {
-    backgroundColor: '#1d4ed8',
-    borderColor: '#1d4ed8',
-  },
-  chipText: {
-    color: '#334155',
-    fontSize: 13,
-  },
-  chipTextActive: {
-    color: '#ffffff',
-    fontWeight: '600' as const,
-  },
-} as const;

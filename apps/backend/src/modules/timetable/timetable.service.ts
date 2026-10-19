@@ -17,6 +17,13 @@ import type { Prisma, Weekday } from '@prisma/client';
 import { ApiError } from '../../errors/ApiError';
 import { prisma } from '../../lib/prisma';
 import { paginate, toSkipTake } from '../../utils/pagination';
+import {
+  assertSectionInScope,
+  assertSubjectInScope,
+  assertTeacherIdIsSelf,
+  assertTimetableEntryInScope,
+  resolveTeacherScope,
+} from '../teachers/teacher-scope';
 import type { Actor } from '../users/users.service';
 
 function resolveSchoolScope(actor: Actor, requestedSchoolId?: string | null): string | undefined {
@@ -140,6 +147,22 @@ export const timetableService = {
     if (query.subjectId) where.subjectId = query.subjectId;
     if (query.teacherId) where.teacherId = query.teacherId;
     if (query.dayOfWeek) where.dayOfWeek = query.dayOfWeek;
+    // A teacher only ever sees their own periods, plus the sections they are
+    // the class teacher of. Requested filters are validated, not trusted.
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      if (query.teacherId) assertTeacherIdIsSelf(teacherScope, query.teacherId);
+      if (query.sectionId) assertSectionInScope(teacherScope, query.sectionId);
+      if (query.subjectId) assertSubjectInScope(teacherScope, query.subjectId);
+      if (teacherScope.classTeacherSectionIds.length > 0) {
+        where.OR = [
+          { teacherId: teacherScope.profileId },
+          { sectionId: { in: teacherScope.classTeacherSectionIds } },
+        ];
+      } else if (!query.teacherId) {
+        where.teacherId = teacherScope.profileId;
+      }
+    }
     const items = await prisma.timetableEntry.findMany({
       where,
       skip,
@@ -159,12 +182,20 @@ export const timetableService = {
     if (!entry) throw ApiError.notFound('Timetable entry not found');
     const scope = resolveSchoolScope(actor);
     if (scope && entry.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertTimetableEntryInScope(teacherScope, entry);
     return entry;
   },
 
   async create(input: CreateTimetableEntryInput, actor: Actor) {
     const schoolId = resolveSchoolScope(actor, input.schoolId) ?? actor.schoolId ?? undefined;
     if (!schoolId) throw ApiError.badRequest('School is required');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      assertSectionInScope(teacherScope, input.sectionId);
+      assertSubjectInScope(teacherScope, input.subjectId);
+      assertTeacherIdIsSelf(teacherScope, input.teacherId);
+    }
     await assertSection(input.sectionId, schoolId);
     await assertSubject(input.subjectId, schoolId);
     await assertTeacher(input.teacherId, schoolId);
@@ -190,6 +221,13 @@ export const timetableService = {
     if (!existing) throw ApiError.notFound('Timetable entry not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) {
+      assertTimetableEntryInScope(teacherScope, existing);
+      if (input.sectionId) assertSectionInScope(teacherScope, input.sectionId);
+      if (input.subjectId) assertSubjectInScope(teacherScope, input.subjectId);
+      if (input.teacherId !== undefined) assertTeacherIdIsSelf(teacherScope, input.teacherId);
+    }
     if (input.sectionId) await assertSection(input.sectionId, existing.schoolId);
     if (input.subjectId) await assertSubject(input.subjectId, existing.schoolId);
     if (input.teacherId !== undefined) await assertTeacher(input.teacherId, existing.schoolId);
@@ -215,6 +253,8 @@ export const timetableService = {
     if (!existing) throw ApiError.notFound('Timetable entry not found');
     const scope = resolveSchoolScope(actor);
     if (scope && existing.schoolId !== scope) throw ApiError.forbidden('Access denied');
+    const teacherScope = await resolveTeacherScope(actor);
+    if (teacherScope) assertTimetableEntryInScope(teacherScope, existing);
     await prisma.timetableEntry.delete({ where: { id } });
     return { success: true };
   },

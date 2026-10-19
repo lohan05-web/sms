@@ -1,4 +1,4 @@
-import { Role, idSchema } from '@smartschool/shared';
+import { Role, idSchema, updateStudentPhotoSchema } from '@smartschool/shared';
 import { Router } from 'express';
 import { z } from 'zod';
 import { authenticate } from '../../middleware/authenticate';
@@ -60,4 +60,14 @@ parentsRouter.get(
   authorize(Role.PARENT),
   validate(childParamSchema, 'params'),
   asyncHandler(parentsController.vehicle),
+);
+
+// Reuses the student photo schema (type + size rules) the admin Students
+// screen sends, but scoped to the parent's own child above.
+parentsRouter.patch(
+  '/me/children/:studentId/photo',
+  authorize(Role.PARENT),
+  validate(childParamSchema, 'params'),
+  validate(updateStudentPhotoSchema),
+  asyncHandler(parentsController.photo),
 );

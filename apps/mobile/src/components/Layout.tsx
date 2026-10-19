@@ -1,5 +1,6 @@
 import { DrawerActions, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from './Icon';
 import { NotificationBell } from './NotificationBell';
@@ -13,27 +14,41 @@ import { colors, shadow } from '../theme';
  * the drawer menu, the SmartSchool brand and school name, the notifications bell
  * and the signed-in user's avatar, a scrollable content area, and the toaster.
  * Navigation itself lives in the drawer navigator.
+ *
+ * The header carries the top safe-area inset and the scroll content the bottom
+ * one, because the status bar is drawn edge-to-edge: without it the header would
+ * sit under the Android status bar and the last row of content under the
+ * navigation bar. Screens hosted by the bottom-tab navigator pass
+ * `bottomInset={false}`, because the tab bar already occupies that inset.
  */
 export function Layout({
   children,
   heading,
   subheading,
+  bottomInset = true,
 }: {
   children: React.ReactNode;
   /** Primary header line. Defaults to the SmartSchool brand name. */
   heading?: string;
   /** Optional second header line (e.g. the school name). */
   subheading?: string;
+  /**
+   * Whether to add the bottom safe-area inset to the content. Set to `false`
+   * inside the bottom-tab host, where the tab bar itself covers the inset.
+   */
+  bottomInset?: boolean;
 }) {
   const navigation = useNavigation();
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const bottom = bottomInset ? insets.bottom : 0;
 
   const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim();
   const avatar = initials(user?.firstName, user?.lastName);
 
   return (
     <View style={styles.shell}>
-      <View style={[styles.header, shadow]}>
+      <View style={[styles.header, shadow, { paddingTop: insets.top + 6 }]}>
         <Pressable
           style={styles.menuButton}
           onPress={() => navigation.dispatch(DrawerActions.toggleDrawer())}
@@ -71,12 +86,12 @@ export function Layout({
       </View>
       <View style={styles.content}>
         <ScrollView
-          contentContainerStyle={styles.contentInner}
+          contentContainerStyle={[styles.contentInner, { paddingBottom: bottom + 32 }]}
           showsVerticalScrollIndicator={false}
         >
           {children}
         </ScrollView>
-        <Toaster />
+        <Toaster bottomInset={bottomInset} />
       </View>
     </View>
   );
@@ -92,7 +107,9 @@ const styles = {
     alignItems: 'center' as const,
     gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    // The top padding is extended with the status-bar inset in the component.
+    paddingTop: 6,
+    paddingBottom: 6,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -156,6 +173,7 @@ const styles = {
   },
   contentInner: {
     padding: 16,
+    // Extended with the bottom safe-area inset in the component.
     paddingBottom: 32,
     gap: 12,
   },

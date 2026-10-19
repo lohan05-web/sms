@@ -1,4 +1,4 @@
-import { ROLE_LABELS } from '@smartschool/shared';
+import { ROLE_LABELS, Role } from '@smartschool/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
@@ -18,6 +18,20 @@ const NAV_ICONS: Record<string, IconName> = {
   'parent-invoices': 'finance',
   'parent-homework': 'homework',
   'parent-vehicle': 'bus',
+  'parent-attendance': 'attendance',
+  'parent-syllabus': 'subject',
+  'parent-teachers': 'teacher',
+  'parent-notices': 'bell',
+  'teacher-classes': 'class',
+  'teacher-students': 'students',
+  'teacher-attendance': 'attendance',
+  'teacher-assignments': 'subject',
+  'teacher-marks': 'marks',
+  'teacher-homework': 'homework',
+  'teacher-timetable': 'timetable',
+  'teacher-messages': 'messages',
+  'teacher-notifications': 'bell',
+  'teacher-profile': 'user',
   'student-details': 'students',
   admissions: 'admissions',
   requests: 'requests',
@@ -48,14 +62,32 @@ const NAV_ICONS: Record<string, IconName> = {
 const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
   { title: null, keys: ['dashboard', 'vehicle-details', 'teacher-portal', 'parent-portal', 'my-requests'] },
   {
+    // Teacher-only navigation. These keys resolve to role-restricted NAV_ITEMS,
+    // so the section stays invisible for every non-teacher role.
+    title: 'Teaching',
+    keys: [
+      'teacher-classes',
+      'teacher-students',
+      'teacher-attendance',
+      'teacher-assignments',
+      'teacher-marks',
+      'teacher-homework',
+      'teacher-timetable',
+    ],
+  },
+  {
     // Parent-only navigation. These keys resolve to role-restricted NAV_ITEMS,
     // so the section stays invisible for every non-parent role.
     title: 'My Child',
     keys: [
+      'parent-attendance',
+      'parent-homework',
       'parent-timetable',
       'parent-results',
+      'parent-syllabus',
       'parent-invoices',
-      'parent-homework',
+      'parent-teachers',
+      'parent-notices',
       'parent-vehicle',
     ],
   },
@@ -80,6 +112,11 @@ const NAV_SECTIONS: { title: string | null; keys: string[] }[] = [
   { title: 'Operations', keys: ['books', 'finance', 'fee-desk'] },
   { title: 'Reports', keys: ['reports', 'report-cards'] },
   { title: 'Communication', keys: ['notifications', 'messages'] },
+  {
+    // Teacher account nav (role-restricted items → invisible to other roles).
+    title: 'My Space',
+    keys: ['teacher-messages', 'teacher-notifications', 'teacher-profile'],
+  },
   { title: 'System', keys: ['settings'] },
 ];
 
@@ -110,6 +147,23 @@ export function Layout() {
     setNavOpen(false);
     contentRef.current?.scrollTo({ top: 0 });
   }, [location.pathname]);
+
+  // The Teacher portal runs on the scoped "navy" palette (see index.css §2b)
+  // and the Parent portal on the "parent" palette (navy blue + white with soft
+  // blue accents, §2c). Every other role keeps the default theme — the attribute
+  // is only ever set for those two roles, and cleared on unmount or a role swap.
+  const theme = user?.role === Role.TEACHER ? 'navy' : user?.role === Role.PARENT ? 'parent' : null;
+  useEffect(() => {
+    const root = document.documentElement;
+    if (!theme) {
+      delete root.dataset.theme;
+      return;
+    }
+    root.dataset.theme = theme;
+    return () => {
+      delete root.dataset.theme;
+    };
+  }, [theme]);
 
   const items = useMemo(() => (user ? navForRole(user.role) : []), [user]);
 
