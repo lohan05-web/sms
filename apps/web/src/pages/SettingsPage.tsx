@@ -29,14 +29,14 @@ const fields: FieldDef[] = [
     name: 'timezone',
     label: 'Timezone',
     type: 'text',
-    help: 'IANA time zone, for example Africa/Lagos',
+    help: 'IANA time zone, for example Asia/Kolkata',
   },
   {
     name: 'currency',
     label: 'Currency',
     type: 'text',
     required: true,
-    help: 'ISO 4217 code, for example USD, EUR or NGN',
+    help: 'ISO 4217 code — INR (₹, Indian grouping) formats as ₹1,00,000; other codes, e.g. USD, EUR or NGN, keep their own format',
   },
   { name: 'isActive', label: 'Active', type: 'checkbox' },
 ];

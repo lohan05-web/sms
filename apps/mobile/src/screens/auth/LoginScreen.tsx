@@ -45,7 +45,11 @@ export function LoginScreen({ portal = 'admin' }: { portal?: LoginPortal }) {
             {PORTALS.map((tab) => (
               <Pressable
                 key={tab.value}
-                onPress={() => setSelected(tab.value)}
+                onPress={() => {
+                  // TEMP DEBUG ([SS-DEBUG] logs are safe to delete after verification).
+                  console.log('[SS-DEBUG] LoginScreen: portal tab pressed', tab.value);
+                  setSelected(tab.value);
+                }}
                 style={[styles.tab, selected === tab.value ? styles.tabActive : null]}
                 accessibilityLabel={`${tab.label} sign in`}
               >
@@ -72,11 +76,22 @@ function LoginForm({ portal }: { portal: LoginPortal }) {
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async () => {
+    // TEMP DEBUG ([SS-DEBUG] logs are safe to delete after verification).
+    // Never logs the email or password — only the portal and outcome.
+    console.log('[SS-DEBUG] LoginScreen: submit pressed', { portal });
     setError(null);
     setSubmitting(true);
     try {
       await login(email.trim(), password, portal);
+      // TEMP DEBUG: reached only after a successful API round-trip.
+      console.log('[SS-DEBUG] LoginScreen: login succeeded', { portal });
     } catch (err) {
+      // TEMP DEBUG: status/code only — no credentials, no tokens.
+      console.log('[SS-DEBUG] LoginScreen: login failed', {
+        portal,
+        status: err instanceof ApiError ? err.status : 'network-or-unknown',
+        code: err instanceof ApiError ? err.code : undefined,
+      });
       setError(
         err instanceof ApiError ? err.message : 'Unable to sign in. Please try again.',
       );
@@ -114,7 +129,13 @@ function LoginForm({ portal }: { portal: LoginPortal }) {
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <Pressable style={styles.submit} onPress={onSubmit} disabled={submitting} accessibilityRole="button">
+      <Pressable
+        style={styles.submit}
+        onPress={onSubmit}
+        disabled={submitting}
+        accessibilityRole="button"
+        testID="login-submit"
+      >
         <Text style={styles.submitText}>{submitting ? 'Signing in…' : 'Sign in'}</Text>
       </Pressable>
       <SiteLink />

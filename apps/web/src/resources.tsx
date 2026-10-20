@@ -1786,7 +1786,7 @@ export const RESOURCES: ResourceConfig[] = [
           textField('phone', 'Phone'),
           textField('address', 'Address', { type: 'textarea' }),
           textField('timezone', 'Timezone'),
-          textField('currency', 'Currency code', { help: '3-letter ISO code, e.g. USD' }),
+          textField('currency', 'Currency code', { help: '3-letter ISO code, e.g. INR' }),
           { name: 'isActive', label: 'Active', type: 'checkbox' },
         ],
         schema: updateSchoolSchema,

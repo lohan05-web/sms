@@ -1047,12 +1047,21 @@ a:hover {
 .page-header__actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .dashboard {
   display: grid;
   gap: 20px;
+}
+
+/* Grid/flex children get an explicit min-width floor so wide inner content
+   (tables, toolbars, long names) shrinks its container instead of forcing
+   the page content area wider than its column. */
+.dashboard > *,
+.page__body > * {
+  min-width: 0;
 }
 
 /* Quick action tiles on the dashboard */
@@ -1325,7 +1334,7 @@ a:hover {
 
 .bar-row {
   display: grid;
-  grid-template-columns: 110px 1fr;
+  grid-template-columns: 110px minmax(0, 1fr);
   align-items: center;
   gap: 12px;
 }
@@ -1592,11 +1601,18 @@ a:hover {
 
 .form__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 6px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+
+/* Inside `.form` the 16px grid gap already separates the alert from the
+   fields below it — the base 14px bottom margin would double the spacing. */
+.form > .alert {
+  margin-bottom: 0;
 }
 
 .field {
@@ -1779,7 +1795,9 @@ select.field__input[multiple] {
   align-items: center;
   gap: 12px;
   color: var(--text-muted);
-  padding: 20px 0;
+  /* Generous vertical padding so a loading panel is closer in height to the
+     content that replaces it — less up/down shifting between states. */
+  padding: 32px 0;
   font-size: 13.5px;
 }
 
@@ -1895,7 +1913,7 @@ select.field__input[multiple] {
 
 .details__row {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 160px minmax(0, 1fr);
   gap: 14px;
   padding: 10px 0;
   border-bottom: 1px solid var(--border);
@@ -1942,7 +1960,7 @@ select.field__input[multiple] {
    -------------------------------------------------------------------------- */
 .messages {
   display: grid;
-  grid-template-columns: minmax(260px, 340px) 1fr;
+  grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
 }
@@ -2393,7 +2411,7 @@ select.field__input[multiple] {
    -------------------------------------------------------------------------- */
 .auth {
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
   min-height: 100vh;
   background-color: var(--bg);
 }
@@ -2908,7 +2926,7 @@ body.modal-open {
 
 .items__row {
   display: grid;
-  grid-template-columns: 1fr 140px auto;
+  grid-template-columns: minmax(0, 1fr) 140px auto;
   gap: 8px;
 }
 
@@ -3118,7 +3136,7 @@ body.modal-open {
   }
 
   .bar-row {
-    grid-template-columns: 84px 1fr;
+    grid-template-columns: 84px minmax(0, 1fr);
   }
 
   .content {
@@ -3252,7 +3270,7 @@ body.modal-open {
 
 .mock__stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 
@@ -3787,7 +3805,7 @@ body.modal-open {
 
 .udash-barlist__row {
   display: grid;
-  grid-template-columns: minmax(72px, 130px) 1fr auto;
+  grid-template-columns: minmax(72px, 130px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
 }
@@ -4385,7 +4403,7 @@ body.modal-open {
 .udash-joining__pill {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 2px 12px;
   padding: 14px 16px 14px 20px;
   border-radius: 16px;
@@ -4446,7 +4464,7 @@ body.modal-open {
 
 .udash-joining__totals {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
 }
 
@@ -4481,7 +4499,7 @@ body.modal-open {
 
 .udash-joining__year {
   display: grid;
-  grid-template-columns: minmax(140px, 200px) 1fr auto;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 16px;
 }
@@ -4773,7 +4791,7 @@ body.modal-open {
 
 .udash-enrollment__class {
   display: grid;
-  grid-template-columns: 24px minmax(64px, 130px) 1fr auto;
+  grid-template-columns: 24px minmax(64px, 130px) minmax(0, 1fr) auto;
   align-items: center;
   gap: 12px;
 }
@@ -5790,7 +5808,7 @@ body.modal-open {
 /* --- Attendance donut ---------------------------------------------------- */
 .attendance-donut {
   display: grid;
-  grid-template-columns: minmax(0, 230px) 1fr;
+  grid-template-columns: minmax(0, 230px) minmax(0, 1fr);
   gap: 20px;
   align-items: center;
 }

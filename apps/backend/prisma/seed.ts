@@ -20,8 +20,10 @@ async function main(): Promise<void> {
 
   const school = await prisma.school.upsert({
     where: { code: 'DEMO' },
+    // `update` intentionally leaves currency alone: an existing school's
+    // configured currency must not be rewritten by re-running the seed.
     update: { name: schoolName },
-    create: { name: schoolName, code: 'DEMO', currency: 'USD', timezone: 'UTC' },
+    create: { name: schoolName, code: 'DEMO', currency: 'INR', timezone: 'Asia/Kolkata' },
   });
 
   const passwordHash = await bcrypt.hash(adminPassword, SALT_ROUNDS);

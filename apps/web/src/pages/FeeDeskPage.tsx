@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { EmptyState, ErrorState, PageHeader, Spinner, StatCard } from '../components/ui';
 import { ApiError, api, buildQuery } from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { formatCurrency } from '../lib/format';
 import { useLookups } from '../lib/options';
 import { can } from '../lib/permissions';
 import { useAsync } from '../lib/useAsync';
@@ -49,8 +50,13 @@ interface SectionRow {
   name: string;
 }
 
-const money = (value: number) =>
-  value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/**
+ * Money on the fee desk is formatted with the shared currency utility so the
+ * school's configured currency (INR by default → ₹1,00,000 grouping) applies
+ * here too. It previously used a bare `toLocaleString`, which dropped the
+ * currency symbol entirely.
+ */
+const money = (value: number) => formatCurrency(value);
 
 const isoDate = (date: Date) => date.toISOString().slice(0, 10);
 const defaultDue = () => isoDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));

@@ -8,8 +8,8 @@ import { useAuth } from '../../lib/auth';
 import { useSettings, type SchoolSettings } from '../../lib/settings';
 import { Permission } from '@smartschool/shared';
 
-const TIMEZONES = ['UTC', 'UTC+03:00', 'UTC-05:00', 'UTC+05:30', 'UTC+08:00'];
-const CURRENCIES = ['USD', 'EUR', 'KES', 'NGN', 'TZS', 'UGX', 'GHS', 'ZAR'];
+const TIMEZONES = ['Asia/Kolkata', 'UTC', 'UTC+03:00', 'UTC-05:00', 'UTC+05:30', 'UTC+08:00'];
+const CURRENCIES = ['INR', 'USD', 'EUR', 'KES', 'NGN', 'TZS', 'UGX', 'GHS', 'ZAR'];
 
 interface Draft {
   name: string;

@@ -43,13 +43,25 @@ export function formatDateTime(value: unknown): string {
   });
 }
 
-export const DEFAULT_CURRENCY = 'USD';
+export const DEFAULT_CURRENCY = 'INR';
 
 let activeCurrency = DEFAULT_CURRENCY;
 
 function normalizeCurrency(currency: unknown): string {
   const code = asString(currency).trim().toUpperCase();
   return /^[A-Z]{3}$/.test(code) ? code : '';
+}
+
+/**
+ * Picks the locale used to group/format an amount.
+ *
+ * Indian grouping (₹1,00,000 rather than ₹100,000) is produced by the `en-IN`
+ * locale, not by the INR currency code — so the locale cannot simply follow the
+ * device. INR therefore always formats as `en-IN`; every other currency keeps
+ * following the system locale, exactly as before.
+ */
+export function currencyLocale(currency: unknown): string | undefined {
+  return normalizeCurrency(currency) === 'INR' ? 'en-IN' : undefined;
 }
 
 /**
@@ -71,9 +83,15 @@ export function formatCurrency(value: unknown, currency?: string): string {
     currency === undefined || currency === null || currency === '' ? activeCurrency : currency;
   const code = normalizeCurrency(requested) || DEFAULT_CURRENCY;
   try {
-    return new Intl.NumberFormat(undefined, { style: 'currency', currency: code }).format(num);
+    // As specified: Intl.NumberFormat with the currency's conventional locale
+    // (`en-IN` for INR) so grouping matches the currency's own convention.
+    return new Intl.NumberFormat(currencyLocale(code), {
+      style: 'currency',
+      currency: code,
+      maximumFractionDigits: 2,
+    }).format(num);
   } catch {
-    return `${code} ${num.toLocaleString()}`;
+    return `${code} ${num.toLocaleString(currencyLocale(code))}`;
   }
 }
 
