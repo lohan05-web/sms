@@ -1,87 +1,103 @@
+import { Link } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
-import { ClassroomArt } from '../../components/illustrations';
 import { SITE_MODULES, SITE_MODULE_GROUPS } from '../../lib/publicContent';
-import { CtaBand, ModuleCard, PageHero, Section, SectionHeading, Split } from './sections';
+import {
+  BookDemo,
+  Checklist,
+  PageHero,
+  Section,
+  SectionHeading,
+  Split,
+  Shot,
+} from './sections';
 
 export function PublicModulesPage() {
   return (
     <>
       <PageHero
         eyebrow="Modules"
-        title="Thirty-plus modules, one connected platform"
-        description="Switch on the modules you need today and add more as your school grows — no re-implementation, no data silos."
-      />
+        title="Switch on the parts your school needs"
+        lead="Every module sits next to the student record, so information entered in one place is available everywhere it is needed. Start small and add more as the school grows — nothing has to be rebuilt."
+      >
+        <Link to="/site/contact" className="pub-btn pub-btn--primary">
+          Book a demo
+          <Icon name="arrow-right" size={16} />
+        </Link>
+        <Link to="/site/features" className="pub-btn pub-btn--ghost">
+          See the features
+        </Link>
+      </PageHero>
 
       <Section>
-        <div className="site-grid site-grid--4">
-          {SITE_MODULES.map((module, index) => (
-            <ModuleCard key={module.title} module={module} delay={index * 45} />
+        <SectionHeading
+          eyebrow="The full list"
+          title="Everything included in the platform"
+          lead="These are the working areas you can turn on for your school."
+        />
+        <div className="mods-index">
+          {SITE_MODULES.map((module) => (
+            <div className="mod-item" key={module.title}>
+              <span className="mod-item__icon">
+                <Icon name={module.icon} size={18} />
+              </span>
+              <div>
+                <h3>{module.title}</h3>
+                <p>{module.description}</p>
+              </div>
+            </div>
           ))}
         </div>
       </Section>
 
-      <Section className="site-section--tint">
+      <Section tone="tint">
         <SectionHeading
           eyebrow="Grouped by department"
           title="A module for every team"
-          description="Each area of the school gets the tools it needs, while sharing one source of truth."
+          lead="Each part of the school gets the tools it needs, while sharing the same student records underneath."
         />
-        <div className="site-grid site-grid--3">
-          {SITE_MODULE_GROUPS.map((group, index) => (
-            <article
-              className="site-card site-group site-card--lift"
-              key={group.title}
-              {...{ 'data-reveal': '', style: { transitionDelay: `${index * 80}ms` } }}
-            >
-              <span className="site-card__icon site-card__icon--pulse">
-                <Icon name={group.icon} size={22} />
-              </span>
-              <h3>{group.title}</h3>
-              <p>{group.summary}</p>
-              <ul className="site-checklist site-checklist--compact">
-                {group.modules.map((module) => (
-                  <li key={module}>
-                    <Icon name="check" size={14} />
-                    {module}
-                  </li>
-                ))}
-              </ul>
-            </article>
+        <div className="mod-groups">
+          {SITE_MODULE_GROUPS.map((group) => (
+            <div className="mod-group" key={group.title}>
+              <div className="mod-group__head">
+                <h3>
+                  <Icon name={group.icon} size={18} />
+                  {group.title}
+                </h3>
+                <p>{group.summary}</p>
+              </div>
+              <Checklist className="pub-checklist--compact" items={group.modules} />
+            </div>
           ))}
         </div>
       </Section>
 
       <Section>
         <Split
+          reverse
           media={
-            <div className="site-panel">
-              <ClassroomArt className="site-panel__art" />
-            </div>
+            <Shot
+              src="/site/shots/dashboard.png"
+              alt="The SmartSchool dashboard, summarising students, attendance, fees and exams."
+            />
           }
         >
-          <SectionHeading
-            align="start"
-            eyebrow="One source of truth"
-            title="Data flows between modules for you"
-            description="A student admitted on Monday is on the register, the timetable, the fee ledger and the gradebook — without anyone copying a thing."
-          />
-          <ul className="site-checklist">
-            <li>
-              <Icon name="check" size={16} /> No duplicate entry between departments
-            </li>
-            <li>
-              <Icon name="check" size={16} /> Permissions that respect every role
-            </li>
-            <li>
-              <Icon name="check" size={16} /> Add modules without disturbing existing data
-            </li>
-          </ul>
+          <h2>One set of records, many ways in</h2>
+          <p>
+            A student is entered once. Attendance, marks, fees and transport all point back to that
+            same record, so the school stops keeping the same details in three different places.
+          </p>
+          <p>
+            Each role sees its own working area. A teacher sees today&apos;s classes and their
+            register; the office sees admissions, invoices and records; parents see their own child.
+          </p>
         </Split>
       </Section>
 
-      <CtaBand
-        title="Not sure which modules you need?"
-        description="Tell us how your school runs today and we will map the right modules to your workflow."
+      <BookDemo
+        title="Start with the modules you need"
+        lead="Book a demo and we will show you how the parts fit together for your school."
+        secondaryLabel="See the features"
+        secondaryTo="/site/features"
       />
     </>
   );

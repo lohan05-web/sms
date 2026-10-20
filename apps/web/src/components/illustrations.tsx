@@ -2,7 +2,7 @@ import { useId } from 'react';
 
 /**
  * Self-contained, theme-matched SVG illustrations for the public marketing
- * site. They use the navy / indigo / violet palette so they sit naturally on
+ * site. They use the navy / teal palette so they sit naturally on
  * the existing gradient theme, and they never depend on external image files
  * (so there are no broken links or network requests).
  *
@@ -40,20 +40,20 @@ export function HeroScene({ className }: ArtProps) {
           <stop offset="100%" stopColor="#0b1220" />
         </linearGradient>
         <linearGradient id={`${id}-brand`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#5eead4" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
         <linearGradient id={`${id}-soft`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#eef2ff" />
-          <stop offset="100%" stopColor="#e0e7ff" />
+          <stop offset="0%" stopColor="#f0fdfa" />
+          <stop offset="100%" stopColor="#e6fffb" />
         </linearGradient>
         <radialGradient id={`${id}-halo`} cx="50%" cy="45%" r="55%">
-          <stop offset="0%" stopColor="#a5b4fc" stopOpacity="0.55" />
-          <stop offset="100%" stopColor="#a5b4fc" stopOpacity="0" />
+          <stop offset="0%" stopColor="#99f6e4" stopOpacity="0.55" />
+          <stop offset="100%" stopColor="#99f6e4" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -108,20 +108,20 @@ export function HeroScene({ className }: ArtProps) {
       {/* People bubbles */}
       <g>
         <circle cx="150" cy="336" r="58" fill="#ffffff" />
-        <circle cx="150" cy="336" r="58" fill="none" stroke="#e0e7ff" />
+        <circle cx="150" cy="336" r="58" fill="none" stroke="#e6fffb" />
         <circle cx="150" cy="322" r="20" fill="#f2c6a0" />
         <path d="M150 300a20 20 0 0 1 20 20c0-8-9-12-20-12s-20 4-20 12a20 20 0 0 1 20-20Z" fill="#2a2f45" />
         <path d="M112 384a38 38 0 0 1 76 0Z" fill={`url(#${id}-brand)`} />
         <path d="M134 352l16 14 16-14" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
 
         <circle cx="300" cy="356" r="52" fill="#ffffff" />
-        <circle cx="300" cy="356" r="52" fill="none" stroke="#e0e7ff" />
+        <circle cx="300" cy="356" r="52" fill="none" stroke="#e6fffb" />
         <circle cx="300" cy="344" r="18" fill="#d29c74" />
         <path d="M300 326c-11 0-18 6-18 14 4-6 11-8 18-8s14 2 18 8c0-8-7-14-18-14Z" fill="#5b3f2e" />
         <path d="M266 398a34 34 0 0 1 68 0Z" fill={`url(#${id}-sky)`} />
 
         <circle cx="450" cy="340" r="54" fill="#ffffff" />
-        <circle cx="450" cy="340" r="54" fill="none" stroke="#e0e7ff" />
+        <circle cx="450" cy="340" r="54" fill="none" stroke="#e6fffb" />
         <circle cx="450" cy="327" r="19" fill="#f2c6a0" />
         <path d="M450 308c-12 0-19 7-19 16 5-7 12-9 19-9s14 2 19 9c0-9-7-16-19-16Z" fill="#2a2f45" />
         <path d="M414 384a36 36 0 0 1 72 0Z" fill={`url(#${id}-brand)`} />
@@ -131,8 +131,8 @@ export function HeroScene({ className }: ArtProps) {
       <g>
         <g transform="translate(40 96) rotate(-8)">
           <rect width="74" height="52" rx="14" fill="#ffffff" />
-          <rect x="12" y="14" width="50" height="7" rx="3.5" fill="#c7d2fe" />
-          <rect x="12" y="30" width="30" height="7" rx="3.5" fill="#e0e7ff" />
+          <rect x="12" y="14" width="50" height="7" rx="3.5" fill="#ccfbf1" />
+          <rect x="12" y="30" width="30" height="7" rx="3.5" fill="#e6fffb" />
         </g>
 
         <g transform="translate(492 120) rotate(7)">
@@ -191,12 +191,12 @@ export function ClassroomArt({ className }: ArtProps) {
           <stop offset="100%" stopColor="#0f1a33" />
         </linearGradient>
         <linearGradient id={`${id}-brand`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#5eead4" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
         <linearGradient id={`${id}-wall`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="#f5f7ff" />
@@ -210,7 +210,7 @@ export function ClassroomArt({ className }: ArtProps) {
       <rect x="120" y="52" width="330" height="176" rx="16" fill={`url(#${id}-board)`} />
       <rect x="120" y="52" width="330" height="176" rx="16" fill="none" stroke="#ffffff" strokeOpacity="0.1" />
       <rect x="146" y="78" width="130" height="12" rx="6" fill="#ffffff" fillOpacity="0.6" />
-      <rect x="146" y="102" width="86" height="9" rx="4.5" fill="#a5b4fc" fillOpacity="0.8" />
+      <rect x="146" y="102" width="86" height="9" rx="4.5" fill="#99f6e4" fillOpacity="0.8" />
       <rect x="146" y="126" width="110" height="9" rx="4.5" fill="#ffffff" fillOpacity="0.22" />
       <circle cx="392" cy="140" r="42" fill="none" stroke="#ffffff" strokeOpacity="0.14" strokeWidth="14" />
       <circle
@@ -239,7 +239,7 @@ export function ClassroomArt({ className }: ArtProps) {
 
       {/* Students at a desk */}
       <g>
-        <rect x="300" y="300" width="210" height="16" rx="8" fill="#c7d2fe" />
+        <rect x="300" y="300" width="210" height="16" rx="8" fill="#ccfbf1" />
         <circle cx="360" cy="256" r="20" fill="#d29c74" />
         <path d="M360 236c-12 0-20 6-20 15 5-6 12-8 20-8s15 2 20 8c0-9-8-15-20-15Z" fill="#5b3f2e" />
         <rect x="332" y="272" width="56" height="30" rx="15" fill={`url(#${id}-sky)`} />
@@ -250,7 +250,7 @@ export function ClassroomArt({ className }: ArtProps) {
 
       {/* Desk items */}
       <rect x="330" y="284" width="52" height="16" rx="4" fill="#ffffff" />
-      <rect x="336" y="278" width="40" height="12" rx="3" fill="#e0e7ff" />
+      <rect x="336" y="278" width="40" height="12" rx="3" fill="#e6fffb" />
     </svg>
   );
 }
@@ -267,7 +267,7 @@ const AVATAR_PALETTE: Record<
 > = {
   teacher: { skin: '#f2c6a0', hair: '#2a2f45', shirt: 'brand', accent: '#f59e0b' },
   student: { skin: '#d29c74', hair: '#5b3f2e', shirt: 'sky', accent: '#34d399' },
-  parent: { skin: '#e8b48c', hair: '#3f2f24', shirt: 'violet', accent: '#38bdf8' },
+  parent: { skin: '#e8b48c', hair: '#3f2f24', shirt: 'violet', accent: '#5eead4' },
 };
 
 export function AvatarArt({ variant, className }: { variant: AvatarVariant } & ArtProps) {
@@ -284,21 +284,21 @@ export function AvatarArt({ variant, className }: { variant: AvatarVariant } & A
     >
       <defs>
         <linearGradient id={`${id}-b`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
         <linearGradient id={`${id}-c`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#5eead4" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
         <linearGradient id={`${id}-d`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#8b5cf6" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#2dd4bf" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
       </defs>
 
-      <circle cx="110" cy="110" r="96" fill="#eef2ff" />
-      <circle cx="110" cy="110" r="96" fill="none" stroke="#e0e7ff" strokeWidth="2" />
+      <circle cx="110" cy="110" r="96" fill="#f0fdfa" />
+      <circle cx="110" cy="110" r="96" fill="none" stroke="#e6fffb" strokeWidth="2" />
       <circle cx="110" cy="98" r="34" fill={p.skin} />
       <path
         d="M110 64c-20 0-34 12-34 30 9-13 22-16 34-16s25 3 34 16c0-18-14-30-34-30Z"
@@ -326,22 +326,22 @@ export function LearningArt({ className }: ArtProps) {
     >
       <defs>
         <linearGradient id={`${id}-brand`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#5eead4" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
       </defs>
-      <circle cx="130" cy="110" r="92" fill="#eef2ff" />
+      <circle cx="130" cy="110" r="92" fill="#f0fdfa" />
       <rect x="70" y="128" width="120" height="18" rx="6" fill={`url(#${id}-brand)`} />
       <rect x="62" y="146" width="136" height="18" rx="6" fill={`url(#${id}-sky)`} />
-      <rect x="78" y="110" width="104" height="18" rx="6" fill="#a5b4fc" />
-      <rect x="96" y="72" width="68" height="42" rx="6" fill="#ffffff" stroke="#c7d2fe" strokeWidth="2" />
+      <rect x="78" y="110" width="104" height="18" rx="6" fill="#99f6e4" />
+      <rect x="96" y="72" width="68" height="42" rx="6" fill="#ffffff" stroke="#ccfbf1" strokeWidth="2" />
       <circle cx="130" cy="52" r="20" fill={`url(#${id}-brand)`} />
       <path d="M130 40v10M130 60h.01" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" />
-      <path d="M120 72c4 6 16 6 20 0" fill="none" stroke="#c7d2fe" strokeWidth="3" strokeLinecap="round" />
+      <path d="M120 72c4 6 16 6 20 0" fill="none" stroke="#ccfbf1" strokeWidth="3" strokeLinecap="round" />
       <circle cx="196" cy="76" r="10" fill="#f59e0b" />
     </svg>
   );
@@ -358,15 +358,15 @@ export function AnalyticsArt({ className }: ArtProps) {
     >
       <defs>
         <linearGradient id={`${id}-brand`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#6366f1" />
-          <stop offset="100%" stopColor="#8b5cf6" />
+          <stop offset="0%" stopColor="#14b8a6" />
+          <stop offset="100%" stopColor="#2dd4bf" />
         </linearGradient>
         <linearGradient id={`${id}-sky`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#38bdf8" />
-          <stop offset="100%" stopColor="#6366f1" />
+          <stop offset="0%" stopColor="#5eead4" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
       </defs>
-      <circle cx="130" cy="110" r="92" fill="#eef2ff" />
+      <circle cx="130" cy="110" r="92" fill="#f0fdfa" />
       <rect x="52" y="52" width="156" height="116" rx="16" fill="#0f1a33" />
       <rect x="70" y="140" width="18" height="16" rx="5" fill={`url(#${id}-brand)`} />
       <rect x="96" y="120" width="18" height="36" rx="5" fill={`url(#${id}-sky)`} />

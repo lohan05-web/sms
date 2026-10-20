@@ -5,7 +5,7 @@ import type {
   UniversityPerformancePoint,
 } from '@smartschool/shared';
 import { Permission, Role } from '@smartschool/shared';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon, type IconName } from '../components/Icon';
 import { JoiningPanel } from '../components/JoiningPanel';
@@ -26,32 +26,35 @@ import {
 import { useAsync } from '../lib/useAsync';
 import { DashboardSections } from './DashboardPage';
 import { ForbiddenPage } from './ForbiddenPage';
+import './UniversityDashboardPage.css';
 
 const CHART_WIDTH = 600;
 const CHART_HEIGHT = 200;
+
+type DashTone = 'blue' | 'amber' | 'violet' | 'rose' | 'emerald';
 
 interface StatTileProps {
   icon: IconName;
   label: string;
   value: ReactNode;
+  tone: DashTone;
   hint?: string;
-  tone?: 'blue' | 'purple' | 'cyan' | 'indigo' | 'green';
 }
 
-function StatTile({ icon, label, value, hint, tone = 'blue' }: StatTileProps) {
+function StatTile({ icon, label, value, tone, hint }: StatTileProps) {
   return (
-    <div className={`udash-tile udash-tile--${tone}`}>
-      <span className="udash-tile__icon">
+    <article className={`uni-stat uni-stat--${tone}`}>
+      <span className="uni-stat__icon">
         <Icon name={icon} size={20} />
       </span>
-      <div className="udash-tile__body">
-        <p className="udash-tile__value">
+      <div className="uni-stat__body">
+        <p className="uni-stat__value">
           <CountUp value={value} />
         </p>
-        <p className="udash-tile__label">{label}</p>
-        {hint ? <p className="udash-tile__hint">{hint}</p> : null}
+        <p className="uni-stat__label">{label}</p>
+        {hint ? <p className="uni-stat__hint">{hint}</p> : null}
       </div>
-    </div>
+    </article>
   );
 }
 
@@ -65,11 +68,11 @@ interface PanelProps {
 
 function Panel({ title, subtitle, action, span = 6, children }: PanelProps) {
   return (
-    <section className={`udash-panel udash-panel--span${span}`}>
-      <div className="udash-panel__head">
+    <section className={`uni-panel uni-panel--span${span}`}>
+      <div className="uni-panel__head">
         <div>
-          <h2 className="udash-panel__title">{title}</h2>
-          {subtitle ? <p className="udash-panel__subtitle">{subtitle}</p> : null}
+          <h2 className="uni-panel__title">{title}</h2>
+          {subtitle ? <p className="uni-panel__subtitle">{subtitle}</p> : null}
         </div>
         {action}
       </div>
@@ -80,7 +83,7 @@ function Panel({ title, subtitle, action, span = 6, children }: PanelProps) {
 
 function ViewAllLink({ to }: { to: string }) {
   return (
-    <Link className="udash-link" to={to}>
+    <Link className="uni-link" to={to}>
       View all
       <Icon name="arrow-right" size={14} />
     </Link>
@@ -94,19 +97,19 @@ function BarList({
   items: readonly { name: string; count: number }[];
   formatValue?: (value: number) => string;
 }) {
-  if (items.length === 0) return <p className="udash-empty">No data yet.</p>;
+  if (items.length === 0) return <p className="uni-empty">No data yet.</p>;
   const peak = Math.max(1, ...items.map((item) => item.count));
   return (
-    <ul className="udash-barlist">
+    <ul className="uni-barlist">
       {items.map((item) => (
-        <li key={item.name} className="udash-barlist__row" title={`${item.name}: ${item.count}`}>
-          <span className="udash-barlist__label" title={item.name}>
+        <li key={item.name} className="uni-barlist__row" title={`${item.name}: ${item.count}`}>
+          <span className="uni-barlist__label" title={item.name}>
             {item.name}
           </span>
-          <span className="udash-barlist__track">
-            <span className="udash-barlist__fill" style={{ width: `${(item.count / peak) * 100}%` }} />
+          <span className="uni-barlist__track">
+            <span className="uni-barlist__fill" style={{ width: `${(item.count / peak) * 100}%` }} />
           </span>
-          <span className="udash-barlist__value">
+          <span className="uni-barlist__value">
             {formatValue ? formatValue(item.count) : item.count}
           </span>
         </li>
@@ -116,32 +119,32 @@ function BarList({
 }
 
 function PerformanceChart({ points }: { points: UniversityPerformancePoint[] }) {
-  if (points.length === 0) return <p className="udash-empty">No exam results recorded yet.</p>;
+  if (points.length === 0) return <p className="uni-empty">No exam results recorded yet.</p>;
   const ceiling = performanceCeiling(points);
   const coordinates = performanceCoordinates(points, CHART_WIDTH, CHART_HEIGHT, ceiling);
   return (
-    <div className="udash-chart">
+    <div className="uni-chart">
       <svg
         viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-        className="udash-chart__svg"
+        className="uni-chart__svg"
         preserveAspectRatio="none"
         role="img"
         aria-label="Average marks by month"
       >
         <defs>
-          <linearGradient id="udash-area" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0" />
+          <linearGradient id="uni-area" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#4f46e5" stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="udash-line" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#5b6bff" />
-            <stop offset="100%" stopColor="#a78bfa" />
+          <linearGradient id="uni-line" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#4f46e5" />
+            <stop offset="100%" stopColor="#8b5cf6" />
           </linearGradient>
         </defs>
         {[0, 0.25, 0.5, 0.75, 1].map((ratio) => (
           <line
             key={ratio}
-            className="udash-chart__grid"
+            className="uni-chart__grid"
             x1={0}
             x2={CHART_WIDTH}
             y1={ratio * CHART_HEIGHT}
@@ -150,27 +153,23 @@ function PerformanceChart({ points }: { points: UniversityPerformancePoint[] }) 
         ))}
         <path
           d={areaPath(coordinates, CHART_HEIGHT)}
-          className="udash-chart__area"
-          fill="url(#udash-area)"
+          className="uni-chart__area"
+          fill="url(#uni-area)"
         />
-        <path d={linePath(coordinates)} className="udash-chart__line" stroke="url(#udash-line)" />
+        <path d={linePath(coordinates)} className="uni-chart__line" stroke="url(#uni-line)" />
         {coordinates.map((point, index) => (
           <circle
             key={points[index]?.month ?? index}
-            className="udash-chart__dot"
+            className="uni-chart__dot"
             cx={point.x}
             cy={point.y}
-            r={5}
-          >
-            <title>
-              {points[index]?.label}: {points[index]?.average}% average marks
-            </title>
-          </circle>
+            r={4}
+          />
         ))}
       </svg>
-      <div className="udash-chart__labels">
+      <div className="uni-chart__labels">
         {points.map((point) => (
-          <span key={point.month} className="udash-chart__label">
+          <span key={point.month} className="uni-chart__label">
             {point.label}
             <small>{point.average}%</small>
           </span>
@@ -182,29 +181,29 @@ function PerformanceChart({ points }: { points: UniversityPerformancePoint[] }) 
 
 function DonutChart({ items }: { items: UniversityDesignationCount[] }) {
   const legend = designationLegend(items);
-  if (legend.length === 0) return <p className="udash-empty">No teaching staff recorded yet.</p>;
+  if (legend.length === 0) return <p className="uni-empty">No teaching staff recorded yet.</p>;
   const total = legend.reduce((sum, item) => sum + item.count, 0);
   return (
-    <div className="udash-donut">
+    <div className="uni-donut">
       <div
-        className="udash-donut__ring"
+        className="uni-donut__ring"
         style={{
           background: conicGradient(
             legend.map((item) => ({ designation: item.key, percentage: item.percentage })),
           ),
         }}
       >
-        <div className="udash-donut__hole">
-          <span className="udash-donut__total">{total}</span>
+        <div className="uni-donut__hole">
+          <span className="uni-donut__total">{total}</span>
           <small>teachers</small>
         </div>
       </div>
-      <ul className="udash-donut__legend">
+      <ul className="uni-donut__legend">
         {legend.map((item) => (
-          <li key={item.key} className="udash-donut__legend-row">
-            <span className="udash-dot" style={{ background: item.color }} />
-            <span className="udash-donut__legend-label">{item.label}</span>
-            <span className="udash-donut__legend-value">
+          <li key={item.key} className="uni-donut__legend-row">
+            <span className="uni-dot" style={{ background: item.color }} />
+            <span className="uni-donut__legend-label">{item.label}</span>
+            <span className="uni-donut__legend-value">
               {item.count} · {item.percentage}%
             </span>
           </li>
@@ -216,8 +215,8 @@ function DonutChart({ items }: { items: UniversityDesignationCount[] }) {
 
 function DataTable({ head, children }: { head: string[]; children: ReactNode }) {
   return (
-    <div className="udash-table-wrap">
-      <table className="udash-table">
+    <div className="uni-table-wrap">
+      <table className="uni-table">
         <thead>
           <tr>
             {head.map((label) => (
@@ -232,17 +231,17 @@ function DataTable({ head, children }: { head: string[]; children: ReactNode }) 
 }
 
 function ActivityList({ items }: { items: UniversityActivityItem[] }) {
-  if (items.length === 0) return <p className="udash-empty">No recent activity.</p>;
+  if (items.length === 0) return <p className="uni-empty">No recent activity.</p>;
   return (
-    <ul className="udash-activity">
+    <ul className="uni-activity">
       {items.map((item) => (
-        <li key={item.id} className="udash-activity__item">
-          <span className="udash-activity__dot" />
+        <li key={item.id} className="uni-activity__item">
+          <span className="uni-activity__dot" />
           <div>
-            <p className="udash-activity__title">
+            <p className="uni-activity__title">
               {humanize(item.action)} · {humanize(item.entity)}
             </p>
-            <p className="udash-activity__meta">
+            <p className="uni-activity__meta">
               {item.actor ?? 'System'} · {formatDateTime(item.createdAt)}
             </p>
           </div>
@@ -254,9 +253,10 @@ function ActivityList({ items }: { items: UniversityActivityItem[] }) {
 
 interface QuickAction {
   label: string;
-  description: string;
   to: string;
   icon: IconName;
+  tone: DashTone;
+  primary?: boolean;
   permission?: Permission;
   roles?: readonly Role[];
 }
@@ -264,37 +264,38 @@ interface QuickAction {
 const QUICK_ACTIONS: QuickAction[] = [
   {
     label: 'Add Student',
-    description: 'Enroll a new learner',
     to: '/resource/students',
     icon: 'students',
+    tone: 'blue',
     permission: Permission.STUDENT_CREATE,
   },
   {
     label: 'Add Teacher',
-    description: 'Onboard teaching staff',
     to: '/resource/teachers',
     icon: 'teacher',
+    tone: 'amber',
     permission: Permission.TEACHER_MANAGE,
   },
   {
     label: 'Create Exam',
-    description: 'Schedule an assessment',
     to: '/resource/exams',
     icon: 'subject',
+    tone: 'rose',
     permission: Permission.EXAM_MANAGE,
   },
   {
     label: 'Enter Marks',
-    description: 'Record exam results',
     to: '/exams/marks',
     icon: 'marks',
+    tone: 'emerald',
     permission: Permission.RESULT_MANAGE,
   },
   {
     label: 'View Reports',
-    description: 'Analytics and report cards',
     to: '/reports',
     icon: 'reports',
+    tone: 'violet',
+    primary: true,
     permission: Permission.REPORT_READ,
   },
 ];
@@ -307,16 +308,19 @@ function QuickActions({ role }: { role: Role }) {
   if (actions.length === 0) return null;
   return (
     <Panel title="Quick actions" subtitle="Jump straight into common tasks" span={12}>
-      <div className="udash-quick">
+      <div className="uni-actions">
         {actions.map((action) => (
-          <Link key={action.to} className="udash-quick__card" to={action.to}>
-            <span className="udash-quick__icon">
-              <Icon name={action.icon} size={18} />
+          <Link
+            key={action.to}
+            className={`uni-action uni-action--${action.tone}${
+              action.primary ? ' uni-action--primary' : ''
+            }`}
+            to={action.to}
+          >
+            <span className="uni-action__icon">
+              <Icon name={action.icon} size={16} />
             </span>
-            <span className="udash-quick__body">
-              <span className="udash-quick__label">{action.label}</span>
-              <span className="udash-quick__desc">{action.description}</span>
-            </span>
+            <span className="uni-action__label">{action.label}</span>
           </Link>
         ))}
       </div>
@@ -326,40 +330,119 @@ function QuickActions({ role }: { role: Role }) {
 
 function MiniStat({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="udash-mini">
-      <span className="udash-mini__value">
+    <div className="uni-mini">
+      <span className="uni-mini__value">
         <CountUp value={value} />
       </span>
-      <span className="udash-mini__label">{label}</span>
+      <span className="uni-mini__label">{label}</span>
     </div>
   );
+}
+
+function ThemeIcon({ dark }: { dark: boolean }) {
+  return dark ? (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+    </svg>
+  ) : (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2" />
+      <path d="M12 20v2" />
+      <path d="m4.93 4.93 1.41 1.41" />
+      <path d="m17.66 17.66 1.41 1.41" />
+      <path d="M2 12h2" />
+      <path d="M20 12h2" />
+      <path d="m6.34 17.66-1.41 1.41" />
+      <path d="m19.07 4.93-1.41 1.41" />
+    </svg>
+  );
+}
+
+const THEME_STORAGE_KEY = 'uni-dash-theme';
+
+function initialTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+  try {
+    return window.localStorage.getItem(THEME_STORAGE_KEY) === 'dark' ? 'dark' : 'light';
+  } catch {
+    return 'light';
+  }
 }
 
 export function UniversityDashboardPage() {
   const { user } = useAuth();
   const [academicYearId, setAcademicYearId] = useState('');
+  const [theme, setTheme] = useState<'light' | 'dark'>(initialTheme);
   const state = useAsync<UniversityDashboard>(
     () => api.get<UniversityDashboard>(`/reports/university${buildQuery({ academicYearId })}`),
     [academicYearId],
   );
 
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      /* storage unavailable — theme still applies for this session */
+    }
+  }, [theme]);
+
   if (state.forbidden) return <ForbiddenPage />;
 
   const data = state.data;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const displayName = user ? user.firstName.trim() || humanize(user.role) : '';
+  const today = new Date().toLocaleDateString(undefined, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
   return (
-    <div className="page udash">
-      <header className="udash-hero">
-        <div className="udash-hero__text">
-          <p className="udash-hero__eyebrow">{data?.academicYear?.name ?? 'Campus overview'}</p>
-          <h1 className="udash-hero__title">University Dashboard</h1>
-          <p className="udash-hero__subtitle">
-            Students, staff, exams and performance in real time.
+    <div className="page uni-dash" data-dash-theme={theme}>
+      <header className="uni-head">
+        <div className="uni-head__main">
+          <p className="uni-greeting">
+            {greeting}
+            {displayName ? (
+              <>
+                , <strong>{displayName}</strong>
+              </>
+            ) : null}
           </p>
+          <p className="uni-date">
+            <Icon name="timetable" size={14} />
+            {today}
+          </p>
+          <h1 className="uni-title">University dashboard</h1>
+          <p className="uni-subtitle">Students, staff, exams and performance in real time.</p>
         </div>
-        <div className="udash-hero__controls">
+        <div className="uni-head__controls">
           <select
-            className="udash-select"
+            className="uni-select"
             aria-label="Academic year"
             value={academicYearId}
             onChange={(event) => setAcademicYearId(event.target.value)}
@@ -374,12 +457,21 @@ export function UniversityDashboardPage() {
           </select>
           <button
             type="button"
-            className="udash-btn"
+            className="uni-btn"
             onClick={state.reload}
             disabled={state.loading}
           >
             <Icon name="refresh" size={16} />
             Refresh
+          </button>
+          <button
+            type="button"
+            className="uni-icon-btn"
+            onClick={() => setTheme((current) => (current === 'dark' ? 'light' : 'dark'))}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            <ThemeIcon dark={theme === 'dark'} />
           </button>
         </div>
       </header>
@@ -389,17 +481,24 @@ export function UniversityDashboardPage() {
       ) : state.error ? (
         <ErrorState message={state.error} onRetry={state.reload} />
       ) : data ? (
-        <div className="udash-grid">
-          <section className="udash-tiles" aria-label="Key metrics">
+        <div className="uni-grid">
+          <section className="uni-stats" aria-label="Key metrics">
             <StatTile icon="students" label="Students" value={data.overview.students} tone="blue" />
-            <StatTile icon="teacher" label="Teachers" value={data.overview.teachers} tone="purple" />
-            <StatTile icon="subject" label="Subjects" value={data.overview.courses} tone="cyan" />
-            <StatTile icon="marks" label="Exams" value={data.overview.exams} tone="indigo" />
+            <StatTile icon="teacher" label="Teachers" value={data.overview.teachers} tone="amber" />
+            <StatTile icon="subject" label="Subjects" value={data.overview.courses} tone="violet" />
+            <StatTile
+              icon="marks"
+              label="Exams"
+              value={data.overview.exams}
+              tone="rose"
+              hint={data.overview.exams === 0 ? 'No exams yet. Create your first exam.' : undefined}
+            />
             <StatTile
               icon="trending"
               label="Average marks"
               value={`${data.overview.averageMarks}%`}
-              tone="green"
+              tone="emerald"
+              hint={data.overview.averageMarks === 0 ? 'No marks recorded yet.' : undefined}
             />
           </section>
 
@@ -424,7 +523,7 @@ export function UniversityDashboardPage() {
                 <DataTable head={['Student', 'Admission No', 'Class', 'Status', 'Joined']}>
                   {data.students.recent.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="udash-empty">
+                      <td colSpan={5} className="uni-empty">
                         No students yet.
                       </td>
                     </tr>
@@ -435,7 +534,7 @@ export function UniversityDashboardPage() {
                         <td>{student.admissionNo}</td>
                         <td>{student.className ?? '—'}</td>
                         <td>
-                          <span className="udash-badge">{humanize(student.status)}</span>
+                          <span className="uni-badge">{humanize(student.status)}</span>
                         </td>
                         <td>{formatDate(student.admissionDate)}</td>
                       </tr>
@@ -449,21 +548,21 @@ export function UniversityDashboardPage() {
           {data.teachers ? (
             <>
               <Panel title="Teaching staff" subtitle="Employment and workload" span={5}>
-                <div className="udash-mini-row">
+                <div className="uni-mini-row">
                   <MiniStat label="Total" value={data.teachers.total} />
                   <MiniStat label="Active" value={data.teachers.active} />
                   <MiniStat label="Full time" value={data.teachers.fullTime} />
                   <MiniStat label="Part time" value={data.teachers.partTime} />
                 </div>
-                <h3 className="udash-subtitle">By employment type</h3>
+                <h3 className="uni-subtitle">By employment type</h3>
                 <BarList
                   items={data.teachers.byEmploymentType.map((item) => ({
                     name: item.label,
                     count: item.count,
                   }))}
                 />
-                <h3 className="udash-subtitle">Workload</h3>
-                <p className="udash-note">
+                <h3 className="uni-subtitle">Workload</h3>
+                <p className="uni-note">
                   {data.teachers.workload.assignments} assignments ·{' '}
                   {data.teachers.workload.average} average per teacher
                 </p>
@@ -482,7 +581,7 @@ export function UniversityDashboardPage() {
                 <DataTable head={['Teacher', 'Employee No', 'Designation', 'Subjects', 'Workload']}>
                   {data.teachers.recent.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="udash-empty">
+                      <td colSpan={5} className="uni-empty">
                         No teachers yet.
                       </td>
                     </tr>
@@ -492,7 +591,7 @@ export function UniversityDashboardPage() {
                         <td>{teacher.name ?? '—'}</td>
                         <td>{teacher.employeeNo}</td>
                         <td>
-                          <span className="udash-badge">{teacher.designationLabel}</span>
+                          <span className="uni-badge">{teacher.designationLabel}</span>
                         </td>
                         <td>{teacher.subjects}</td>
                         <td>{teacher.workload}</td>
@@ -511,7 +610,7 @@ export function UniversityDashboardPage() {
                 subtitle="Average marks scored over recent exams"
                 span={12}
               >
-                <div className="udash-mini-row">
+                <div className="uni-mini-row">
                   <MiniStat label="Average marks" value={`${data.exams.averageMarks}%`} />
                   <MiniStat label="Pass rate" value={`${data.exams.passRate}%`} />
                   <MiniStat label="Exams" value={data.exams.total} />
@@ -524,7 +623,7 @@ export function UniversityDashboardPage() {
                 <DataTable head={['Exam', 'Class', 'Date', 'Results']}>
                   {data.exams.recent.length === 0 ? (
                     <tr>
-                      <td colSpan={4} className="udash-empty">
+                      <td colSpan={4} className="uni-empty">
                         No exams yet.
                       </td>
                     </tr>
@@ -545,7 +644,7 @@ export function UniversityDashboardPage() {
                 <DataTable head={['Student', 'Subject', 'Marks', '%', 'Grade']}>
                   {data.exams.recentResults.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="udash-empty">
+                      <td colSpan={5} className="uni-empty">
                         No results yet.
                       </td>
                     </tr>
@@ -558,7 +657,7 @@ export function UniversityDashboardPage() {
                           {result.marksObtained}/{result.maxMarks}
                         </td>
                         <td>
-                          <span className="udash-badge">{result.percentage}%</span>
+                          <span className="uni-badge">{result.percentage}%</span>
                         </td>
                         <td>{result.grade ?? '—'}</td>
                       </tr>
@@ -585,10 +684,10 @@ export function UniversityDashboardPage() {
             </Panel>
           ) : null}
 
-          <section className="udash-ops">
-            <div className="udash-ops__head">
-              <h2 className="udash-ops__title">Operations</h2>
-              <p className="udash-ops__subtitle">
+          <section className="uni-ops">
+            <div className="uni-ops__head">
+              <h2 className="uni-ops__title">Operations</h2>
+              <p className="uni-ops__subtitle">
                 Finance, attendance, admissions and joining trends.
               </p>
             </div>

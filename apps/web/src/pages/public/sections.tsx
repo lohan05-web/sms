@@ -1,203 +1,226 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Icon, type IconName } from '../../components/Icon';
-import { AvatarArt, DecorShapes } from '../../components/illustrations';
-import type { SiteFeature, SiteModule, SiteStat } from '../../lib/publicContent';
+import { Icon } from '../../components/Icon';
 
-function cx(base: string, extra?: string): string {
-  return extra ? `${base} ${extra}` : base;
-}
+/**
+ * Shared building blocks for the public website.
+ *
+ * These are intentionally small and layout-agnostic: every page composes them
+ * into its own arrangement so the seven pages feel related without looking like
+ * the same template repeated. All styling lives in the public stylesheets.
+ */
 
-export function revealAttrs(delay?: number): { 'data-reveal': string; style?: CSSProperties } {
-  return delay === undefined
-    ? { 'data-reveal': '' }
-    : { 'data-reveal': '', style: { transitionDelay: `${delay}ms` } };
+export function cx(...parts: Array<string | false | null | undefined>): string {
+  return parts.filter(Boolean).join(' ');
 }
 
 export function Section({
   id,
+  tone,
   className,
   children,
 }: {
   id?: string;
+  tone?: 'paper' | 'tint';
   className?: string;
   children: ReactNode;
 }) {
   return (
-    <section id={id} className={cx('site-section', className)}>
-      <div className="site-container">{children}</div>
+    <section
+      id={id}
+      className={cx('pub-section', tone === 'tint' && 'pub-section--tint', className)}
+    >
+      <div className="pub-container">{children}</div>
     </section>
-  );
-}
-
-export function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  align = 'center',
-}: {
-  eyebrow?: string;
-  title: string;
-  description?: string;
-  align?: 'center' | 'start';
-}) {
-  return (
-    <div className={cx('site-heading', `site-heading--${align}`)} {...revealAttrs()}>
-      {eyebrow ? <span className="site-eyebrow">{eyebrow}</span> : null}
-      <h2>{title}</h2>
-      {description ? <p>{description}</p> : null}
-    </div>
-  );
-}
-
-export function Split({
-  reverse,
-  media,
-  className,
-  children,
-}: {
-  reverse?: boolean;
-  media: ReactNode;
-  className?: string;
-  children: ReactNode;
-}) {
-  const splitClass = ['site-split', reverse && 'site-split--reverse', className]
-    .filter(Boolean)
-    .join(' ');
-
-  return (
-    <div className={splitClass}>
-      <div className="site-split__text" {...revealAttrs()}>
-        {children}
-      </div>
-      <div className="site-split__media" {...revealAttrs(90)}>
-        {media}
-      </div>
-    </div>
   );
 }
 
 export function PageHero({
   eyebrow,
   title,
-  description,
+  lead,
   children,
+  media,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
-  description: string;
+  lead: string;
   children?: ReactNode;
+  media?: ReactNode;
 }) {
   return (
-    <section className="site-hero site-hero--compact">
-      <DecorShapes className="site-hero__decor" />
-      <div className="site-container site-hero__inner">
-        <div className="site-hero__content site-anim-stack">
-          <span className="site-eyebrow site-eyebrow--onDark">{eyebrow}</span>
-          <h1>{title}</h1>
-          <p className="site-hero__lead">{description}</p>
-          {children ? <div className="site-hero__actions">{children}</div> : null}
+    <section className="pub-hero">
+      <div className={cx('pub-container', 'pub-hero__grid', media ? 'pub-hero__grid--media' : false)}>
+        <div className="pub-hero__content">
+          {eyebrow ? <p className="pub-eyebrow">{eyebrow}</p> : null}
+          <h1 className="pub-hero__title">{title}</h1>
+          <p className="pub-hero__lead">{lead}</p>
+          {children ? <div className="pub-actions">{children}</div> : null}
         </div>
+        {media ? <div className="pub-hero__media">{media}</div> : null}
       </div>
     </section>
   );
 }
 
-export function FeatureCard({ feature, delay }: { feature: SiteFeature; delay?: number }) {
-  return (
-    <article className="site-card site-feature site-card--lift" {...revealAttrs(delay)}>
-      <span className="site-card__icon site-card__icon--pulse">
-        <Icon name={feature.icon} size={22} />
-      </span>
-      <h3>{feature.title}</h3>
-      <p>{feature.description}</p>
-    </article>
-  );
-}
-
-export function ModuleCard({ module, delay }: { module: SiteModule; delay?: number }) {
-  return (
-    <article className="site-card site-module site-card--lift" {...revealAttrs(delay)}>
-      <span className="site-card__icon site-card__icon--pulse">
-        <Icon name={module.icon} size={20} />
-      </span>
-      <h3>{module.title}</h3>
-      <p>{module.description}</p>
-    </article>
-  );
-}
-
-export function PeopleCard({
-  variant,
+export function SectionHeading({
+  id,
+  eyebrow,
   title,
-  description,
-  delay,
+  lead,
+  align = 'start',
 }: {
-  variant: 'teacher' | 'student' | 'parent';
+  id?: string;
+  eyebrow?: string;
   title: string;
-  description: string;
-  delay?: number;
+  lead?: string;
+  align?: 'start' | 'center';
 }) {
   return (
-    <article className="site-person site-card--lift" {...revealAttrs(delay)}>
-      <AvatarArt variant={variant} className="site-person__art" />
-      <h3>{title}</h3>
-      <p>{description}</p>
-    </article>
-  );
-}
-
-export function IconBadge({ name }: { name: IconName }) {
-  return (
-    <span className="site-badge">
-      <Icon name={name} size={18} />
-    </span>
-  );
-}
-
-export function StatStrip({ stats }: { stats: SiteStat[] }) {
-  return (
-    <div className="site-stats">
-      {stats.map((stat, index) => (
-        <div className="site-stat" key={stat.label} {...revealAttrs(index * 70)}>
-          <span className="site-stat__value">{stat.value}</span>
-          <span className="site-stat__label">{stat.label}</span>
-        </div>
-      ))}
+    <div className={cx('pub-heading', align === 'center' && 'pub-heading--center')}>
+      {eyebrow ? <p className="pub-eyebrow">{eyebrow}</p> : null}
+      <h2 id={id} className="pub-heading__title">
+        {title}
+      </h2>
+      {lead ? <p className="pub-heading__lead">{lead}</p> : null}
     </div>
   );
 }
 
-export function CtaBand({
-  title,
-  description,
-  primaryLabel = 'Book a demo',
-  primaryTo = '/site/contact',
-  secondaryLabel = 'See the modules',
-  secondaryTo = '/site/modules',
+export function Split({
+  media,
+  reverse,
+  className,
+  children,
 }: {
-  title: string;
-  description: string;
-  primaryLabel?: string;
-  primaryTo?: string;
-  secondaryLabel?: string;
-  secondaryTo?: string;
+  media: ReactNode;
+  reverse?: boolean;
+  className?: string;
+  children: ReactNode;
 }) {
   return (
-    <Section className="site-cta-wrap">
-      <div className="site-cta site-cta--animate" {...revealAttrs()}>
-        <div>
-          <h2>{title}</h2>
-          <p>{description}</p>
+    <div className={cx('pub-split', reverse && 'pub-split--reverse', className)}>
+      <div className="pub-split__text">{children}</div>
+      <div className="pub-split__media">{media}</div>
+    </div>
+  );
+}
+
+export function Checklist({
+  items,
+  className,
+}: {
+  items: ReactNode[];
+  className?: string;
+}) {
+  return (
+    <ul className={cx('pub-checklist', className)}>
+      {items.map((item, index) => (
+        <li key={typeof item === 'string' ? item : index}>
+          <Icon name="check" size={16} />
+          <span>{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * A real photograph. If a file ever goes missing the frame degrades into a
+ * quiet, unstriped panel that names what should be there, rather than
+ * pretending the image loaded.
+ */
+export function Shot({
+  src,
+  alt,
+  caption,
+  className,
+}: {
+  src: string;
+  alt: string;
+  caption?: string;
+  className?: string;
+}) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className={cx('pub-shot', className)}>
+      {failed ? (
+        <div className="pub-shot__fallback" role="img" aria-label={alt}>
+          <Icon name="camera" size={20} />
+          <span className="pub-shot__fallback-text">{alt}</span>
         </div>
-        <div className="site-cta__actions">
-          <Link to={primaryTo} className="btn btn--primary">
-            {primaryLabel}
+      ) : (
+        <img
+          className="pub-shot__img"
+          src={src}
+          alt={alt}
+          decoding="async"
+          onError={() => setFailed(true)}
+        />
+      )}
+      {caption ? <p className="pub-shot__caption">{caption}</p> : null}
+    </div>
+  );
+}
+
+export function BrowserFrame({
+  children,
+  url = 'SmartSchool',
+}: {
+  children: ReactNode;
+  url?: string;
+}) {
+  return (
+    <div className="pub-frame">
+      <div className="pub-frame__bar" aria-hidden="true">
+        <span className="pub-frame__dots">
+          <i />
+          <i />
+          <i />
+        </span>
+        <span className="pub-frame__url">
+          <Icon name="lock" size={12} />
+          {url}
+        </span>
+      </div>
+      <div className="pub-frame__view">{children}</div>
+    </div>
+  );
+}
+
+export function BookDemo({
+  title,
+  lead,
+  secondaryLabel,
+  secondaryTo,
+  id,
+  className,
+}: {
+  title: string;
+  lead: string;
+  secondaryLabel?: string;
+  secondaryTo?: string;
+  id?: string;
+  className?: string;
+}) {
+  return (
+    <Section id={id} className={cx('pub-cta-wrap', className)}>
+      <div className="pub-cta">
+        <div className="pub-cta__text">
+          <h2>{title}</h2>
+          <p>{lead}</p>
+        </div>
+        <div className="pub-cta__actions">
+          <Link to="/site/contact" className="pub-btn pub-btn--primary">
+            Book a demo
             <Icon name="arrow-right" size={16} />
           </Link>
-          <Link to={secondaryTo} className="btn btn--ghost site-btn--onDark">
-            {secondaryLabel}
-          </Link>
+          {secondaryTo && secondaryLabel ? (
+            <Link to={secondaryTo} className="pub-btn pub-btn--ghost">
+              {secondaryLabel}
+            </Link>
+          ) : null}
         </div>
       </div>
     </Section>

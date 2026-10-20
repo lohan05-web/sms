@@ -9,8 +9,8 @@ import { useAsync } from '../lib/useAsync';
 
 const CHART_WIDTH = 640;
 const CHART_HEIGHT = 220;
-const STUDENT_COLOR = '#8b5cf6';
-const TEACHER_COLOR = '#22d3ee';
+const STUDENT_COLOR = '#14b8a6';
+const TEACHER_COLOR = '#5eead4';
 
 function DualAreaChart({ points }: { points: JoiningMonthPoint[] }) {
   if (points.length === 0) return <p className="udash-empty">No joining data yet.</p>;

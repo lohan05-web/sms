@@ -34,8 +34,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  BUS: '#6366f1',
-  VAN: '#06b6d4',
+  BUS: '#14b8a6',
+  VAN: '#0f766e',
 };
 
 function KpiCard({
@@ -254,7 +254,7 @@ export function VehicleDashboard({ version }: { version: number }) {
                 <Tooltip />
                 <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={64}>
                   {typeData.map((entry) => (
-                    <Cell key={entry.type} fill={TYPE_COLORS[entry.type] ?? '#6366f1'} />
+                    <Cell key={entry.type} fill={TYPE_COLORS[entry.type] ?? '#14b8a6'} />
                   ))}
                 </Bar>
               </BarChart>
@@ -282,7 +282,7 @@ export function VehicleDashboard({ version }: { version: number }) {
                     axisLine={false}
                   />
                   <Tooltip />
-                  <Bar dataKey="capacity" fill="#6366f1" radius={[0, 6, 6, 0]} maxBarSize={26} />
+                  <Bar dataKey="capacity" fill="#14b8a6" radius={[0, 6, 6, 0]} maxBarSize={26} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

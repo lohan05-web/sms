@@ -1,0 +1,1572 @@
+/* ==========================================================================
+   University dashboard — page-scoped light/dark theme
+   --------------------------------------------------------------------------
+   This file is imported ONLY by UniversityDashboardPage.tsx. Rules are scoped
+   under `.uni-dash` (or the page's own `uni-*` classes) so no global style,
+   shared component or other page is affected. Design tokens are declared once
+   below and reused everywhere.
+
+   The `.udash-*` overrides at the bottom re-skin the page-exclusive
+   JoiningPanel sub-component that still renders its own global class names —
+   the component itself is untouched. The Student enrollment section
+   (StudentEnrollmentPanel) uses the dedicated `uni-enroll*` classes below.
+   ========================================================================== */
+
+.uni-dash {
+  /* Palette tokens (light) */
+  --d-bg: #f6f7fb;
+  --d-card: #ffffff;
+  --d-text: #1e2433;
+  --d-muted: #64748b;
+  --d-primary: #4f46e5;
+  --d-primary-strong: #4338ca;
+  --d-border: #e2e8f0;
+  --d-border-strong: #cbd5e1;
+
+  --d-success: #22c55e;
+  --d-warning: #f59e0b;
+  --d-error: #ef4444;
+  /* Text-safe variants that stay ≥ 4.5:1 on the card surface. */
+  --d-success-text: #047857;
+  --d-error-text: #b91c1c;
+
+  --d-blue: #3b82f6;
+  --d-amber: #f59e0b;
+  --d-violet: #8b5cf6;
+  --d-rose: #f43f5e;
+  --d-emerald: #10b981;
+  --d-teal: #0f766e;
+  --d-teal-bright: #14b8a6;
+
+  --d-radius: 16px;
+  --d-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.06);
+  --d-shadow-lg: 0 12px 28px -16px rgba(16, 24, 40, 0.22);
+
+  /* Token bridge for the reused `.udash-*` sub-components. */
+  --udash-navy-900: var(--d-bg);
+  --udash-navy-800: var(--d-card);
+  --udash-navy-700: var(--d-bg);
+  --udash-card: var(--d-card);
+  --udash-card-strong: var(--d-card);
+  --udash-border: var(--d-border);
+  --udash-border-strong: var(--d-border-strong);
+  --udash-text: var(--d-text);
+  --udash-muted: var(--d-muted);
+  --udash-blue: var(--d-primary);
+  --udash-purple: var(--d-primary);
+  --udash-cyan: var(--d-blue);
+  --udash-green: var(--d-emerald);
+
+  position: relative;
+  padding: 26px;
+  border-radius: 20px;
+  background: var(--d-bg);
+  color: var(--d-text);
+}
+
+.uni-dash[data-dash-theme='dark'] {
+  --d-bg: #0e1425;
+  --d-card: #172033;
+  --d-text: #e7ecf5;
+  --d-muted: #9aa7be;
+  --d-primary: #818cf8;
+  --d-primary-strong: #a5b4fc;
+  --d-border: #2a3550;
+  --d-border-strong: #3b4869;
+  --d-teal: #2dd4bf;
+  --d-teal-bright: #14b8a6;
+
+  --d-success-text: #34d399;
+  --d-error-text: #f87171;
+
+  --d-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --d-shadow-lg: 0 14px 30px -18px rgba(0, 0, 0, 0.75);
+}
+
+/* Consistent keyboard focus across the whole dashboard. */
+.uni-dash :is(a, button, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--d-primary);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+.uni-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.uni-head__main {
+  min-width: 0;
+}
+
+.uni-greeting {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--d-muted);
+}
+
+.uni-greeting strong {
+  color: var(--d-text);
+  font-weight: 700;
+}
+
+.uni-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-title {
+  margin: 10px 0 0;
+  font-size: 28px;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--d-text);
+}
+
+.uni-subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-head__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.uni-select {
+  appearance: none;
+  min-width: 190px;
+  padding: 10px 36px 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--d-border);
+  background-color: var(--d-card);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  color: var(--d-text);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.uni-select option {
+  color: var(--d-text);
+  background: var(--d-card);
+}
+
+.uni-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--d-primary);
+  background: transparent;
+  color: var(--d-primary);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.uni-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--d-primary) 10%, transparent);
+  box-shadow: var(--d-shadow);
+}
+
+.uni-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.uni-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--d-border);
+  background: var(--d-card);
+  color: var(--d-text);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.uni-icon-btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--d-primary);
+  color: var(--d-primary);
+}
+
+/* --------------------------------------------------------------------------
+   Grid + statistics
+   -------------------------------------------------------------------------- */
+.uni-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.uni-stats {
+  grid-column: span 12;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.uni-stat {
+  --accent: var(--d-primary);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: var(--d-card);
+  border: 1px solid var(--d-border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--d-radius);
+  box-shadow: var(--d-shadow);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.uni-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--d-shadow-lg);
+}
+
+.uni-stat--blue {
+  --accent: var(--d-blue);
+}
+.uni-stat--amber {
+  --accent: var(--d-amber);
+}
+.uni-stat--violet {
+  --accent: var(--d-violet);
+}
+.uni-stat--rose {
+  --accent: var(--d-rose);
+}
+.uni-stat--emerald {
+  --accent: var(--d-emerald);
+}
+
+.uni-stat__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  color: var(--accent);
+  background: rgba(79, 70, 229, 0.12);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.uni-stat__body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.uni-stat__value {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--d-text);
+}
+
+.uni-stat__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--d-muted);
+}
+
+.uni-stat__hint {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--d-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Quick actions
+   -------------------------------------------------------------------------- */
+.uni-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.uni-action {
+  --accent: var(--d-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--d-border);
+  background: var(--d-card);
+  color: var(--d-text);
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: var(--d-shadow);
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.uni-action:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--d-border));
+  box-shadow: var(--d-shadow-lg);
+}
+
+.uni-action__icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+.uni-action--blue {
+  --accent: var(--d-blue);
+}
+.uni-action--amber {
+  --accent: var(--d-amber);
+}
+.uni-action--violet {
+  --accent: var(--d-violet);
+}
+.uni-action--rose {
+  --accent: var(--d-rose);
+}
+.uni-action--emerald {
+  --accent: var(--d-emerald);
+}
+
+.uni-action--primary {
+  background: var(--d-primary);
+  border-color: var(--d-primary);
+  color: #ffffff;
+}
+
+.uni-action--primary .uni-action__icon {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.uni-action--primary:hover {
+  border-color: var(--d-primary-strong);
+  background: var(--d-primary-strong);
+}
+
+/* On the lighter dark-mode indigo, white text would fail contrast — flip it. */
+.uni-dash[data-dash-theme='dark'] .uni-action--primary {
+  color: #0e1425;
+}
+
+.uni-dash[data-dash-theme='dark'] .uni-action--primary .uni-action__icon {
+  background: rgba(14, 20, 37, 0.16);
+  color: #0e1425;
+}
+
+/* --------------------------------------------------------------------------
+   Panels
+   -------------------------------------------------------------------------- */
+.uni-panel {
+  grid-column: span 6;
+  min-width: 0;
+  padding: 22px;
+  background: var(--d-card);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius);
+  box-shadow: var(--d-shadow);
+}
+
+.uni-panel--span4 {
+  grid-column: span 4;
+}
+.uni-panel--span5 {
+  grid-column: span 5;
+}
+.uni-panel--span6 {
+  grid-column: span 6;
+}
+.uni-panel--span7 {
+  grid-column: span 7;
+}
+.uni-panel--span8 {
+  grid-column: span 8;
+}
+.uni-panel--span12 {
+  grid-column: span 12;
+}
+
+.uni-panel__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.uni-panel__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--d-text);
+}
+
+.uni-panel__subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--d-primary);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.uni-link:hover {
+  text-decoration: underline;
+}
+
+.uni-subtitle {
+  margin: 18px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--d-text);
+}
+
+.uni-note {
+  margin: 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Mini stats + bar list
+   -------------------------------------------------------------------------- */
+.uni-mini-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.uni-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--d-border);
+  background: color-mix(in srgb, var(--d-primary) 4%, var(--d-card));
+}
+
+.uni-mini__value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+.uni-mini__label {
+  font-size: 12px;
+  color: var(--d-muted);
+}
+
+.uni-barlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uni-barlist__row {
+  display: grid;
+  grid-template-columns: minmax(84px, 150px) 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.uni-barlist__label {
+  font-size: 12.5px;
+  color: var(--d-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uni-barlist__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--d-border);
+  overflow: hidden;
+}
+
+.uni-barlist__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--d-primary), var(--d-violet));
+}
+
+.uni-barlist__value {
+  font-size: 12.5px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+  color: var(--d-text);
+}
+
+/* --------------------------------------------------------------------------
+   Performance chart
+   -------------------------------------------------------------------------- */
+.uni-chart {
+  margin-top: 6px;
+}
+
+.uni-chart__svg {
+  display: block;
+  width: 100%;
+  height: 210px;
+  overflow: visible;
+}
+
+.uni-chart__grid {
+  stroke: var(--d-border);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.uni-chart__line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.uni-chart__area {
+  stroke: none;
+}
+
+.uni-chart__dot {
+  fill: var(--d-card);
+  stroke: var(--d-primary);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.uni-chart__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.uni-chart__label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1 1 0;
+  font-size: 11px;
+  text-align: center;
+  color: var(--d-muted);
+}
+
+.uni-chart__label small {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+/* --------------------------------------------------------------------------
+   Donut
+   -------------------------------------------------------------------------- */
+.uni-donut {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.uni-donut__ring {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.uni-donut__hole {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--d-card);
+  border: 1px solid var(--d-border);
+}
+
+.uni-donut__total {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--d-text);
+}
+
+.uni-donut__hole small {
+  font-size: 11px;
+  color: var(--d-muted);
+}
+
+.uni-donut__legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.uni-donut__legend-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.uni-donut__legend-label {
+  flex: 1 1 auto;
+  color: var(--d-muted);
+}
+
+.uni-donut__legend-value {
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+.uni-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+/* --------------------------------------------------------------------------
+   Tables + badges
+   -------------------------------------------------------------------------- */
+.uni-table-wrap {
+  overflow-x: auto;
+}
+
+.uni-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.uni-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+  border-bottom: 1px solid var(--d-border);
+  white-space: nowrap;
+}
+
+.uni-table td {
+  padding: 12px;
+  color: var(--d-text);
+  border-bottom: 1px solid var(--d-border);
+  white-space: nowrap;
+}
+
+.uni-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.uni-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--d-primary) 4%, transparent);
+}
+
+.uni-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--d-primary);
+  background: color-mix(in srgb, var(--d-primary) 12%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Activity
+   -------------------------------------------------------------------------- */
+.uni-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uni-activity__item {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  padding: 10px 0 10px 4px;
+}
+
+.uni-activity__item:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 26px;
+  bottom: -4px;
+  width: 1px;
+  background: var(--d-border);
+}
+
+.uni-activity__dot {
+  position: relative;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--d-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--d-primary) 18%, transparent);
+}
+
+.uni-activity__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--d-text);
+}
+
+.uni-activity__meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: var(--d-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Operations fold-in
+   -------------------------------------------------------------------------- */
+.uni-ops {
+  grid-column: span 12;
+  margin-top: 6px;
+  padding-top: 22px;
+  border-top: 1px solid var(--d-border);
+}
+
+.uni-ops__head {
+  margin-bottom: 16px;
+}
+
+.uni-ops__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+.uni-ops__subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+/* ==========================================================================
+   Reused `.udash-*` sub-component (JoiningPanel)
+   This file is NOT modified — only re-skinned from this page scope.
+   ========================================================================== */
+
+/* --- Joining statistics -------------------------------------------------- */
+.uni-dash .udash-joining {
+  grid-column: span 12;
+  position: relative;
+  padding: 22px;
+  border-radius: var(--d-radius);
+  border: 1px solid var(--d-border);
+  background: var(--d-card);
+  box-shadow: var(--d-shadow);
+  overflow: hidden;
+}
+
+.uni-dash .udash-joining::before {
+  display: none;
+}
+
+.uni-dash .udash-joining__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--d-primary) 24%, transparent);
+  background: color-mix(in srgb, var(--d-primary) 10%, transparent);
+  color: var(--d-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.uni-dash .udash-joining__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--d-text);
+}
+
+.uni-dash .udash-joining__subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--d-muted);
+}
+
+/* Chart column becomes a stack so the legend can sit below the chart. */
+.uni-dash .udash-joining__chart {
+  display: flex;
+  flex-direction: column;
+}
+
+.uni-dash .udash-joining__svg {
+  order: 1;
+  height: 230px;
+}
+
+.uni-dash .udash-joining__legend {
+  order: 2;
+  display: flex;
+  gap: 18px;
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--d-border);
+}
+
+.uni-dash .udash-joining__chart .udash-chart__labels {
+  order: 3;
+}
+
+.uni-dash .udash-joining__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--d-muted);
+}
+
+/* Legend swatches: Students = blue, Teachers = amber. */
+.uni-dash .udash-joining__legend-item:nth-child(1) .udash-dot {
+  background: var(--d-blue) !important;
+}
+
+.uni-dash .udash-joining__legend-item:nth-child(2) .udash-dot {
+  background: var(--d-amber) !important;
+}
+
+/* Recolour the SVG series: area gradients + stroke lines. */
+.uni-dash #join-students stop {
+  stop-color: var(--d-blue);
+}
+
+.uni-dash #join-teachers stop {
+  stop-color: var(--d-amber);
+}
+
+.uni-dash .udash-joining__svg path.udash-chart__line:nth-of-type(3) {
+  stroke: var(--d-blue);
+}
+
+.uni-dash .udash-joining__svg path.udash-chart__line:nth-of-type(4) {
+  stroke: var(--d-amber);
+}
+
+.uni-dash .udash-chart__grid {
+  stroke: var(--d-border);
+}
+
+.uni-dash .udash-chart__line {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.uni-dash .udash-joining__svg .udash-chart__dot {
+  fill: var(--d-card);
+  stroke: var(--d-border-strong) !important;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.uni-dash .udash-chart__label {
+  color: var(--d-muted);
+}
+
+.uni-dash .udash-chart__label small {
+  color: var(--d-text);
+}
+
+.uni-dash .udash-joining__pill {
+  border: 1px solid var(--d-border);
+  background: var(--d-card);
+  border-radius: 12px;
+}
+
+.uni-dash .udash-joining__pill--students::before {
+  background: var(--d-blue);
+}
+
+.uni-dash .udash-joining__pill--teachers::before {
+  background: var(--d-amber);
+}
+
+.uni-dash .udash-joining__pill-label,
+.uni-dash .udash-joining__total-label,
+.uni-dash .udash-joining__year-counts {
+  color: var(--d-muted);
+}
+
+.uni-dash .udash-joining__pill-value,
+.uni-dash .udash-joining__total-value,
+.uni-dash .udash-joining__year-name {
+  color: var(--d-text);
+}
+
+.uni-dash .udash-joining__total {
+  border: 1px solid var(--d-border);
+  background: color-mix(in srgb, var(--d-primary) 4%, var(--d-card));
+  border-radius: 12px;
+}
+
+.uni-dash .udash-joining__year-track {
+  background: var(--d-border);
+}
+
+.uni-dash .udash-joining__year-fill--students {
+  background: var(--d-blue);
+}
+
+.uni-dash .udash-joining__year-fill--teachers {
+  background: var(--d-amber);
+}
+
+.uni-dash .udash-joining__current {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: var(--d-primary);
+}
+
+/* Growth deltas: keep the up/down meaning but at readable contrast. */
+.uni-dash .udash-joining__pill-delta--up {
+  color: var(--d-success-text);
+}
+
+.uni-dash .udash-joining__pill-delta--down {
+  color: var(--d-error-text);
+}
+
+.uni-dash .udash-joining__pill-delta--flat {
+  color: var(--d-muted);
+}
+
+/* On the lighter dark-mode indigo, white badge text would fail contrast. */
+.uni-dash[data-dash-theme='dark'] .udash-joining__current {
+  color: #0e1425;
+}
+
+.uni-dash .udash-select {
+  appearance: none;
+  min-width: 0;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--d-border);
+  background: var(--d-card);
+  color: var(--d-text);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.uni-dash .udash-select option {
+  color: var(--d-text);
+  background: var(--d-card);
+}
+
+/* --- Student enrollment -------------------------------------------------- */
+.uni-enroll {
+  grid-column: span 7;
+  min-width: 0;
+  padding: 22px;
+  background: var(--d-card);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius);
+  box-shadow: var(--d-shadow);
+}
+
+.uni-enroll__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.uni-enroll__intro {
+  min-width: 0;
+}
+
+.uni-enroll__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--d-primary) 24%, transparent);
+  background: color-mix(in srgb, var(--d-primary) 10%, transparent);
+  color: var(--d-primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.uni-enroll__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--d-text);
+}
+
+.uni-enroll__subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-enroll__active-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--d-primary) 22%, transparent);
+  background: color-mix(in srgb, var(--d-primary) 8%, var(--d-card));
+}
+
+.uni-enroll__active-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--d-primary);
+}
+
+.uni-enroll__active-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+.uni-enroll__body {
+  display: grid;
+  grid-template-columns: minmax(0, 180px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.uni-enroll__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.uni-enroll__ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 148px;
+  height: 148px;
+}
+
+.uni-enroll__ring-svg {
+  width: 148px;
+  height: 148px;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+
+.uni-enroll__ring-track {
+  fill: none;
+  stroke: var(--d-border);
+  stroke-width: 14;
+}
+
+.uni-enroll__ring-value {
+  fill: none;
+  stroke-width: 14;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.6s ease;
+}
+
+.uni-enroll__ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.uni-enroll__ring-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--d-primary);
+  background: color-mix(in srgb, var(--d-primary) 12%, transparent);
+}
+
+.uni-enroll__ring-rate {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--d-text);
+}
+
+.uni-enroll__ring-caption {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+.uni-enroll__figure {
+  text-align: center;
+}
+
+.uni-enroll__count {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--d-text);
+}
+
+.uni-enroll__count-label {
+  margin: 4px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--d-muted);
+}
+
+.uni-enroll__classes {
+  display: inline-flex;
+  align-items: center;
+  margin: 10px 0 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--d-teal);
+  background: color-mix(in srgb, var(--d-teal-bright) 14%, transparent);
+}
+
+.uni-enroll__summary {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.uni-enroll__summary-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+.uni-enroll__summary-active {
+  margin: 0;
+  font-size: 14px;
+  color: var(--d-muted);
+}
+
+.uni-enroll__summary-active strong {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+.uni-enroll__stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 10px;
+}
+
+.uni-enroll__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--d-border);
+  background: color-mix(in srgb, var(--d-primary) 5%, var(--d-card));
+}
+
+.uni-enroll__stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--d-text);
+}
+
+.uni-enroll__stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--d-muted);
+}
+
+.uni-enroll__gender {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.uni-enroll__gender-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--d-border);
+}
+
+.uni-enroll__gender-seg {
+  display: block;
+  height: 100%;
+}
+
+.uni-enroll__gender-seg--male {
+  background: var(--d-primary);
+}
+
+.uni-enroll__gender-seg--female {
+  background: var(--d-teal-bright);
+}
+
+.uni-enroll__gender-seg--other {
+  background: var(--d-border-strong);
+}
+
+.uni-enroll__gender-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+
+.uni-enroll__gender-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--d-muted);
+}
+
+.uni-enroll__gender-legend strong {
+  color: var(--d-text);
+  font-weight: 700;
+}
+
+.uni-enroll__swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.uni-enroll__swatch--male {
+  background: var(--d-primary);
+}
+
+.uni-enroll__swatch--female {
+  background: var(--d-teal-bright);
+}
+
+.uni-enroll__swatch--other {
+  background: var(--d-border-strong);
+}
+
+/* Shared small typography used by the reused sub-components. */
+.uni-dash .udash-subtitle {
+  color: var(--d-text);
+}
+
+.uni-dash .udash-empty {
+  color: var(--d-muted);
+  font-size: 14px;
+}
+
+.uni-dash .udash-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  flex: 0 0 auto;
+}
+
+/* ==========================================================================
+   Dark theme: neutralise the light-themed shared fragments that are rendered
+   inside this page (Operations / DashboardSections) so contrast stays correct.
+   ========================================================================== */
+.uni-dash[data-dash-theme='dark'] .panel,
+.uni-dash[data-dash-theme='dark'] .stat-card {
+  background: var(--d-card);
+  border-color: var(--d-border);
+  color: var(--d-text);
+}
+
+.uni-dash[data-dash-theme='dark'] .panel__title,
+.uni-dash[data-dash-theme='dark'] .stat-card__value {
+  color: var(--d-text);
+}
+
+.uni-dash[data-dash-theme='dark'] .panel__subtitle,
+.uni-dash[data-dash-theme='dark'] .stat-card__label,
+.uni-dash[data-dash-theme='dark'] .stat-card__hint,
+.uni-dash[data-dash-theme='dark'] .muted {
+  color: var(--d-muted);
+}
+
+.uni-dash[data-dash-theme='dark'] .table th {
+  color: var(--d-muted);
+  border-color: var(--d-border);
+}
+
+.uni-dash[data-dash-theme='dark'] .table td {
+  color: var(--d-text);
+  border-color: var(--d-border);
+}
+
+.uni-dash[data-dash-theme='dark'] .bar__track,
+.uni-dash[data-dash-theme='dark'] .field__input {
+  background: var(--d-card);
+  border-color: var(--d-border);
+  color: var(--d-text);
+}
+
+.uni-dash[data-dash-theme='dark'] .btn--ghost {
+  color: var(--d-text);
+  border-color: var(--d-border);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 1200px) {
+  .uni-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1080px) {
+  .uni-panel--span4,
+  .uni-panel--span5,
+  .uni-panel--span7,
+  .uni-panel--span8 {
+    grid-column: span 6;
+  }
+
+  .uni-enroll {
+    grid-column: span 6;
+  }
+
+  .uni-enroll__body {
+    grid-template-columns: 1fr;
+  }
+
+  .uni-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .uni-dash {
+    padding: 18px;
+    border-radius: 16px;
+  }
+
+  .uni-grid {
+    gap: 14px;
+  }
+
+  .uni-panel,
+  .uni-panel--span4,
+  .uni-panel--span5,
+  .uni-panel--span6,
+  .uni-panel--span7,
+  .uni-panel--span8,
+  .uni-panel--span12 {
+    grid-column: span 12;
+  }
+
+  .uni-head {
+    align-items: flex-start;
+  }
+
+  .uni-head__controls {
+    width: 100%;
+  }
+
+  .uni-select {
+    flex: 1 1 auto;
+  }
+
+  .uni-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .uni-dash .udash-joining {
+    padding: 18px;
+  }
+
+  .uni-dash .udash-joining__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .uni-dash .udash-joining__svg {
+    height: 180px;
+  }
+
+  .uni-enroll {
+    grid-column: span 12;
+    padding: 18px;
+  }
+
+  .uni-enroll__body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .uni-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .uni-enroll__count {
+    font-size: 34px;
+  }
+
+  .uni-enroll__stat {
+    padding: 10px 12px;
+  }
+
+  .uni-enroll__stat-value {
+    font-size: 18px;
+  }
+
+  .uni-barlist__row {
+    grid-template-columns: minmax(72px, 1fr) 1fr auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uni-dash *,
+  .uni-dash *::before,
+  .uni-dash *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

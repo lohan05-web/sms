@@ -148,10 +148,10 @@ export function Layout() {
     contentRef.current?.scrollTo({ top: 0 });
   }, [location.pathname]);
 
-  // The Teacher portal runs on the scoped "navy" palette (see index.css §2b)
-  // and the Parent portal on the "parent" palette (navy blue + white with soft
-  // blue accents, §2c). Every other role keeps the default theme — the attribute
-  // is only ever set for those two roles, and cleared on unmount or a role swap.
+  // Every role shares the same navy / teal palette. The `data-theme` attribute
+  // is still set for the Teacher ("navy") and Parent ("parent") portals because
+  // a few scoped rules in index.css (§2b / §2c) tune their hero and accents; it
+  // is cleared on unmount or a role swap.
   const theme = user?.role === Role.TEACHER ? 'navy' : user?.role === Role.PARENT ? 'parent' : null;
   useEffect(() => {
     const root = document.documentElement;

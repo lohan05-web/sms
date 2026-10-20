@@ -4,15 +4,15 @@ import type {
 } from '@smartschool/shared';
 
 const DESIGNATION_COLORS: Record<string, string> = {
-  PROFESSOR: '#8b5cf6',
-  ASSOCIATE_PROFESSOR: '#7c8cff',
-  ASSISTANT_PROFESSOR: '#38bdf8',
-  LECTURER: '#22d3ee',
-  OTHER: '#a78bfa',
+  PROFESSOR: '#14b8a6',
+  ASSOCIATE_PROFESSOR: '#2dd4bf',
+  ASSISTANT_PROFESSOR: '#5eead4',
+  LECTURER: '#0f766e',
+  OTHER: '#99f6e4',
 };
 
 export function designationColor(designation: string): string {
-  return DESIGNATION_COLORS[designation] ?? '#818cf8';
+  return DESIGNATION_COLORS[designation] ?? '#0d9488';
 }
 
 function round(value: number): number {
@@ -32,7 +32,7 @@ export function conicGradient(
     stops.push(`${designationColor(item.designation)} ${round(start)}% ${round(cursor)}%`);
   }
   if (cursor < 100) {
-    stops.push(`rgba(148, 163, 255, 0.14) ${round(cursor)}% 100%`);
+    stops.push(`rgba(148, 163, 184, 0.14) ${round(cursor)}% 100%`);
   }
   return `conic-gradient(from 180deg, ${stops.join(', ')})`;
 }

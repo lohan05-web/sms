@@ -41,22 +41,22 @@ export function PublicContactPage() {
     <>
       <PageHero
         eyebrow="Contact"
-        title="Let's talk about your school"
-        description="Book a demo, ask a question or request a quote. Our team usually replies within one working day."
+        title="Book a demo, or ask us anything"
+        lead="Tell us a little about your school and what you would like to improve. We will arrange a walkthrough of SmartSchool at a time that suits you."
       />
 
       <Section>
-        <div className="site-contact">
-          <div className="site-contact__aside">
-            <h2>Talk to a human</h2>
+        <div className="contact-grid">
+          <div className="contact-aside">
+            <h2>Talk to a person</h2>
             <p>
-              Prefer to reach out directly? Use any of the channels below — or send us a note and we
-              will get back to you shortly.
+              Send us a note and we will come back to you directly. There is no call centre in
+              between — the message lands with the team that builds and supports SmartSchool.
             </p>
-            <ul className="site-channels">
+            <ul className="contact-channels">
               {CONTACT_CHANNELS.map((channel) => (
                 <li key={channel.label}>
-                  <span className="site-card__icon">
+                  <span className="contact-channels__icon">
                     <Icon name={channel.icon} size={18} />
                   </span>
                   <div>
@@ -72,20 +72,20 @@ export function PublicContactPage() {
             </ul>
           </div>
 
-          <form className="site-card site-form" onSubmit={onSubmit} noValidate>
+          <form className="contact-form" onSubmit={onSubmit} noValidate>
             {sent ? (
-              <div className="site-form__success">
+              <div className="contact-form__success" role="status">
                 <Icon name="check" size={20} />
                 <div>
                   <strong>Thank you — your message is on its way.</strong>
-                  <p>We will be in touch shortly.</p>
+                  <p>We will get back to you shortly.</p>
                 </div>
               </div>
             ) : null}
 
             {formError ? <div className="alert alert--error">{formError}</div> : null}
 
-            <div className="site-form__row">
+            <div className="contact-form__row">
               <label className="field">
                 <span className="field__label">Full name</span>
                 <input
@@ -94,7 +94,7 @@ export function PublicContactPage() {
                   autoComplete="name"
                   value={String(values.name ?? '')}
                   onChange={(event) => setValue('name', event.target.value)}
-                  placeholder="Jordan Rivera"
+                  placeholder="Your name"
                 />
                 {errors.name ? <span className="field__error">{errors.name}</span> : null}
               </label>
@@ -113,7 +113,7 @@ export function PublicContactPage() {
               </label>
             </div>
 
-            <div className="site-form__row">
+            <div className="contact-form__row">
               <label className="field">
                 <span className="field__label">
                   Phone <span className="field__optional">optional</span>
@@ -124,7 +124,7 @@ export function PublicContactPage() {
                   autoComplete="tel"
                   value={String(values.phone ?? '')}
                   onChange={(event) => setValue('phone', event.target.value)}
-                  placeholder="+1 (555) 010-2020"
+                  placeholder="Only if you would like a call"
                 />
                 {errors.phone ? <span className="field__error">{errors.phone}</span> : null}
               </label>
@@ -151,7 +151,7 @@ export function PublicContactPage() {
                 rows={5}
                 value={String(values.message ?? '')}
                 onChange={(event) => setValue('message', event.target.value)}
-                placeholder="Tell us about your school and what you would like to achieve."
+                placeholder="Tell us about your school and what you would like to improve."
               />
               {errors.message ? <span className="field__error">{errors.message}</span> : null}
             </label>
@@ -159,9 +159,9 @@ export function PublicContactPage() {
             <button type="submit" className="btn btn--primary btn--block" disabled={submitting}>
               {submitting ? 'Sending…' : 'Send message'}
             </button>
-            <p className="site-fineprint">
-              By sending this message you agree to be contacted about SmartSchool. We never share
-              your details.
+            <p className="contact-note">
+              By sending this message you agree to be contacted about SmartSchool. We never share your
+              details.
             </p>
           </form>
         </div>

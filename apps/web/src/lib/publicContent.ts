@@ -15,18 +15,6 @@ export const PUBLIC_NAV: PublicNavItem[] = [
   { label: 'Contact', to: '/site/contact' },
 ];
 
-export interface SiteStat {
-  value: string;
-  label: string;
-}
-
-export const SITE_STATS: SiteStat[] = [
-  { value: '30+', label: 'Built-in modules' },
-  { value: '4', label: 'Role-based portals' },
-  { value: '100%', label: 'Web-based, no installs' },
-  { value: '24/7', label: 'Cloud availability' },
-];
-
 export interface SiteFeature {
   icon: IconName;
   title: string;
@@ -318,26 +306,6 @@ export const SITE_FAQ: SiteFaq[] = [
   },
 ];
 
-export interface SiteStep {
-  title: string;
-  description: string;
-}
-
-export const SITE_STEPS: SiteStep[] = [
-  {
-    title: 'Set up your school',
-    description: 'Add classes, sections and staff, then import your student list in a few clicks.',
-  },
-  {
-    title: 'Run the school day',
-    description: 'Mark attendance, set homework, plan lessons and record marks across every section.',
-  },
-  {
-    title: 'Stay in control',
-    description: 'Watch fees, performance and the admissions pipeline from one live dashboard.',
-  },
-];
-
 export interface SiteValue {
   icon: IconName;
   title: string;
@@ -374,6 +342,13 @@ export interface ContactChannel {
   href?: string;
 }
 
+/**
+ * Public contact channels.
+ *
+ * Only channels the project actually owns are listed. We deliberately do not
+ * publish a demo phone number or postal address, and we never invent one. The
+ * contact form is the primary way to reach the team.
+ */
 export const CONTACT_CHANNELS: ContactChannel[] = [
   {
     icon: 'mail',
@@ -382,14 +357,8 @@ export const CONTACT_CHANNELS: ContactChannel[] = [
     href: 'mailto:hello@smartschool.app',
   },
   {
-    icon: 'phone',
-    label: 'Phone',
-    value: '+1 (555) 010-2020',
-    href: 'tel:+15550102020',
-  },
-  {
-    icon: 'map-pin',
-    label: 'Office',
-    value: 'Level 4, Learning Square, City Centre',
+    icon: 'messages',
+    label: 'Contact form',
+    value: 'Send a message from this page',
   },
 ];

@@ -1,0 +1,201 @@
+/* ==========================================================================
+   Public home page
+   Page-specific layout only. Colours, type and shared pieces (buttons, frames,
+   screenshots, the call to action) come from PublicSite.css via --pub-* tokens.
+   ========================================================================== */
+
+.home {
+  display: block;
+}
+
+/* --- Hero ---------------------------------------------------------------- */
+
+.home-hero {
+  padding: 66px 0 34px;
+}
+
+.home-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 52px;
+  align-items: center;
+}
+
+.home-hero__title {
+  margin: 0;
+  font-size: clamp(2.1rem, 4.2vw, 3.05rem);
+  line-height: 1.08;
+  letter-spacing: -0.025em;
+}
+
+.home-hero__lead {
+  margin: 20px 0 28px;
+  max-width: 46ch;
+  font-size: 17px;
+  line-height: 1.62;
+  color: var(--pub-muted);
+}
+
+/* --- Everyday school work ------------------------------------------------ */
+
+.home-work {
+  display: grid;
+  gap: 56px;
+  margin-top: 46px;
+}
+
+.home-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 52px;
+  align-items: center;
+}
+
+.home-row--reverse .home-row__media {
+  order: -1;
+}
+
+.home-row__icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 16px;
+  border-radius: 11px;
+  background: var(--pub-brand-soft);
+  color: var(--pub-brand);
+}
+
+.home-row__title {
+  margin: 0 0 10px;
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.home-row__body {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--pub-muted);
+}
+
+/* --- A school day, step by step ------------------------------------------ */
+
+.home-story {
+  max-width: 920px;
+}
+
+.home-story__note {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--pub-soft);
+}
+
+.home-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  margin: 38px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-step {
+  padding-top: 18px;
+  border-top: 2px solid var(--pub-brand);
+}
+
+.home-step__time {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--pub-brand);
+}
+
+.home-step__title {
+  margin: 10px 0 8px;
+  font-size: 1.05rem;
+}
+
+.home-step__body {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--pub-muted);
+}
+
+/* --- A closer look ------------------------------------------------------- */
+
+.home-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 42px;
+  align-items: start;
+}
+
+.home-gallery__item {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.home-gallery__item figcaption {
+  display: grid;
+  gap: 3px;
+}
+
+.home-gallery__item figcaption strong {
+  font-size: 14.5px;
+}
+
+.home-gallery__item figcaption span {
+  font-size: 13.5px;
+  color: var(--pub-muted);
+}
+
+/* --- Responsive ---------------------------------------------------------- */
+
+@media (max-width: 1000px) {
+  .home-hero__grid,
+  .home-row {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .home-row--reverse .home-row__media {
+    order: 0;
+  }
+
+  .home-work {
+    gap: 48px;
+  }
+
+  .home-steps {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .home-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .home-hero {
+    padding: 44px 0 24px;
+  }
+
+  .home-gallery {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

@@ -1,123 +1,174 @@
-import type { UniversityDashboard, UniversityNameCount } from '@smartschool/shared';
+import type { UniversityDashboard } from '@smartschool/shared';
 import { Icon } from './Icon';
+import { CountUp } from './ui';
 import { sharePercentage } from '../lib/university';
 
 type StudentEnrollment = NonNullable<UniversityDashboard['students']>;
 
-const MALE_COLOR = '#5b6bff';
-const FEMALE_COLOR = '#a78bfa';
-const OTHER_COLOR = '#22d3ee';
-
-function genderGradient(male: number, female: number, other: number): string {
-  const total = male + female + other;
-  if (total <= 0) return 'conic-gradient(from -90deg, rgba(148, 163, 255, 0.16), rgba(148, 163, 255, 0.16))';
-  const maleShare = (male / total) * 100;
-  const femaleShare = (female / total) * 100;
-  const femaleEnd = maleShare + femaleShare;
-  return `conic-gradient(from -90deg, ${MALE_COLOR} 0% ${maleShare}%, ${FEMALE_COLOR} ${maleShare}% ${femaleEnd}%, ${OTHER_COLOR} ${femaleEnd}% 100%)`;
-}
-
-function GenderLegend({
-  items,
-  total,
-}: {
-  items: { label: string; value: number; color: string }[];
-  total: number;
-}) {
-  return (
-    <ul className="udash-enrollment__legend">
-      {items.map((item) => (
-        <li key={item.label} className="udash-enrollment__legend-row">
-          <span className="udash-dot" style={{ background: item.color }} />
-          <span className="udash-enrollment__legend-label">{item.label}</span>
-          <span className="udash-enrollment__legend-value">
-            {item.value}
-            <small>{sharePercentage(item.value, total)}%</small>
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function ClassBars({ items }: { items: UniversityNameCount[] }) {
-  if (items.length === 0) return <p className="udash-empty">No class distribution data.</p>;
-  const peak = Math.max(1, ...items.map((item) => item.count));
-  return (
-    <ol className="udash-enrollment__classes">
-      {items.map((item, index) => (
-        <li key={item.id ?? item.name} className="udash-enrollment__class">
-          <span className="udash-enrollment__rank">{index + 1}</span>
-          <span className="udash-enrollment__class-name" title={item.name}>
-            {item.name}
-          </span>
-          <span className="udash-enrollment__class-track">
-            <span
-              className="udash-enrollment__class-fill"
-              style={{ width: `${(item.count / peak) * 100}%` }}
-            />
-          </span>
-          <span className="udash-enrollment__class-count">{item.count}</span>
-        </li>
-      ))}
-    </ol>
-  );
-}
+const RING_SIZE = 148;
+const RING_STROKE = 14;
+const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
 /**
  * A redesigned, unique "Student enrollment" panel for the university dashboard:
- * a gender ring, an active-student rate and a ranked class-distribution chart.
+ * a large student count, an active-student progress ring with a student icon and
+ * a compact enrollment summary. Every figure is derived from the existing API data.
  */
 export function StudentEnrollmentPanel({ students }: { students: StudentEnrollment }) {
   const other = Math.max(0, students.total - students.male - students.female);
   const activeRate = sharePercentage(students.active, students.total);
+  const inactive = Math.max(0, students.total - students.active);
   const classCount = students.byClass.length;
 
+  const ringDash = (Math.min(100, Math.max(0, activeRate)) / 100) * RING_CIRCUMFERENCE;
+
+  const genderTotal = students.male + students.female + other;
+  const genderShare = (value: number) => (genderTotal > 0 ? (value / genderTotal) * 100 : 0);
+
   return (
-    <section className="udash-enrollment">
-      <header className="udash-enrollment__head">
-        <div className="udash-enrollment__intro">
-          <p className="udash-enrollment__eyebrow">
+    <section className="uni-enroll">
+      <header className="uni-enroll__head">
+        <div className="uni-enroll__intro">
+          <p className="uni-enroll__eyebrow">
             <Icon name="students" size={14} />
             Enrollment
           </p>
-          <h2 className="udash-enrollment__title">Student enrollment</h2>
-          <p className="udash-enrollment__subtitle">
-            {students.total} students across {classCount} {classCount === 1 ? 'class' : 'classes'}
+          <h2 className="uni-enroll__title">Student Enrollment</h2>
+          <p className="uni-enroll__subtitle">
+            <CountUp value={students.total} /> Students across <CountUp value={classCount} />{' '}
+            {classCount === 1 ? 'Class' : 'Classes'}
           </p>
         </div>
-        <div className="udash-enrollment__rate">
-          <span className="udash-enrollment__rate-value">{activeRate}%</span>
-          <span className="udash-enrollment__rate-label">
-            active · {students.active}/{students.total}
+        <div className="uni-enroll__active-pill">
+          <span className="uni-enroll__active-value">
+            <CountUp value={`${activeRate}%`} />
           </span>
+          <span className="uni-enroll__active-label">Active</span>
         </div>
       </header>
 
-      <div className="udash-enrollment__body">
-        <div className="udash-enrollment__gender">
+      <div className="uni-enroll__body">
+        <div className="uni-enroll__hero">
           <div
-            className="udash-enrollment__ring"
-            style={{ background: genderGradient(students.male, students.female, other) }}
+            className="uni-enroll__ring"
+            role="img"
+            aria-label={`${activeRate}% of ${students.total} students are active`}
           >
-            <div className="udash-enrollment__hole">
-              <span className="udash-enrollment__hole-value">{students.total}</span>
-              <small>students</small>
+            <svg
+              className="uni-enroll__ring-svg"
+              viewBox={`0 0 ${RING_SIZE} ${RING_SIZE}`}
+              aria-hidden="true"
+              focusable="false"
+            >
+              <defs>
+                <linearGradient id="uni-enroll-ring" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#4f46e5" />
+                  <stop offset="100%" stopColor="#14b8a6" />
+                </linearGradient>
+              </defs>
+              <circle
+                className="uni-enroll__ring-track"
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+              />
+              <circle
+                className="uni-enroll__ring-value"
+                cx={RING_SIZE / 2}
+                cy={RING_SIZE / 2}
+                r={RING_RADIUS}
+                stroke="url(#uni-enroll-ring)"
+                strokeDasharray={`${ringDash} ${RING_CIRCUMFERENCE}`}
+              />
+            </svg>
+            <div className="uni-enroll__ring-center">
+              <span className="uni-enroll__ring-icon">
+                <Icon name="students" size={26} />
+              </span>
+              <span className="uni-enroll__ring-rate">
+                <CountUp value={`${activeRate}%`} />
+              </span>
+              <span className="uni-enroll__ring-caption">Active</span>
             </div>
           </div>
-          <GenderLegend
-            total={students.total}
-            items={[
-              { label: 'Male', value: students.male, color: MALE_COLOR },
-              { label: 'Female', value: students.female, color: FEMALE_COLOR },
-              { label: 'Other', value: other, color: OTHER_COLOR },
-            ]}
-          />
+
+          <div className="uni-enroll__figure">
+            <p className="uni-enroll__count">
+              <CountUp value={students.total} />
+            </p>
+            <p className="uni-enroll__count-label">Students</p>
+            <p className="uni-enroll__classes">
+              <CountUp value={classCount} /> {classCount === 1 ? 'Class' : 'Classes'}
+            </p>
+          </div>
         </div>
 
-        <div className="udash-enrollment__classes-col">
-          <h3 className="udash-subtitle">Class distribution</h3>
-          <ClassBars items={students.byClass} />
+        <div className="uni-enroll__summary">
+          <h3 className="uni-enroll__summary-title">Enrollment summary</h3>
+          <p className="uni-enroll__summary-active">
+            <strong>
+              <CountUp value={`${activeRate}%`} />
+            </strong>{' '}
+            Active · <CountUp value={students.active} /> / <CountUp value={students.total} />{' '}
+            students
+          </p>
+
+          <ul className="uni-enroll__stats">
+            <li className="uni-enroll__stat">
+              <span className="uni-enroll__stat-value">
+                <CountUp value={students.active} />
+              </span>
+              <span className="uni-enroll__stat-label">Active</span>
+            </li>
+            <li className="uni-enroll__stat">
+              <span className="uni-enroll__stat-value">
+                <CountUp value={inactive} />
+              </span>
+              <span className="uni-enroll__stat-label">Inactive</span>
+            </li>
+            <li className="uni-enroll__stat">
+              <span className="uni-enroll__stat-value">
+                <CountUp value={classCount} />
+              </span>
+              <span className="uni-enroll__stat-label">Classes</span>
+            </li>
+          </ul>
+
+          <div className="uni-enroll__gender">
+            <div
+              className="uni-enroll__gender-bar"
+              role="img"
+              aria-label={`Male ${students.male}, Female ${students.female}, Other ${other}`}
+            >
+              <span
+                className="uni-enroll__gender-seg uni-enroll__gender-seg--male"
+                style={{ width: `${genderShare(students.male)}%` }}
+              />
+              <span
+                className="uni-enroll__gender-seg uni-enroll__gender-seg--female"
+                style={{ width: `${genderShare(students.female)}%` }}
+              />
+              <span
+                className="uni-enroll__gender-seg uni-enroll__gender-seg--other"
+                style={{ width: `${genderShare(other)}%` }}
+              />
+            </div>
+            <ul className="uni-enroll__gender-legend">
+              <li>
+                <span className="uni-enroll__swatch uni-enroll__swatch--male" />
+                Male <strong>{students.male.toLocaleString()}</strong>
+              </li>
+              <li>
+                <span className="uni-enroll__swatch uni-enroll__swatch--female" />
+                Female <strong>{students.female.toLocaleString()}</strong>
+              </li>
+              <li>
+                <span className="uni-enroll__swatch uni-enroll__swatch--other" />
+                Other <strong>{other.toLocaleString()}</strong>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

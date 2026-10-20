@@ -1,13 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { PUBLIC_NAV } from '../lib/publicContent';
-import { useReveal } from '../lib/useReveal';
 import { Icon } from './Icon';
+import './PublicSite.css';
 
-const PORTAL_LINKS = [
-  { label: 'Admin', to: '/login' },
-  { label: 'Teacher', to: '/login/teacher' },
-  { label: 'Parent', to: '/login/parent' },
+const FOOTER_PRODUCT = [
+  { label: 'Features', to: '/site/features' },
+  { label: 'Modules', to: '/site/modules' },
+  { label: 'Plans', to: '/site/plans' },
+];
+
+const FOOTER_COMPANY = [
+  { label: 'About', to: '/site/about' },
+  { label: 'FAQ', to: '/site/faq' },
+  { label: 'Contact', to: '/site/contact' },
 ];
 
 export function PublicLayout() {
@@ -18,28 +24,26 @@ export function PublicLayout() {
     setNavOpen(false);
   }, [location.pathname]);
 
-  useReveal();
-
   return (
-    <div className="site">
-      <header className={`site-nav${navOpen ? ' site-nav--open' : ''}`}>
-        <div className="site-container site-nav__inner">
-          <Link to="/site" className="site-brand" aria-label="SmartSchool home">
-            <span className="site-brand__mark">SS</span>
-            <span className="site-brand__text">
+    <div className="pub">
+      <header className={`pub-nav${navOpen ? ' pub-nav--open' : ''}`}>
+        <div className="pub-container pub-nav__inner">
+          <Link to="/site" className="pub-brand" aria-label="SmartSchool home">
+            <span className="pub-brand__mark">SS</span>
+            <span className="pub-brand__text">
               SmartSchool
-              <small>School Management System</small>
+              <small>School management system</small>
             </span>
           </Link>
 
-          <nav className="site-nav__links" aria-label="Primary">
+          <nav className="pub-nav__links" aria-label="Primary">
             {PUBLIC_NAV.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.to === '/site'}
                 className={({ isActive }) =>
-                  `site-nav__link${isActive ? ' site-nav__link--active' : ''}`
+                  `pub-nav__link${isActive ? ' is-active' : ''}`
                 }
               >
                 {item.label}
@@ -47,89 +51,106 @@ export function PublicLayout() {
             ))}
           </nav>
 
-          <div className="site-nav__actions">
-            <Link to="/login" className="btn btn--primary site-nav__cta">
+          <div className="pub-nav__actions">
+            <Link to="/login" className="pub-nav__signin">
               Sign in
-              <Icon name="arrow-right" size={16} />
+            </Link>
+            <Link to="/site/contact" className="pub-btn pub-btn--primary">
+              Book a demo
             </Link>
             <button
               type="button"
-              className="site-nav__toggle"
+              className="pub-nav__toggle"
               aria-label="Toggle menu"
               aria-expanded={navOpen}
               onClick={() => setNavOpen((open) => !open)}
             >
-              <Icon name={navOpen ? 'close' : 'menu'} size={22} />
+              <Icon name={navOpen ? 'close' : 'menu'} size={20} />
             </button>
           </div>
         </div>
 
-        <div className="site-nav__mobile">
+        <div className="pub-nav__mobile">
           {PUBLIC_NAV.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={item.to === '/site'}
               className={({ isActive }) =>
-                `site-nav__mobile-link${isActive ? ' site-nav__mobile-link--active' : ''}`
+                `pub-nav__mobile-link${isActive ? ' is-active' : ''}`
               }
             >
               {item.label}
             </NavLink>
           ))}
-          <Link to="/login" className="btn btn--primary btn--block">
+          <Link to="/login" className="pub-nav__mobile-link">
             Sign in
+          </Link>
+          <Link to="/site/contact" className="pub-btn pub-btn--primary">
+            Book a demo
+            <Icon name="arrow-right" size={16} />
           </Link>
         </div>
       </header>
 
-      <main className="site-main">
+      <main className="pub-main">
         <Outlet />
       </main>
 
-      <footer className="site-footer">
-        <div className="site-container site-footer__grid">
-          <div className="site-footer__brand">
-            <Link to="/site" className="site-brand">
-              <span className="site-brand__mark">SS</span>
-              <span className="site-brand__text">SmartSchool</span>
+      <footer className="pub-footer">
+        <div className="pub-container pub-footer__grid">
+          <div className="pub-footer__brand">
+            <Link to="/site" className="pub-brand">
+              <span className="pub-brand__mark">SS</span>
+              <span className="pub-brand__text">SmartSchool</span>
             </Link>
             <p>
-              The all-in-one platform that helps schools run admissions, academics, finance and
-              communication from a single place.
+              Software for the school day: admissions, attendance, fees, exams and parent updates in
+              one connected place.
             </p>
           </div>
 
-          <div className="site-footer__col">
-            <h3>Explore</h3>
-            {PUBLIC_NAV.map((item) => (
-              <Link key={item.to} to={item.to}>
-                {item.label}
-              </Link>
-            ))}
+          <div className="pub-footer__col">
+            <h3>Product</h3>
+            <ul>
+              {FOOTER_PRODUCT.map((item) => (
+                <li key={item.to}>
+                  <Link to={item.to}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="site-footer__col">
-            <h3>Portals</h3>
-            {PORTAL_LINKS.map((item) => (
-              <Link key={item.to} to={item.to}>
-                {item.label} sign in
-              </Link>
-            ))}
-            <Link to="/site/contact">Book a demo</Link>
+          <div className="pub-footer__col">
+            <h3>Company</h3>
+            <ul>
+              {FOOTER_COMPANY.map((item) => (
+                <li key={item.to}>
+                  <Link to={item.to}>{item.label}</Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="site-footer__col">
-            <h3>Get in touch</h3>
-            <a href="mailto:hello@smartschool.app">hello@smartschool.app</a>
-            <a href="tel:+15550102020">+1 (555) 010-2020</a>
-            <span>Level 4, Learning Square</span>
+          <div className="pub-footer__col">
+            <h3>Get started</h3>
+            <ul>
+              <li>
+                <Link to="/site/contact">Book a demo</Link>
+              </li>
+              <li>
+                <Link to="/site/plans">See plans</Link>
+              </li>
+              <li>
+                <Link to="/login">Sign in</Link>
+              </li>
+            </ul>
           </div>
         </div>
 
-        <div className="site-container site-footer__bottom">
-          <span>© {new Date().getFullYear()} SmartSchool. All rights reserved.</span>
-          <span>Built for schools that never stop moving.</span>
+        <div className="pub-container pub-footer__bottom">
+          <span>© {new Date().getFullYear()} SmartSchool</span>
+          <span>Made for schools that never stop moving.</span>
         </div>
       </footer>
     </div>

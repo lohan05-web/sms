@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '../../components/Icon';
 import { SITE_PLANS } from '../../lib/publicContent';
-import { CtaBand, PageHero, Section, SectionHeading } from './sections';
+import { BookDemo, Checklist, PageHero, Section, SectionHeading, cx } from './sections';
 
 const INCLUDED = [
-  'Secure role-based access control',
-  'Web-based — nothing to install',
-  'Audit log for sensitive actions',
-  'Free updates and improvements',
-  'Encrypted, backed-up database',
-  'Onboarding and data import help',
+  'A portal for every role, from principal to parent',
+  'Role-based permissions and an audit log',
+  'Browser access on any school device — nothing to install',
+  'Data held in an encrypted, backed-up database',
+  'Updates delivered automatically, with no extra charge',
+  'Help with importing your student list',
 ];
 
 export function PublicPlansPage() {
@@ -17,67 +17,72 @@ export function PublicPlansPage() {
     <>
       <PageHero
         eyebrow="Plans"
-        title="Straightforward pricing that grows with you"
-        description="Start free, then add finance, transport and communication as you need them. No hidden fees, no lock-in surprises."
-      />
+        title="Plans that grow with the school"
+        lead="Start with the essentials and add finance, transport and parent messaging when you are ready. There is no re-implementation and no data to move."
+      >
+        <Link to="/site/contact" className="pub-btn pub-btn--primary">
+          Book a demo
+          <Icon name="arrow-right" size={16} />
+        </Link>
+        <Link to="/site/faq" className="pub-btn pub-btn--ghost">
+          Read the FAQ
+        </Link>
+      </PageHero>
 
       <Section>
-        <div className="site-plans">
+        <div className="plans">
           {SITE_PLANS.map((plan) => (
-            <article
-              className={`site-card site-plan${plan.highlighted ? ' site-plan--featured' : ''}`}
-              key={plan.name}
-            >
-              {plan.highlighted ? <span className="site-plan__tag">Most popular</span> : null}
+            <div className={cx('plan', plan.highlighted && 'plan--featured')} key={plan.name}>
+              {plan.highlighted ? <span className="plan__tag">Most chosen</span> : null}
               <h3>{plan.name}</h3>
-              <p className="site-plan__tagline">{plan.tagline}</p>
-              <div className="site-plan__price">
+              <p className="plan__tagline">{plan.tagline}</p>
+              <div className="plan__price">
                 <strong>{plan.price}</strong>
                 <span>{plan.period}</span>
               </div>
-              <ul className="site-checklist">
-                {plan.features.map((feature) => (
-                  <li key={feature}>
-                    <Icon name="check" size={15} />
-                    {feature}
-                  </li>
-                ))}
-              </ul>
+              <Checklist className="pub-checklist--compact" items={plan.features} />
               <Link
-                to={plan.name === 'Starter' ? '/login' : '/site/contact'}
-                className={`btn ${plan.highlighted ? 'btn--primary' : 'btn--ghost'} btn--block`}
+                to="/site/contact"
+                className={cx('pub-btn', plan.highlighted ? 'pub-btn--primary' : 'pub-btn--ghost')}
               >
                 {plan.cta}
               </Link>
-            </article>
+            </div>
           ))}
         </div>
-        <p className="site-fineprint">
-          Prices are indicative and shown in USD. Every plan can be tailored — talk to us about
-          multi-campus needs, annual billing or a not-for-profit discount.
+        <p className="fineprint">
+          Prices are shown for guidance only. Book a demo and we will confirm the details for your
+          school.
         </p>
       </Section>
 
-      <Section className="site-section--tint">
+      <Section tone="tint">
         <SectionHeading
-          eyebrow="Always included"
-          title="Every plan comes with the essentials"
+          eyebrow="In every plan"
+          title="The basics never change"
+          lead="Whichever plan you choose, the platform works the same way underneath."
         />
-        <ul className="site-included">
+        <ul className="plans-included">
           {INCLUDED.map((item) => (
             <li key={item}>
-              <span className="site-card__icon">
-                <Icon name="check" size={16} />
-              </span>
-              {item}
+              <Icon name="check" size={16} />
+              <span>{item}</span>
             </li>
           ))}
         </ul>
       </Section>
 
-      <CtaBand
-        title="Questions about pricing?"
-        description="We will help you find the plan that matches your school's size and budget."
+      <Section>
+        <SectionHeading
+          align="center"
+          title="How schools usually start"
+          lead="Most begin with records and attendance, settle in for a term, then add finance and messaging once the routine is running."
+        />
+      </Section>
+
+      <BookDemo
+        title="Not sure which plan fits?"
+        lead="Book a demo and we will talk through the options for your school."
         secondaryLabel="Read the FAQ"
         secondaryTo="/site/faq"
       />

@@ -27,11 +27,11 @@ function designation(
 
 describe('designationColor', () => {
   it('returns a mapped colour for known designations', () => {
-    expect(designationColor('PROFESSOR')).toBe('#8b5cf6');
+    expect(designationColor('PROFESSOR')).toBe('#14b8a6');
   });
 
   it('falls back to a default colour', () => {
-    expect(designationColor('VISITING')).toBe('#818cf8');
+    expect(designationColor('VISITING')).toBe('#0d9488');
   });
 });
 
@@ -42,13 +42,13 @@ describe('conicGradient', () => {
       designation('LECTURER', 2, 40),
     ]);
     expect(gradient).toContain('conic-gradient(from 180deg');
-    expect(gradient).toContain('#8b5cf6 0% 60%');
-    expect(gradient).toContain('#22d3ee 60% 100%');
+    expect(gradient).toContain('#14b8a6 0% 60%');
+    expect(gradient).toContain('#0f766e 60% 100%');
   });
 
   it('fills the remaining arc when shares do not total 100', () => {
     const gradient = conicGradient([designation('PROFESSOR', 1, 25)]);
-    expect(gradient).toContain('rgba(148, 163, 255, 0.14) 25% 100%');
+    expect(gradient).toContain('rgba(148, 163, 184, 0.14) 25% 100%');
   });
 
   it('skips zero-share designations', () => {
@@ -56,8 +56,8 @@ describe('conicGradient', () => {
       designation('PROFESSOR', 0, 0),
       designation('LECTURER', 1, 100),
     ]);
-    expect(gradient).not.toContain('#8b5cf6');
-    expect(gradient).toContain('#22d3ee 0% 100%');
+    expect(gradient).not.toContain('#14b8a6');
+    expect(gradient).toContain('#0f766e 0% 100%');
   });
 });
 
@@ -166,6 +166,6 @@ describe('designationLegend', () => {
       designation('PROFESSOR', 4, 80),
     ]);
     expect(legend.map((item) => item.key)).toEqual(['PROFESSOR', 'LECTURER']);
-    expect(legend[0]?.color).toBe('#8b5cf6');
+    expect(legend[0]?.color).toBe('#14b8a6');
   });
 });

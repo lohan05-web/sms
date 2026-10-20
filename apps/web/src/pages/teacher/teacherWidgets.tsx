@@ -20,10 +20,10 @@ const STATUS_ORDER = ['PRESENT', 'ABSENT', 'LATE', 'EXCUSED', 'HALF_DAY'] as con
  */
 const STATUS_COLORS: Record<string, string> = {
   PRESENT: '#22c55e',
-  ABSENT: '#f87171',
+  ABSENT: '#ef4444',
   LATE: '#f59e0b',
-  EXCUSED: '#38bdf8',
-  HALF_DAY: '#a78bfa',
+  EXCUSED: '#14b8a6',
+  HALF_DAY: '#2dd4bf',
 };
 
 /** Shared tooltip styling so recharts popups follow the active palette. */

@@ -46,8 +46,11 @@ describe('public site content', () => {
     );
   });
 
-  it('provides contact channels with icons', () => {
-    expect(CONTACT_CHANNELS.length).toBeGreaterThanOrEqual(3);
+  it('publishes only contact channels the project owns', () => {
+    expect(CONTACT_CHANNELS.length).toBeGreaterThanOrEqual(2);
     expect(CONTACT_CHANNELS.every((channel) => channel.value.length > 0)).toBe(true);
+    // We never publish a demo phone number or postal address.
+    const hrefs = CONTACT_CHANNELS.map((channel) => channel.href ?? '');
+    expect(hrefs.some((href) => href.startsWith('tel:'))).toBe(false);
   });
 });
